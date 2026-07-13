@@ -80,6 +80,16 @@ async function hasNoUsers(): Promise<boolean> {
   }
 }
 
+async function hasNoOwners(): Promise<boolean> {
+  if (!db) return true;
+  try {
+    const [result] = await db.select({ total: count() }).from(users).where(eq(users.role, "owner"));
+    return (result?.total ?? 0) === 0;
+  } catch {
+    return true;
+  }
+}
+
 async function ensureDbInitialized(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
   if (db) return true;
   try {
@@ -118,7 +128,7 @@ function assertSetupToken(request: FastifyRequest, reply: FastifyReply): boolean
 export default async function setupRoutes(app: FastifyInstance) {
   app.get("/status", async () => {
     return {
-      needsSetup: await hasNoUsers(),
+      needsSetup: await hasNoOwners(),
       setupToken: Boolean(getSetupToken()),
     };
   });
@@ -218,31 +228,43 @@ export default async function setupRoutes(app: FastifyInstance) {
   app.post("/init", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
     if (!(await ensureDbInitialized(request, reply))) return;
-    if (!(await hasNoUsers())) {
+    if (!(await hasNoOwners())) {
       return reply.status(403).send({ error: "Setup has already been completed" });
     }
 
     const body = parseBody(SetupInitSchema, request.body, reply);
     if (!body) return;
-    const authService = new AuthenticationDomainService(new DrizzleUserRepository());
-    const result = await authService.register({
-      email: body.email,
-      password: body.password,
-      name: body.name,
-      username:
-        body.username ||
-        body.email
-          .split("@")[0]
-          .toLowerCase()
-          .replace(/[^a-z0-9_-]/g, "-")
-          .slice(0, 32),
-    });
 
-    if (!result.success) {
-      return reply.status(400).send({ error: result.error.message });
+    // If a user with this email already exists (e.g. from an interrupted setup),
+    // promote them to owner instead of failing with a duplicate-key error.
+    const [existing] = await db.select().from(users).where(eq(users.email, body.email)).limit(1);
+
+    let ownerUser;
+    if (existing) {
+      await db.update(users).set({ role: "owner" }).where(eq(users.id, existing.id));
+      ownerUser = existing;
+    } else {
+      const authService = new AuthenticationDomainService(new DrizzleUserRepository());
+      const result = await authService.register({
+        email: body.email,
+        password: body.password,
+        name: body.name,
+        username:
+          body.username ||
+          body.email
+            .split("@")[0]
+            .toLowerCase()
+            .replace(/[^a-z0-9_-]/g, "-")
+            .slice(0, 32),
+      });
+
+      if (!result.success) {
+        return reply.status(400).send({ error: result.error.message });
+      }
+
+      await db.update(users).set({ role: "owner" }).where(eq(users.id, result.data.user.id));
+      ownerUser = result.data.user;
     }
-
-    await db.update(users).set({ role: "owner" }).where(eq(users.id, result.data.user.id));
 
     try {
       await fs.writeFile(SETUP_MARKER_PATH, new Date().toISOString(), "utf-8");
@@ -252,9 +274,9 @@ export default async function setupRoutes(app: FastifyInstance) {
 
     return {
       user: {
-        id: result.data.user.id,
-        email: result.data.user.email,
-        username: result.data.user.username,
+        id: ownerUser.id,
+        email: ownerUser.email,
+        username: ownerUser.username,
         role: "owner",
       },
     };
