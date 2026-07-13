@@ -36,6 +36,7 @@ export default function Wizard() {
   const [success, setSuccess] = useState<string | null>(null);
   const [needsRestart, setNeedsRestart] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [setupToken, setSetupToken] = useState(() => localStorage.getItem("keystone-setup-token") || "");
 
   const update = <K extends keyof WizardState>(section: K, values: Partial<WizardState[K]>) => {
     setState((prev) => ({ ...prev, [section]: { ...prev[section], ...values } }));
@@ -244,11 +245,15 @@ export default function Wizard() {
       <input
         id="token"
         type="password"
-        value={localStorage.getItem("keystone-setup-token") || ""}
-        onChange={(e) => localStorage.setItem("keystone-setup-token", e.target.value)}
+        value={setupToken}
+        onChange={(e) => {
+          const value = e.target.value.trim();
+          setSetupToken(value);
+          localStorage.setItem("keystone-setup-token", value);
+        }}
         placeholder="paste-token-here"
       />
-      <button onClick={next} disabled={!localStorage.getItem("keystone-setup-token")}>
+      <button onClick={next} disabled={!setupToken}>
         Continue
       </button>
     </>

@@ -96,6 +96,10 @@ async function ensureDbInitialized(reply: FastifyReply): Promise<boolean> {
 function assertSetupToken(request: FastifyRequest, reply: FastifyReply): boolean {
   const token = request.headers["x-setup-token"] as string | undefined;
   if (!validateSetupToken(token)) {
+    request.log.warn(
+      { hasToken: Boolean(token), tokenLength: token?.length, expectedLength: getSetupToken()?.length },
+      "Invalid or missing setup token"
+    );
     reply.status(401).send({ error: "Invalid or missing setup token" });
     return false;
   }

@@ -65,7 +65,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const token = localStorage.getItem("keystone-setup-token");
+  const token = localStorage.getItem("keystone-setup-token")?.trim();
   if (token) {
     headers["X-Setup-Token"] = token;
   }
