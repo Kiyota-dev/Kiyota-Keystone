@@ -15,6 +15,7 @@ import {
   Lock,
   Puzzle,
   ToggleLeft,
+  Shield,
 } from "lucide-react";
 import { api, getKeystoneAccessToken } from "./api.ts";
 import { Card } from "./components/ui/Card.tsx";
@@ -30,6 +31,7 @@ import { AuditLogsPanel } from "./components/AuditLogsPanel.tsx";
 import { KeysPanel } from "./components/KeysPanel.tsx";
 import { PluginsPanel } from "./components/PluginsPanel.tsx";
 import { FeatureFlagsPanel } from "./components/FeatureFlagsPanel.tsx";
+import { EnterpriseSsoPanel } from "./components/EnterpriseSsoPanel.tsx";
 
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
@@ -92,6 +94,36 @@ export default function Dashboard() {
   const handleCreateFeatureFlag = async (key: string, enabled: boolean, description?: string) => {
     await api.setFeatureFlag(key, enabled, description);
     refreshFeatureFlags();
+  };
+  const [samlConnections, setSamlConnections] = useState<DataTabState<{ connections: Array<{ id: string; name: string; idpEntityId: string | null; idpSsoUrl: string | null; spEntityId: string; spAcsUrl: string; isActive: boolean; createdAt: string }> }>>({ data: null, loading: false, error: null });
+  const [oidcConnections, setOidcConnections] = useState<DataTabState<{ connections: Array<{ id: string; name: string; issuer: string; authorizationEndpoint: string; tokenEndpoint: string; userinfoEndpoint: string | null; jwksUri: string | null; clientId: string; scopes: string[]; isActive: boolean; createdAt: string }> }>>({ data: null, loading: false, error: null });
+  const [scimConfig, setScimConfig] = useState<DataTabState<{ enabled: boolean; baseUrl: string; orgId: string }>>({ data: null, loading: false, error: null });
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const refreshEnterpriseSso = () => {
+    if (!selectedOrgId) return;
+    loadTab({ data: null, loading: false, error: null }, setSamlConnections, () => api.getSamlConnections(selectedOrgId));
+    loadTab({ data: null, loading: false, error: null }, setOidcConnections, () => api.getOidcConnections(selectedOrgId));
+    loadTab({ data: null, loading: false, error: null }, setScimConfig, () => api.getScimConfig(selectedOrgId));
+  };
+  const handleCreateSaml = async (input: { name: string; spEntityId: string; spAcsUrl: string }) => {
+    if (!selectedOrgId) return;
+    await api.createSamlConnection(selectedOrgId, input);
+    refreshEnterpriseSso();
+  };
+  const handleDeleteSaml = async (id: string) => {
+    if (!selectedOrgId) return;
+    await api.deleteSamlConnection(selectedOrgId, id);
+    refreshEnterpriseSso();
+  };
+  const handleCreateOidc = async (input: { name: string; issuer: string; authorizationEndpoint: string; tokenEndpoint: string; clientId: string; clientSecret: string }) => {
+    if (!selectedOrgId) return;
+    await api.createOidcConnection(selectedOrgId, input);
+    refreshEnterpriseSso();
+  };
+  const handleDeleteOidc = async (id: string) => {
+    if (!selectedOrgId) return;
+    await api.deleteOidcConnection(selectedOrgId, id);
+    refreshEnterpriseSso();
   };
 
   useEffect(() => {
@@ -166,9 +198,20 @@ export default function Dashboard() {
         loadTab(featureFlags, setFeatureFlags, api.getFeatureFlags);
         loadTab(configProfiles, setConfigProfiles, api.getConfigurationProfiles);
         break;
+      case "enterprise-sso":
+        refreshEnterpriseSso();
+        break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
+
+  useEffect(() => {
+    if (selectedOrgId) return;
+    const orgs = organizations.data?.organizations as Array<{ id: string }> | undefined;
+    if (orgs && orgs.length > 0) {
+      setSelectedOrgId(orgs[0].id);
+    }
+  }, [organizations.data, selectedOrgId]);
 
   async function loadTab<T>(
     state: DataTabState<T>,
@@ -203,6 +246,7 @@ export default function Dashboard() {
     { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" /> },
     { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" /> },
     { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" /> },
+    { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" /> },
     { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
   ];
 
@@ -419,6 +463,36 @@ export default function Dashboard() {
                 onDelete={handleDeleteFeatureFlag}
                 onCreate={handleCreateFeatureFlag}
               />
+            )}
+
+            {activeTab === "enterprise-sso" && (
+              <>
+                <div className="mt-6 flex items-center gap-2">
+                  <span className="text-[13px] txt-muted">Organization:</span>
+                  <select
+                    className="bg-surface border border-theme/30 rounded-lg px-3 py-1.5 text-[13px] txt-head"
+                    value={selectedOrgId ?? ""}
+                    onChange={(e) => setSelectedOrgId(e.target.value)}
+                  >
+                    {(organizations.data?.organizations as Array<{ id: string; name: string }> | undefined)?.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <EnterpriseSsoPanel
+                  samlState={samlConnections}
+                  oidcState={oidcConnections}
+                  scimState={scimConfig}
+                  selectedOrgId={selectedOrgId}
+                  onRefresh={refreshEnterpriseSso}
+                  onCreateSaml={handleCreateSaml}
+                  onDeleteSaml={handleDeleteSaml}
+                  onCreateOidc={handleCreateOidc}
+                  onDeleteOidc={handleDeleteOidc}
+                />
+              </>
             )}
 
             {activeTab === "audit-logs" && (

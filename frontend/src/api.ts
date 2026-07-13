@@ -168,6 +168,24 @@ export const api = {
   getConfigurationProfiles: () => fetchJson<{ profiles: Array<{ id: string; name: string; description: string }> }>("/v1/admin/platform/configuration-profiles"),
   getConfigurationProfile: (id: string) => fetchJson<{ profile: { name: string; description: string; values: Record<string, string> } }>(`/v1/admin/platform/configuration-profiles/${encodeURIComponent(id)}`),
 
+  // Enterprise SSO
+  getSamlConnections: (orgId: string) =>
+    fetchJson<{ connections: Array<{ id: string; name: string; idpEntityId: string | null; idpSsoUrl: string | null; spEntityId: string; spAcsUrl: string; isActive: boolean; createdAt: string }> }>(`/v1/admin/organizations/${orgId}/saml-connections`),
+  createSamlConnection: (orgId: string, input: { name: string; spEntityId: string; spAcsUrl: string; idpEntityId?: string; idpSsoUrl?: string; idpCertificate?: string; attributeMapping?: Record<string, string[]>; isActive?: boolean }) =>
+    fetchJson<{ id: string }>(`/v1/admin/organizations/${orgId}/saml-connections`, { method: "POST", body: JSON.stringify(input) }),
+  deleteSamlConnection: (orgId: string, connectionId: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/organizations/${orgId}/saml-connections/${connectionId}`, { method: "DELETE" }),
+  getSamlMetadata: (connectionId: string) =>
+    fetch(`${API_BASE}/v1/admin/organizations/_/saml-connections/${connectionId}/metadata`).then((r) => r.text()),
+  getOidcConnections: (orgId: string) =>
+    fetchJson<{ connections: Array<{ id: string; name: string; issuer: string; authorizationEndpoint: string; tokenEndpoint: string; userinfoEndpoint: string | null; jwksUri: string | null; clientId: string; scopes: string[]; isActive: boolean; createdAt: string }> }>(`/v1/admin/organizations/${orgId}/oidc-connections`),
+  createOidcConnection: (orgId: string, input: { name: string; issuer: string; authorizationEndpoint: string; tokenEndpoint: string; userinfoEndpoint?: string; jwksUri?: string; clientId: string; clientSecret: string; scopes?: string[]; attributeMapping?: Record<string, string[]>; isActive?: boolean }) =>
+    fetchJson<{ id: string }>(`/v1/admin/organizations/${orgId}/oidc-connections`, { method: "POST", body: JSON.stringify(input) }),
+  deleteOidcConnection: (orgId: string, connectionId: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/organizations/${orgId}/oidc-connections/${connectionId}`, { method: "DELETE" }),
+  getScimConfig: (orgId: string) =>
+    fetchJson<{ enabled: boolean; baseUrl: string; orgId: string }>(`/v1/admin/organizations/${orgId}/scim-config`),
+
   // Platform admin CRUD
   createOrganization: (input: { name: string; slug?: string; plan?: string }) =>
     fetchJson<{ id: string }>("/v1/admin/organizations", { method: "POST", body: JSON.stringify(input) }),
