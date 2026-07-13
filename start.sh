@@ -46,6 +46,15 @@ echo "==> Starting Keystone ${BACKEND_LABEL} on port ${PORT}..."
 ${BACKEND_COMMAND} &
 BACKEND_PID=$!
 
+echo "==> Waiting for Keystone backend to be ready..."
+for i in {1..60}; do
+  if curl -sf "http://localhost:${PORT}/health" >/dev/null 2>&1; then
+    echo "✅ Keystone backend is ready."
+    break
+  fi
+  sleep 1
+done
+
 echo "==> Starting Keystone setup frontend..."
 cd frontend
 npm run dev &
