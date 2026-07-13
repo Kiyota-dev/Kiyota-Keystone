@@ -99,6 +99,43 @@ export default async function authRoutes(app: FastifyInstance) {
     }
   );
 
+  app.post(
+    "/token-login",
+    {
+      preHandler: [
+        rateLimit({
+          keyPrefix: "login",
+          maxAttempts: 5,
+          windowSeconds: 900,
+        }),
+      ],
+    },
+    async (request, reply) => {
+      const body = LoginSchema.parse(request.body);
+
+      const result = await sdk.authentication.login({
+        email: body.email,
+        password: body.password,
+        clientId: body.client_id,
+      });
+
+      if (!result.success) return sendResultError(reply, result);
+
+      if (body.totp_code) {
+        const { verifyTOTP } = await import("../services/totp.js");
+        const validTotp = await verifyTOTP(result.data.user.id, body.totp_code);
+        if (!validTotp) {
+          return reply.status(401).send({ error: "Invalid two-factor code." });
+        }
+      }
+
+      return {
+        accessToken: result.data.accessToken,
+        user: toPublicUser(result.data.user),
+      };
+    }
+  );
+
   app.get("/me", { preHandler: [app.authenticate] }, async (request) => {
     return { user: request.user ? toPublicUser(request.user) : null };
   });

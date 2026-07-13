@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { orgMemberships, apiKeys } from "../db/schema.js";
+import { orgMemberships, apiKeys, users, organizations, applications } from "../db/schema.js";
 import { getSdk } from "../sdk/index.js";
 import { listPermissions, listPermissionsForRole, assignPermissionToRole, removePermissionFromRole } from "../services/permissions.js";
 import { listAuditLogs } from "../services/audit.js";
@@ -51,6 +51,17 @@ function sendResultError(reply: FastifyReply, result: { success: false; error: {
   return reply.status(result.error.statusCode ?? 400).send({ error: result.error.message, code: result.error.code });
 }
 
+function requireOwner() {
+  return async (request: FastifyRequest, reply: FastifyReply) => {
+    await request.server.authenticate(request, reply);
+    if (reply.sent) return;
+
+    if (request.user!.role !== "owner") {
+      return reply.status(403).send({ error: "Forbidden" });
+    }
+  };
+}
+
 function requireAuthAndRole(allowedRoles: OrgRole[], permission?: { resource: string; action: string }) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     await request.server.authenticate(request, reply);
@@ -71,6 +82,52 @@ function requireAuthAndRole(allowedRoles: OrgRole[], permission?: { resource: st
 
 export default async function adminRoutes(app: FastifyInstance) {
   const sdk = getSdk();
+
+  // Platform-level owner-only endpoints.
+  app.get("/platform/users", { preHandler: [requireOwner()] }, async () => {
+    const allUsers = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        username: users.username,
+        name: users.name,
+        role: users.role,
+        emailVerified: users.emailVerified,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .orderBy(users.createdAt);
+    return { users: allUsers };
+  });
+
+  app.get("/platform/organizations", { preHandler: [requireOwner()] }, async () => {
+    const allOrganizations = await db.select().from(organizations).orderBy(organizations.createdAt);
+    return { organizations: allOrganizations };
+  });
+
+  app.get("/platform/applications", { preHandler: [requireOwner()] }, async () => {
+    const allApplications = await db
+      .select({
+        id: applications.id,
+        orgId: applications.orgId,
+        clientId: applications.clientId,
+        name: applications.name,
+        redirectUris: applications.redirectUris,
+        allowedOrigins: applications.allowedOrigins,
+        branding: applications.branding,
+        isActive: applications.isActive,
+        createdAt: applications.createdAt,
+        updatedAt: applications.updatedAt,
+      })
+      .from(applications)
+      .orderBy(applications.createdAt);
+    return { applications: allApplications };
+  });
+
+  app.get("/platform/audit-logs", { preHandler: [requireOwner()] }, async () => {
+    const logs = await listAuditLogs({ limit: 100 });
+    return { logs };
+  });
 
   app.post(
     "/organizations",

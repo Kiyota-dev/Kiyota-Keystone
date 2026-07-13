@@ -65,13 +65,41 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface LoginTokenResponse {
+  accessToken: string;
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    name: string | null;
+    avatarUrl: string | null;
+    emailVerified: boolean;
+    plan: string;
+    role: string;
+    provider: string;
+  };
+}
+
+export function getKeystoneAccessToken(): string | null {
+  return localStorage.getItem("keystone-access-token")?.trim() || null;
+}
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const token = localStorage.getItem("keystone-setup-token")?.trim();
-  if (token) {
-    headers["X-Setup-Token"] = token;
+  const setupToken = localStorage.getItem("keystone-setup-token")?.trim();
+  if (setupToken) {
+    headers["X-Setup-Token"] = setupToken;
+  }
+  const accessToken = getKeystoneAccessToken();
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
   }
 
   const response = await fetch(`${API_BASE}${path}`, {
@@ -110,4 +138,13 @@ export const api = {
   // Public discovery / health endpoints used by the post-setup dashboard.
   getHealth: () => fetchJson<HealthStatus>("/health"),
   getOpenIdConfig: () => fetchJson<Record<string, unknown>>("/.well-known/openid-configuration"),
+
+  // Token-based authentication and platform admin endpoints.
+  loginToken: (input: LoginInput) =>
+    fetchJson<LoginTokenResponse>("/auth/token-login", { method: "POST", body: JSON.stringify(input) }),
+  getMe: () => fetchJson<{ user: unknown }>("/auth/me"),
+  getUsers: () => fetchJson<{ users: unknown[] }>("/v1/admin/platform/users"),
+  getOrganizations: () => fetchJson<{ organizations: unknown[] }>("/v1/admin/platform/organizations"),
+  getApplications: () => fetchJson<{ applications: unknown[] }>("/v1/admin/platform/applications"),
+  getAuditLogs: () => fetchJson<{ logs: unknown[] }>("/v1/admin/platform/audit-logs"),
 };

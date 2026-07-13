@@ -22,6 +22,14 @@ export default defineConfig({
         target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
         changeOrigin: true,
       },
+      "/auth": {
+        target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
+        changeOrigin: true,
+      },
+      "/v1": {
+        target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
+        changeOrigin: true,
+      },
     },
   },
   build: {
