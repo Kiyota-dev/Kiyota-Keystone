@@ -76,9 +76,38 @@ npm install
 ui_success "Frontend dependencies installed."
 
 echo ""
+wait_for_apt_lock() {
+  local timeout="${1:-120}"
+  local elapsed=0
+  while [ $elapsed -lt $timeout ]; do
+    if ! lsof /var/lib/dpkg/lock-frontend >/dev/null 2>&1 && \
+       ! lsof /var/lib/apt/lists/lock >/dev/null 2>&1 && \
+       ! lsof /var/cache/apt/archives/lock >/dev/null 2>&1; then
+      return 0
+    fi
+    if [ $elapsed -eq 0 ]; then
+      ui_info "Waiting for another package manager process to finish..."
+    fi
+    sleep 2
+    elapsed=$((elapsed + 2))
+  done
+  return 1
+}
+
+echo ""
 ui_step "Installing Playwright Chromium for E2E tests..."
-npx playwright install --with-deps chromium
-ui_success "Playwright Chromium installed."
+if wait_for_apt_lock 120; then
+  if npx playwright install --with-deps chromium; then
+    ui_success "Playwright Chromium installed."
+  else
+    ui_warning "Playwright system dependency installation failed."
+    ui_info "You can install browsers later with: npx playwright install --with-deps chromium"
+  fi
+else
+  ui_warning "Another apt/dpkg process is still running after 2 minutes."
+  ui_info "Skipping Playwright system dependencies. Install later with:"
+  ui_info "  npx playwright install --with-deps chromium"
+fi
 
 cd "$SCRIPT_DIR"
 
