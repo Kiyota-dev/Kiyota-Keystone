@@ -147,4 +147,5 @@ export const api = {
   getOrganizations: () => fetchJson<{ organizations: unknown[] }>("/v1/admin/platform/organizations"),
   getApplications: () => fetchJson<{ applications: unknown[] }>("/v1/admin/platform/applications"),
   getAuditLogs: () => fetchJson<{ logs: unknown[] }>("/v1/admin/platform/audit-logs"),
+  getFederationProviders: () => fetchJson<{ providers: Array<{ type: string; name: string; configured: boolean }> }>("/federation/providers"),
 };

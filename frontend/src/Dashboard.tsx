@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   ScrollText,
   LogOut,
+  Plug,
 } from "lucide-react";
 import { api, getKeystoneAccessToken } from "./api.ts";
 import { Card } from "./components/ui/Card.tsx";
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const [organizations, setOrganizations] = useState<DataTabState<{ organizations: unknown[] }>>({ data: null, loading: false, error: null });
   const [applications, setApplications] = useState<DataTabState<{ applications: unknown[] }>>({ data: null, loading: false, error: null });
   const [auditLogs, setAuditLogs] = useState<DataTabState<{ logs: unknown[] }>>({ data: null, loading: false, error: null });
+  const [providers, setProviders] = useState<DataTabState<{ providers: Array<{ type: string; name: string; configured: boolean }> }>>({ data: null, loading: false, error: null });
 
   useEffect(() => {
     setToken(getKeystoneAccessToken());
@@ -102,6 +104,9 @@ export default function Dashboard() {
       case "audit-logs":
         loadTab(auditLogs, setAuditLogs, api.getAuditLogs);
         break;
+      case "identity-providers":
+        loadTab(providers, setProviders, api.getFederationProviders);
+        break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
@@ -135,6 +140,7 @@ export default function Dashboard() {
     { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" /> },
     { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" /> },
     { id: "users", label: "Users", icon: <Users className="w-4 h-4" /> },
+    { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" /> },
     { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
   ];
 
@@ -322,6 +328,10 @@ export default function Dashboard() {
               />
             )}
 
+            {activeTab === "identity-providers" && (
+              <IdentityProvidersPanel state={providers} />
+            )}
+
             {activeTab === "audit-logs" && (
               <DataTabPanel
                 title="Audit Logs"
@@ -417,4 +427,74 @@ function formatCellValue(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
+}
+
+interface IdentityProvidersPanelProps {
+  state: DataTabState<{ providers: Array<{ type: string; name: string; configured: boolean }> }>;
+}
+
+function IdentityProvidersPanel({ state }: IdentityProvidersPanelProps) {
+  if (state.loading) {
+    return (
+      <div className="py-20 flex flex-col items-center gap-3 text-muted-foreground">
+        <Activity className="w-8 h-8 animate-spin text-gold" />
+        <p className="text-[14px]">Loading identity providers…</p>
+      </div>
+    );
+  }
+
+  if (state.error) {
+    return (
+      <Alert variant="error" className="mt-6">
+        Unable to load identity providers: {state.error}
+      </Alert>
+    );
+  }
+
+  const providers = state.data?.providers ?? [];
+
+  return (
+    <Card variant="glass" className="mt-6 p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[14px] font-semibold txt-head flex items-center gap-2">
+          <Plug className="w-4 h-4 text-gold" />
+          Identity Providers
+        </h3>
+        <span className="text-[11px] txt-muted">
+          {providers.filter((p) => p.configured).length} of {providers.length} configured
+        </span>
+      </div>
+
+      {providers.length === 0 ? (
+        <p className="text-[13px] txt-muted">No identity providers available.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {providers.map((provider) => (
+            <div
+              key={provider.type}
+              className={`flex items-center justify-between p-3 rounded-xl border ${
+                provider.configured
+                  ? "border-emerald-500/30 bg-emerald-500/[0.05]"
+                  : "border-theme/20 bg-surface"
+              }`}
+            >
+              <span className="text-[13px] font-medium txt-head capitalize">{provider.name}</span>
+              <Badge variant={provider.configured ? "success" : "default"}>
+                {provider.configured ? "Configured" : "Not configured"}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 p-3 rounded-xl bg-surface border border-theme/20">
+        <p className="text-[12px] txt-muted">
+          Configure providers in the setup wizard or by setting environment variables such as{" "}
+          <code className="font-mono text-gold">GOOGLE_CLIENT_ID</code> and{" "}
+          <code className="font-mono text-gold">GOOGLE_CLIENT_SECRET</code>. Users can then sign in
+          through the federation endpoints.
+        </p>
+      </div>
+    </Card>
+  );
 }

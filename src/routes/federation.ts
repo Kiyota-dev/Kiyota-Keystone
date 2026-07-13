@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { z } from "zod";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { config } from "../config.js";
-import { listSupportedProviders } from "../services/connectors/registry.js";
+import { listSupportedProviders, listConfiguredProviders } from "../services/connectors/registry.js";
 import { getSdk } from "../sdk/index.js";
 import { setSessionCookies, clearSessionCookies } from "../plugins/auth.js";
 import { findApplicationByClientId } from "../services/applications.js";
@@ -130,7 +130,7 @@ export default async function federationRoutes(app: FastifyInstance) {
 
   app.get("/providers", async () => {
     return {
-      providers: listSupportedProviders().map((type) => ({ type, name: type })),
+      providers: listConfiguredProviders(),
     };
   });
 

@@ -5,7 +5,7 @@ export class OidcConnector implements IdentityConnector {
   id: string;
   name: string;
   type: string;
-  private config: ConnectorConfig;
+  protected config: ConnectorConfig;
   private discoveryCache: Record<string, unknown> | null = null;
 
   constructor(id: string, name: string, type: string, config: ConnectorConfig) {

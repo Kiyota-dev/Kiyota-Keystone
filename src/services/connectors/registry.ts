@@ -2,6 +2,7 @@ import { config, isZitadelConfigured } from "../../config.js";
 import { getConnectorFactory } from "../plugins/registry.js";
 import type { IdentityConnector, ConnectorConfig } from "./types.js";
 import { OidcConnector } from "./oidc.js";
+import { GoogleConnector } from "./google.js";
 import { ZitadelConnector } from "./zitadel.js";
 
 const wellKnownIssuers: Record<string, { issuer: string; authorizationEndpoint?: string; tokenEndpoint?: string; userinfoEndpoint?: string; jwksUri?: string }> = {
@@ -90,9 +91,34 @@ export function buildConnector(type: string, overrides?: Partial<ConnectorConfig
     throw new Error(`${type} connector is not fully configured. Set ${prefix}_CLIENT_ID, ${prefix}_CLIENT_SECRET, and ${prefix}_ISSUER.`);
   }
 
+  if (type === "google") {
+    return new GoogleConnector(type, type, type, cfg);
+  }
+
   return new OidcConnector(type, type, type, cfg);
 }
 
 export function listSupportedProviders(): string[] {
   return ["zitadel", "google", "github", "azure", "okta", "keycloak"];
+}
+
+/**
+ * Returns supported providers annotated with whether they are currently
+ * configured with client credentials in the environment.
+ */
+export function listConfiguredProviders(): Array<{ type: string; name: string; configured: boolean }> {
+  return listSupportedProviders().map((type) => {
+    const prefix = type.toUpperCase();
+    let configured = false;
+
+    if (type === "zitadel") {
+      configured = Boolean(process.env.ZITADEL_DOMAIN && process.env.ZITADEL_CLIENT_ID);
+    } else {
+      configured = Boolean(
+        process.env[`${prefix}_CLIENT_ID`] && process.env[`${prefix}_CLIENT_SECRET`]
+      );
+    }
+
+    return { type, name: type.charAt(0).toUpperCase() + type.slice(1), configured };
+  });
 }
