@@ -242,7 +242,7 @@ From `Kiyota/Keystone`:
 ./install.sh       # installs backend + frontend deps + Playwright Chromium
 ```
 
-Start Postgres and Redis, then launch Keystone. If no `.env` exists (or `DATABASE_URL` is missing), Keystone starts in **setup mode** and opens the browser wizard instead of the main API:
+Launch Keystone. `start.sh` will automatically start PostgreSQL and Redis via Docker if they are not already running. If no `.env` exists (or `DATABASE_URL` is missing), Keystone starts in **setup mode** and opens the browser wizard instead of the main API:
 
 ```bash
 ./start.sh         # starts backend/setup server + frontend together

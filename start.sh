@@ -19,6 +19,9 @@ fi
 export PORT="${PORT:-4001}"
 export KEYSTONE_API_URL="${KEYSTONE_API_URL:-http://localhost:${PORT}}"
 
+# Ensure PostgreSQL and Redis are running (via Docker if available).
+./scripts/start-services.sh || true
+
 # Detect whether we are in first-run setup mode (no DATABASE_URL configured)
 if [ -z "${DATABASE_URL:-}" ]; then
   export KEYSTONE_SETUP_MODE="true"

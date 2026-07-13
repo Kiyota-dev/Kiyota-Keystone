@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Kiyota Keystone — one-command installer
-# Installs backend dependencies, frontend dependencies, and required tools.
+# Installs dependencies, required tools, and starts PostgreSQL + Redis.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -20,11 +20,15 @@ npx playwright install --with-deps chromium
 cd "$SCRIPT_DIR"
 
 echo ""
+echo "==> Starting PostgreSQL and Redis (via Docker if available)..."
+./scripts/start-services.sh || true
+
+echo ""
 echo "==> Installation complete."
 echo ""
 echo "Next steps:"
-echo "  1. Copy .env.example to .env and configure DATABASE_URL, REDIS_URL, etc."
-echo "  2. Start Postgres and Redis (e.g. docker compose up -d)"
-echo "  3. Run migrations: npm run db:migrate"
-echo "  4. Start everything: ./start.sh"
+echo "  1. Start everything: ./start.sh"
+echo "     (If no .env exists, Keystone will launch the browser setup wizard.)"
+echo "  2. Open http://localhost:5173 and follow the wizard."
+echo "  3. Copy the setup token from the server logs when prompted."
 echo ""
