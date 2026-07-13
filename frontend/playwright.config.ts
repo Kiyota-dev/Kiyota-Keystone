@@ -27,6 +27,7 @@ export default defineConfig({
         DATABASE_URL: process.env.DATABASE_URL || "postgresql://kiyota:kiyota@localhost:5432/kiyota",
         REDIS_URL: process.env.REDIS_URL || "redis://localhost:6379",
         KEYSTONE_QUEUE_PROVIDER: process.env.KEYSTONE_QUEUE_PROVIDER || "",
+        KEYSTONE_SETUP_TOKEN: process.env.KEYSTONE_SETUP_TOKEN || "test-setup-token",
         PORT: "4001",
       },
     },
