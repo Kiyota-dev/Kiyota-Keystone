@@ -139,6 +139,17 @@ export default async function adminRoutes(app: FastifyInstance) {
     return { queue: app.container.queue.constructor.name, stats };
   });
 
+  app.get("/platform/keys", { preHandler: [requireOwner()] }, async () => {
+    const keys = await app.container.secretsProvider.listActiveSigningKeys();
+    return { keys, provider: app.container.secretsProvider.name };
+  });
+
+  app.post("/platform/keys/rotate", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const active = await app.container.secretsProvider.rotateSigningKeys();
+    await request.audit("platform_signing_key_rotated", { keyId: active.keyId });
+    return reply.status(201).send({ keyId: active.keyId, provider: app.container.secretsProvider.name });
+  });
+
   app.patch(
     "/platform/users/:id",
     { preHandler: [requireOwner()] },

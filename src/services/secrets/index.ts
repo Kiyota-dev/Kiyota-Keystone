@@ -1,6 +1,8 @@
 import { config } from "../../config.js";
 import { DatabaseSecretsProvider } from "./database.js";
 import { EnvironmentSecretsProvider } from "./environment.js";
+import { VaultSecretsProvider } from "./vault.js";
+import { AwsKmsSecretsProvider } from "./awsKms.js";
 import type { SecretsProvider } from "./provider.js";
 
 function createProvider(): SecretsProvider {
@@ -8,6 +10,10 @@ function createProvider(): SecretsProvider {
   switch (providerName) {
     case "environment":
       return new EnvironmentSecretsProvider();
+    case "vault":
+      return new VaultSecretsProvider();
+    case "aws-kms":
+      return new AwsKmsSecretsProvider();
     case "database":
     default:
       return new DatabaseSecretsProvider();
@@ -20,6 +26,8 @@ export const secretsProvider: SecretsProvider = createProvider();
 export * from "./provider.js";
 export { DatabaseSecretsProvider } from "./database.js";
 export { EnvironmentSecretsProvider } from "./environment.js";
+export { VaultSecretsProvider } from "./vault.js";
+export { AwsKmsSecretsProvider } from "./awsKms.js";
 
 // Convenience re-exports of the active provider's methods.
 export const hashPassword = secretsProvider.hashPassword.bind(secretsProvider);

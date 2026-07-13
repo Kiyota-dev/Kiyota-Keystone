@@ -59,6 +59,7 @@ const VALID_EVENT_TYPES = new Set([
   "workflow_step_executed",
   "platform_user_updated",
   "platform_user_deactivated",
+  "platform_signing_key_rotated",
 ]);
 
 export function validateEvent(event: EmittableEvent): EventValidationResult {

@@ -12,6 +12,7 @@ import {
   ScrollText,
   LogOut,
   Plug,
+  Lock,
 } from "lucide-react";
 import { api, getKeystoneAccessToken } from "./api.ts";
 import { Card } from "./components/ui/Card.tsx";
@@ -24,6 +25,7 @@ import { OrganizationsPanel } from "./components/OrganizationsPanel.tsx";
 import { ApplicationsPanel } from "./components/ApplicationsPanel.tsx";
 import { UsersPanel } from "./components/UsersPanel.tsx";
 import { AuditLogsPanel } from "./components/AuditLogsPanel.tsx";
+import { KeysPanel } from "./components/KeysPanel.tsx";
 
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
@@ -51,12 +53,14 @@ export default function Dashboard() {
   const [applications, setApplications] = useState<DataTabState<{ applications: unknown[] }>>({ data: null, loading: false, error: null });
   const [auditLogs, setAuditLogs] = useState<DataTabState<{ logs: unknown[] }>>({ data: null, loading: false, error: null });
   const [providers, setProviders] = useState<DataTabState<{ providers: Array<{ type: string; name: string; configured: boolean }> }>>({ data: null, loading: false, error: null });
+  const [keys, setKeys] = useState<DataTabState<{ keys: Array<{ keyId: string; createdAt: string; expiresAt?: string | null }>; provider: string }>>({ data: null, loading: false, error: null });
 
   const refreshUsers = () => loadTab({ data: null, loading: false, error: null }, setUsers, api.getUsers);
   const refreshOrganizations = () => loadTab({ data: null, loading: false, error: null }, setOrganizations, api.getOrganizations);
   const refreshApplications = () => loadTab({ data: null, loading: false, error: null }, setApplications, api.getApplications);
   const refreshAuditLogs = (event?: string) =>
     loadTab({ data: null, loading: false, error: null }, setAuditLogs, () => api.getAuditLogs(event));
+  const refreshKeys = () => loadTab({ data: null, loading: false, error: null }, setKeys, api.getSigningKeys);
 
   useEffect(() => {
     setToken(getKeystoneAccessToken());
@@ -119,6 +123,9 @@ export default function Dashboard() {
       case "identity-providers":
         loadTab(providers, setProviders, api.getFederationProviders);
         break;
+      case "keys":
+        loadTab(keys, setKeys, api.getSigningKeys);
+        break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
@@ -153,6 +160,7 @@ export default function Dashboard() {
     { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" /> },
     { id: "users", label: "Users", icon: <Users className="w-4 h-4" /> },
     { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" /> },
+    { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" /> },
     { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
   ];
 
@@ -345,6 +353,10 @@ export default function Dashboard() {
 
             {activeTab === "identity-providers" && (
               <IdentityProvidersPanel state={providers} />
+            )}
+
+            {activeTab === "keys" && (
+              <KeysPanel state={keys} onRefresh={refreshKeys} />
             )}
 
             {activeTab === "audit-logs" && (

@@ -149,6 +149,8 @@ export const api = {
   getAuditLogs: (event?: string) =>
     fetchJson<{ logs: unknown[] }>(`/v1/admin/platform/audit-logs${event ? `?event=${encodeURIComponent(event)}` : ""}`),
   getQueueStatus: () => fetchJson<{ queue: string; stats: Array<{ type: string; count: number; failed?: number; delayed?: number }> }>("/v1/admin/platform/queue"),
+  getSigningKeys: () => fetchJson<{ keys: Array<{ keyId: string; createdAt: string; expiresAt?: string | null }>; provider: string }>("/v1/admin/platform/keys"),
+  rotateSigningKey: () => fetchJson<{ keyId: string; provider: string }>("/v1/admin/platform/keys/rotate", { method: "POST" }),
   getFederationProviders: () => fetchJson<{ providers: Array<{ type: string; name: string; configured: boolean }> }>("/federation/providers"),
 
   // Platform admin CRUD
