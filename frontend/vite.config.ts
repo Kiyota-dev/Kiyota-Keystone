@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    strictPort: true,
     proxy: {
       "/setup": {
         target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
