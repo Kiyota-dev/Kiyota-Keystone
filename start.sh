@@ -29,20 +29,45 @@ export KEYSTONE_API_URL="${KEYSTONE_API_URL:-http://localhost:${PORT}}"
 
 ui_header "Kiyota Keystone Launcher" "Starting the identity platform"
 
+# Resolve a working Docker invocation for this shell session.
+resolve_docker_cmd() {
+  if docker ps >/dev/null 2>&1; then
+    echo "docker"
+  elif command -v sg >/dev/null 2>&1 && sg docker -c "docker ps" >/dev/null 2>&1; then
+    echo "sg docker -c docker"
+  elif sudo -n docker ps >/dev/null 2>&1; then
+    echo "sudo docker"
+  else
+    echo ""
+  fi
+}
+
+DOCKER_CMD="$(resolve_docker_cmd)"
+
 # Service status checks
 ui_step "Checking dependencies..."
 if command -v docker >/dev/null 2>&1; then
-  # Try to check container status quietly; start-services.sh will handle permission fallbacks.
-  if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "keystone-postgres" && \
-     docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "keystone-redis"; then
-    ui_success "PostgreSQL and Redis containers are running."
-  else
-    ui_warning "PostgreSQL and/or Redis containers are not running."
-    if ui_confirm "Start PostgreSQL and Redis now?"; then
-      ./scripts/start-services.sh || true
+  if [ -n "$DOCKER_CMD" ]; then
+    if [ "$DOCKER_CMD" = "sg docker -c docker" ]; then
+      DOCKER_PS_CMD="sg docker -c 'docker ps --format \"{{.Names}}\"'"
     else
-      ui_info "Continuing without starting services. You can enter external URLs in the wizard."
+      DOCKER_PS_CMD="$DOCKER_CMD ps --format '{{.Names}}'"
     fi
+
+    if eval "$DOCKER_PS_CMD" 2>/dev/null | grep -qx "keystone-postgres" && \
+       eval "$DOCKER_PS_CMD" 2>/dev/null | grep -qx "keystone-redis"; then
+      ui_success "PostgreSQL and Redis containers are running."
+    else
+      ui_warning "PostgreSQL and/or Redis containers are not running."
+      if ui_confirm "Start PostgreSQL and Redis now?"; then
+        ./scripts/start-services.sh || true
+      else
+        ui_info "Continuing without starting services. You can enter external URLs in the wizard."
+      fi
+    fi
+  else
+    ui_warning "Docker is installed but not accessible in this shell."
+    ui_info "Try: newgrp docker   or   log out and back in   then run ./start.sh again."
   fi
 else
   ui_warning "Docker is not installed. PostgreSQL and Redis must be running manually."

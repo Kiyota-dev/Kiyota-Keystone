@@ -19,11 +19,16 @@ export function validateSetupToken(token: string | undefined): boolean {
   if (!token) return false;
   const expected = getSetupToken();
   if (!expected) return false;
-  if (token.length !== expected.length) {
-    console.log(`[debug] token length mismatch: sent=${token.length} expected=${expected.length}`);
+
+  // Ignore accidental whitespace / newlines when pasting from the terminal.
+  const cleanToken = token.trim().toLowerCase();
+  const cleanExpected = expected.trim().toLowerCase();
+
+  if (cleanToken.length !== cleanExpected.length) {
+    console.log(`[debug] token length mismatch: sent=${cleanToken.length} expected=${cleanExpected.length}`);
     return false;
   }
-  return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  return crypto.timingSafeEqual(Buffer.from(cleanToken), Buffer.from(cleanExpected));
 }
 
 export function printSetupToken(): void {
