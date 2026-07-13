@@ -81,8 +81,17 @@ if command -v docker >/dev/null 2>&1; then
       fi
     fi
   else
-    ui_warning "Docker is installed but not accessible in this shell."
-    ui_info "Try: newgrp docker   or   log out and back in   then run ./start.sh again."
+    if ui_confirm "Docker is installed but not accessible. Run Docker commands with sudo?"; then
+      sudo -v || true
+      if sudo -n docker ps >/dev/null 2>&1; then
+        DOCKER_CMD="sudo docker"
+      else
+        ui_error "Could not authenticate sudo. Start the containers manually or log out and back in."
+      fi
+    else
+      ui_warning "Docker is installed but not accessible in this shell."
+      ui_info "Try: newgrp docker   or   log out and back in   then run ./start.sh again."
+    fi
   fi
 else
   ui_warning "Docker is not installed. PostgreSQL and Redis must be running manually."
