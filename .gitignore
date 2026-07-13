@@ -15,6 +15,9 @@ frontend/dist/
 # Setup marker
 .keystone-setup-complete
 
+# Installer backups
+.env.backup-*
+
 # Logs
 logs/
 *.log
