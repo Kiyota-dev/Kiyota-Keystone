@@ -154,4 +154,26 @@ fi
 echo -e "  ${GRAY}Press Ctrl+C to stop both services.${RESET}"
 echo ""
 
+# Keep the backend alive. If it exits cleanly and setup has completed, restart it
+# in normal (non-setup) mode so the user does not have to run ./start.sh again.
+while true; do
+  wait "$BACKEND_PID"
+  backend_exit=$?
+  if [ -f "$SETUP_MARKER" ] && [ "$backend_exit" -eq 0 ]; then
+    echo ""
+    ui_step "Setup complete. Restarting Keystone in normal mode..."
+    BACKEND_COMMAND="npx tsx watch src/index.ts"
+    $BACKEND_COMMAND &
+    BACKEND_PID=$!
+    ui_info "Waiting for backend health check..."
+    if ui_wait_for_url "http://localhost:${PORT}/health" 60; then
+      ui_success "Keystone backend is ready."
+    else
+      ui_warning "Backend health check timed out."
+    fi
+  else
+    break
+  fi
+done
+
 wait
