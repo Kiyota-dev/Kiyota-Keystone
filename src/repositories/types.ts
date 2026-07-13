@@ -1,4 +1,4 @@
-import type { User, Organization, OrgMembership, Application, auditLog } from "../db/schema.js";
+import type { User, Organization, OrgMembership, Application, auditLog, Permission } from "../db/schema.js";
 
 export interface CreateUserInput {
   email: string;
@@ -95,4 +95,16 @@ export interface ApplicationRepository {
   listByOrgId(orgId: string): Promise<Application[]>;
   update(appId: string, orgId: string, input: UpdateApplicationInput): Promise<Application | undefined>;
   verifyClientSecret(clientId: string, secret: string): Promise<Application | undefined>;
+}
+
+export interface PermissionRepository {
+  ensureSeeded(): Promise<void>;
+  ensureRolePermissionsSeeded(): Promise<void>;
+  list(): Promise<Permission[]>;
+  listForRole(role: string): Promise<Permission[]>;
+  listKeysForRole(role: string): Promise<Set<string>>;
+  assignToRole(role: string, permissionId: string): Promise<void>;
+  removeFromRole(role: string, permissionId: string): Promise<void>;
+  hasPermission(role: string, resource: string, action: string): Promise<boolean>;
+  hasAnyPermission(role: string, required: { resource: string; action: string }[]): Promise<boolean>;
 }

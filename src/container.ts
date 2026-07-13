@@ -6,6 +6,7 @@ import type {
   ApplicationRepository,
   AuditRepository,
   IdentityRepository,
+  PermissionRepository,
 } from "./repositories/types.js";
 import type { SecretsProvider } from "./services/secrets/provider.js";
 import type { Queue } from "./services/queue/types.js";
@@ -18,6 +19,7 @@ export interface Container {
   organizationRepository: OrganizationRepository;
   applicationRepository: ApplicationRepository;
   auditRepository: AuditRepository;
+  permissionRepository: PermissionRepository;
   secretsProvider: SecretsProvider;
   queue: Queue;
 }

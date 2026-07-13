@@ -11,7 +11,7 @@ import { db } from "./db/index.js";
 import { initializeContainer } from "./di.js";
 import { redis } from "./services/redis.js";
 import { loadSigningKeys, getPublicJwks } from "./services/tokens.js";
-import { ensureRolePermissionsSeeded } from "./services/permissions.js";
+
 import { loadWorkflows } from "./services/workflows/engine.js";
 import { startTracing, stopTracing } from "./plugins/tracing.js";
 import authPlugin from "./plugins/auth.js";
@@ -252,7 +252,7 @@ async function start() {
   }
 
   try {
-    await ensureRolePermissionsSeeded();
+    await app.container.permissionRepository.ensureRolePermissionsSeeded();
     app.log.info("Role permissions seeded");
   } catch (err) {
     app.log.warn({ err }, "Role permission seeding failed");

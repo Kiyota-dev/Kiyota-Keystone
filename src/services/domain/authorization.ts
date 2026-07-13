@@ -1,36 +1,35 @@
-import {
-  requirePermission as requirePermissionService,
-  hasPermission as hasPermissionService,
-  hasAnyPermission as hasPermissionAnyService,
-  type PermissionInput,
-} from "../permissions.js";
-import { findMembership } from "../organizations.js";
 import type { OrgMembership } from "../../db/schema.js";
-import type { OrganizationRepository } from "../../repositories/types.js";
+import type { OrganizationRepository, PermissionRepository } from "../../repositories/types.js";
 import { ok, err, type Result } from "../../lib/result.js";
 
-export { type PermissionInput };
+export interface PermissionInput {
+  resource: string;
+  action: string;
+}
+
+export { type PermissionInput as PermissionRequirement };
 export type OrgRole = "owner" | "admin" | "member";
 
 export class AuthorizationDomainService {
-  constructor(private readonly organizations: OrganizationRepository) {}
+  constructor(
+    private readonly organizations: OrganizationRepository,
+    private readonly permissions: PermissionRepository
+  ) {}
 
   async requirePermission(role: string, resource: string, action: string): Promise<Result<void>> {
-    try {
-      await requirePermissionService(role, resource, action);
-      return ok(undefined);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return err({ code: "FORBIDDEN", message, statusCode: 403 });
+    const allowed = await this.permissions.hasPermission(role, resource, action);
+    if (!allowed) {
+      return err({ code: "FORBIDDEN", message: `Missing permission ${resource}:${action}`, statusCode: 403 });
     }
+    return ok(undefined);
   }
 
   async hasPermission(role: string, resource: string, action: string): Promise<boolean> {
-    return hasPermissionService(role, resource, action);
+    return this.permissions.hasPermission(role, resource, action);
   }
 
   async hasAnyPermission(role: string, required: PermissionInput[]): Promise<boolean> {
-    return hasPermissionAnyService(role, required);
+    return this.permissions.hasAnyPermission(role, required);
   }
 
   async requireOrgRole(userId: string, orgId: string, allowedRoles: OrgRole[]): Promise<Result<OrgMembership>> {

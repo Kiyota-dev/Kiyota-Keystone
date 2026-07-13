@@ -4,8 +4,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { orgMemberships, apiKeys, users, organizations, applications } from "../db/schema.js";
 import { getSdk } from "../sdk/index.js";
-import { listPermissions, listPermissionsForRole, assignPermissionToRole, removePermissionFromRole } from "../services/permissions.js";
-import { listAuditLogs } from "../services/audit.js";
+
 import type { OrgRole } from "../services/domain/authorization.js";
 
 const CreateOrgSchema = z.object({
@@ -82,6 +81,7 @@ function requireAuthAndRole(allowedRoles: OrgRole[], permission?: { resource: st
 
 export default async function adminRoutes(app: FastifyInstance) {
   const sdk = getSdk();
+  const { auditRepository, permissionRepository } = app.container;
 
   // Platform-level owner-only endpoints.
   app.get("/platform/users", { preHandler: [requireOwner()] }, async () => {
@@ -126,7 +126,7 @@ export default async function adminRoutes(app: FastifyInstance) {
 
   app.get("/platform/audit-logs", { preHandler: [requireOwner()] }, async (request) => {
     const query = request.query as { limit?: string; offset?: string; event?: string };
-    const logs = await listAuditLogs({
+    const logs = await auditRepository.list({
       event: query.event,
       limit: query.limit ? Number(query.limit) : 100,
       offset: query.offset ? Number(query.offset) : 0,
@@ -345,12 +345,12 @@ export default async function adminRoutes(app: FastifyInstance) {
   );
 
   app.get("/permissions", { preHandler: [app.authenticate] }, async () => {
-    return { permissions: await listPermissions() };
+    return { permissions: await permissionRepository.list() };
   });
 
   app.get("/roles/:role/permissions", { preHandler: [app.authenticate] }, async (request) => {
     const { role } = request.params as { role: string };
-    return { role, permissions: await listPermissionsForRole(role) };
+    return { role, permissions: await permissionRepository.listForRole(role) };
   });
 
   app.post(
@@ -359,7 +359,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { role } = request.params as { role: string };
       const body = RolePermissionSchema.parse(request.body);
-      await assignPermissionToRole(role, body.permissionId);
+      await permissionRepository.assignToRole(role, body.permissionId);
       await request.audit("organization_member_role_updated", { role, permissionId: body.permissionId });
       return reply.status(201).send({ success: true });
     }
@@ -370,7 +370,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     { preHandler: [app.authenticate] },
     async (request) => {
       const { role, permissionId } = request.params as { role: string; permissionId: string };
-      await removePermissionFromRole(role, permissionId);
+      await permissionRepository.removeFromRole(role, permissionId);
       await request.audit("organization_member_role_updated", { role, permissionId });
       return { success: true };
     }
@@ -422,7 +422,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     async (request) => {
       const { id } = request.params as { id: string };
       const query = request.query as { limit?: string; offset?: string; event?: string };
-      const logs = await listAuditLogs({
+      const logs = await auditRepository.list({
         orgId: id,
         event: query.event,
         limit: query.limit ? Number(query.limit) : 50,

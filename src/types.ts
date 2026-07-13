@@ -1,5 +1,6 @@
 import type { User, Application, Organization, OrgMembership } from "./db/schema.js";
 import type { KeystonePlugin } from "./services/plugins/types.js";
+import type { Container } from "./container.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -13,6 +14,7 @@ declare module "fastify" {
 
   interface FastifyInstance {
     registerPlugin(plugin: KeystonePlugin): void;
+    container: Container;
   }
 }
 
