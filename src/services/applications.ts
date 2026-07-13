@@ -1,0 +1,83 @@
+import crypto from "node:crypto";
+import { eq, and } from "drizzle-orm";
+import { db } from "../db/index.js";
+import { applications, type Application } from "../db/schema.js";
+import { generateClientSecret, hashClientSecret } from "./secrets.js";
+
+export function generateClientId(): string {
+  return `app_${crypto.randomBytes(16).toString("base64url")}`;
+}
+
+// Re-exported for callers that imported these helpers from this module.
+export { generateClientSecret, hashClientSecret };
+
+export async function createApplication(input: {
+  orgId: string;
+  name: string;
+  redirectUris?: string[];
+  allowedOrigins?: string[];
+  clientId?: string;
+  clientSecret?: string;
+}): Promise<Application & { clientSecret: string }> {
+  const clientSecret = input.clientSecret || generateClientSecret();
+  const [app] = await db
+    .insert(applications)
+    .values({
+      orgId: input.orgId,
+      clientId: input.clientId || generateClientId(),
+      clientSecretHash: hashClientSecret(clientSecret),
+      name: input.name,
+      redirectUris: input.redirectUris ?? [],
+      allowedOrigins: input.allowedOrigins ?? [],
+    })
+    .returning();
+  return { ...app, clientSecret };
+}
+
+export async function findApplicationByClientId(
+  clientId: string
+): Promise<Application | undefined> {
+  const [app] = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.clientId, clientId))
+    .limit(1);
+  return app;
+}
+
+export async function findApplicationsByOrgId(orgId: string): Promise<Application[]> {
+  return db.select().from(applications).where(eq(applications.orgId, orgId));
+}
+
+export async function updateApplication(
+  appId: string,
+  orgId: string,
+  updates: Partial<{
+    name: string;
+    redirectUris: string[];
+    allowedOrigins: string[];
+    isActive: boolean;
+  }>
+): Promise<Application | undefined> {
+  const [updated] = await db
+    .update(applications)
+    .set(updates)
+    .where(and(eq(applications.id, appId), eq(applications.orgId, orgId)))
+    .returning();
+  return updated;
+}
+
+export async function verifyClientSecret(
+  clientId: string,
+  secret: string
+): Promise<Application | undefined> {
+  const [app] = await db
+    .select()
+    .from(applications)
+    .where(and(eq(applications.clientId, clientId), eq(applications.isActive, true)))
+    .limit(1);
+
+  if (!app) return undefined;
+  if (app.clientSecretHash !== hashClientSecret(secret)) return undefined;
+  return app;
+}
