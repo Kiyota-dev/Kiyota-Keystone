@@ -127,3 +127,107 @@ button:disabled {
   background: #238636;
   color: white;
 }
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.step-content {
+  margin-bottom: 1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+button.secondary {
+  background: #30363d;
+  color: #c9d1d9;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #3d444d;
+}
+
+select {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #30363d;
+  background: #0d1117;
+  color: #e6edf3;
+  font-size: 1rem;
+}
+
+.connector-card {
+  border: 1px solid #30363d;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #0d1117;
+}
+
+.connector-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.connector-fields {
+  margin-top: 1rem;
+}
+
+.connector-fields input {
+  margin-bottom: 0.75rem;
+}
+
+.connector-fields input:last-of-type {
+  margin-bottom: 0;
+}
+
+.review {
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid #30363d;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: #0d1117;
+  margin-bottom: 1rem;
+}
+
+.review-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #21262d;
+  font-size: 0.875rem;
+}
+
+.review-row:last-child {
+  border-bottom: none;
+}
+
+.review-key {
+  color: #8b949e;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.review-value {
+  color: #c9d1d9;
+}
+
+input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.5rem;
+  margin-bottom: 0;
+}
+

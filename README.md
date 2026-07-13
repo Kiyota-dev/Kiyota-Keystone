@@ -242,26 +242,44 @@ From `Kiyota/Keystone`:
 ./install.sh       # installs backend + frontend deps + Playwright Chromium
 ```
 
-Then start Postgres and Redis and copy `.env.example` to `.env` with the required values:
-
-- `DATABASE_URL`
-- `REDIS_URL`
-- `AUTH_API_PUBLIC_URL`
-- `CLIENT_APP_URL`
-- `ALLOWED_ORIGINS`
-- `KEYSTONE_INTERNAL_API_KEY`
-- `KEYSTONE_ENCRYPTION_KEY` (optional in dev)
-- **Zitadel is optional.** If you want to use it, set `ZITADEL_DOMAIN`, `ZITADEL_CLIENT_ID`, and `ZITADEL_CLIENT_SECRET`.
-- To enable Google/GitHub/Azure/Okta/Keycloak federation, set their `*_CLIENT_ID` and `*_CLIENT_SECRET` variables.
-
-Run migrations and start everything from the project root — no need to `cd frontend`:
+Start Postgres and Redis, then launch Keystone. If no `.env` exists (or `DATABASE_URL` is missing), Keystone starts in **setup mode** and opens the browser wizard instead of the main API:
 
 ```bash
-npm run db:migrate
-./start.sh         # starts backend + setup frontend together
+./start.sh         # starts backend/setup server + frontend together
 ```
 
-The API runs on `http://localhost:4001` and the setup wizard on `http://localhost:5173`.
+The wizard guides you through:
+
+1. Pasting the setup token printed in the server logs.
+2. Configuring and testing PostgreSQL and Redis.
+3. Setting public URLs and allowed origins.
+4. Generating platform secrets (internal API key, encryption key).
+5. Choosing and testing email and SMS providers.
+6. Enabling optional identity connectors (Google, GitHub, Azure, Okta, Keycloak, Zitadel).
+7. Creating the first owner account.
+
+When finished, the wizard writes `.env`, runs migrations, and creates the owner. Restart the server if prompted; on the next boot the main Keystone API starts with the new configuration.
+
+### Manual setup
+
+If you prefer to manage each part separately:
+
+1. Install backend dependencies: `npm install`
+2. Install frontend dependencies: `cd frontend && npm install`
+3. Start Postgres and Redis.
+4. Copy `.env.example` to `.env` and fill in the required values:
+   - `DATABASE_URL`
+   - `REDIS_URL`
+   - `AUTH_API_PUBLIC_URL`
+   - `CLIENT_APP_URL`
+   - `ALLOWED_ORIGINS`
+   - `KEYSTONE_INTERNAL_API_KEY`
+   - `KEYSTONE_ENCRYPTION_KEY` (optional in dev)
+   - **Zitadel is optional.** If you want to use it, set `ZITADEL_DOMAIN`, `ZITADEL_CLIENT_ID`, and `ZITADEL_CLIENT_SECRET`.
+   - To enable Google/GitHub/Azure/Okta/Keycloak federation, set their `*_CLIENT_ID` and `*_CLIENT_SECRET` variables.
+5. Run migrations: `npm run db:migrate`
+6. Start the backend: `npm run dev`
+7. In another terminal, start the frontend: `cd frontend && npm run dev`
 
 ### Manual setup
 

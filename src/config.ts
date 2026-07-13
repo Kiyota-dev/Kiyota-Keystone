@@ -18,6 +18,14 @@ function requireEnv(name: string): string {
   return value;
 }
 
+function requireEnvUnlessSetup(name: string): string {
+  const value = process.env[name];
+  if (!value && process.env.KEYSTONE_SETUP_MODE !== "true") {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value || "";
+}
+
 function getList(name: string): string[] {
   const value = process.env[name];
   if (!value) return [];
@@ -29,7 +37,7 @@ export const config = {
   PORT: Number(getEnv("PORT", "4001")),
   HOST: getEnv("HOST", "0.0.0.0"),
 
-  DATABASE_URL: requireEnv("DATABASE_URL"),
+  DATABASE_URL: requireEnvUnlessSetup("DATABASE_URL"),
   REDIS_URL: getEnv("REDIS_URL", "redis://localhost:6379"),
 
   // Zitadel is now an optional identity connector, not a hard dependency.
