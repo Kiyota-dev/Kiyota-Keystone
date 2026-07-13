@@ -10,8 +10,8 @@ const STEPS = [
   "Email",
   "SMS",
   "Connectors",
-  "Owner",
   "Review",
+  "Owner",
   "Done",
 ];
 
@@ -35,7 +35,6 @@ export default function Wizard() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [needsRestart, setNeedsRestart] = useState(false);
-  const [completed, setCompleted] = useState(false);
   const [setupToken, setSetupToken] = useState(() => localStorage.getItem("keystone-setup-token") || "");
 
   const update = <K extends keyof WizardState>(section: K, values: Partial<WizardState[K]>) => {
@@ -218,7 +217,6 @@ export default function Wizard() {
         password: state.owner.password,
         name: state.owner.name,
       });
-      setCompleted(true);
       next();
     } catch (err) {
       setErrorMessage(err);
@@ -666,26 +664,19 @@ export default function Wizard() {
 
   const renderDoneStep = () => (
     <>
-      {completed ? (
+      <p className="success">Setup complete. Owner account created for {state.owner.email}.</p>
+      {needsRestart ? (
         <>
-          <p className="success">Setup complete. Owner account created for {state.owner.email}.</p>
-          {needsRestart ? (
-            <>
-              <p className="lead">
-                Keystone must restart to load the new database configuration.
-              </p>
-              <button onClick={restart} disabled={busy}>
-                {busy ? "Restarting…" : "Restart server"}
-              </button>
-            </>
-          ) : (
-            <p className="lead">You can now sign in to the Administration Portal.</p>
-          )}
+          <p className="lead">
+            Keystone must restart to load the new database configuration.
+          </p>
+          <button onClick={restart} disabled={busy}>
+            {busy ? "Restarting…" : "Restart server"}
+          </button>
         </>
       ) : (
-        <p className="lead">Configuration applied. Continue to create the owner account.</p>
+        <p className="lead">You can now sign in to the Administration Portal.</p>
       )}
-      {!completed && <button onClick={next}>Create owner account</button>}
     </>
   );
 
@@ -697,8 +688,8 @@ export default function Wizard() {
     4: renderEmailStep,
     5: renderSmsStep,
     6: renderConnectorsStep,
-    7: renderOwnerStep,
-    8: renderReviewStep,
+    7: renderReviewStep,
+    8: renderOwnerStep,
     9: renderDoneStep,
   };
 
@@ -725,7 +716,7 @@ export default function Wizard() {
 
       <div className="step-content">{stepRenderers[step]()}</div>
 
-      {step > 0 && step < 8 && step !== 7 && (
+      {step > 0 && step < 9 && step !== 7 && (
         <button className="secondary" onClick={back} disabled={busy}>
           Back
         </button>
