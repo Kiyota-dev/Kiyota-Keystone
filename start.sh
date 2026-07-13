@@ -7,6 +7,21 @@
 : "${CYAN:=\033[36m}"
 : "${GRAY:=\033[90m}"
 
+# If Docker is installed but this shell cannot use it, re-run this script with the
+# docker group applied (via sg). This avoids forcing the user to run newgrp manually.
+if command -v docker >/dev/null 2>&1 && [ -z "${KEYSTONE_DOCKER_REEXEC:-}" ]; then
+  if ! docker ps >/dev/null 2>&1; then
+    if command -v sg >/dev/null 2>&1 && sg docker -c "docker ps" >/dev/null 2>&1; then
+      KEYSTONE_DOCKER_REEXEC=1
+      args=""
+      if [ $# -gt 0 ]; then
+        args=" $(printf "%q" "$*")"
+      fi
+      exec sg docker -c "bash -c 'cd $(printf "%q" "$PWD") && $(printf "%q" "$0")$args'"
+    fi
+  fi
+fi
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
