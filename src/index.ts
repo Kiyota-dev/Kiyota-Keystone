@@ -47,8 +47,6 @@ import scimRoutes from "./routes/scim.js";
 import federationRoutes from "./routes/federation.js";
 import setupRoutes from "./routes/setup.js";
 import { generateSetupToken, printSetupToken } from "./services/setup/token.js";
-import { users } from "./db/schema.js";
-import { count } from "drizzle-orm";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -247,13 +245,10 @@ async function start() {
   }
 
   try {
-    const [userCount] = await db.select({ total: count() }).from(users);
-    if ((userCount?.total ?? 0) === 0) {
-      generateSetupToken();
-      printSetupToken();
-    }
+    generateSetupToken();
+    printSetupToken();
   } catch (err) {
-    app.log.warn({ err }, "Could not check user count for setup token");
+    app.log.warn({ err }, "Could not generate setup token");
   }
 
   try {

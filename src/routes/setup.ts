@@ -57,6 +57,16 @@ const SetupConfigSchema = z.object({
   env: z.record(z.string()),
 });
 
+function parseBody<T>(schema: z.ZodSchema<T>, body: unknown, reply: FastifyReply): T | null {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const issues = result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+    reply.status(400).send({ error: `Invalid input: ${issues}`, code: "VALIDATION_ERROR" });
+    return null;
+  }
+  return result.data;
+}
+
 async function hasNoUsers(): Promise<boolean> {
   if (!db) return true;
   const [result] = await db.select({ total: count() }).from(users);
@@ -102,9 +112,11 @@ export default async function setupRoutes(app: FastifyInstance) {
 
   app.post("/validate/db", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
-    const body = ValidateDatabaseSchema.parse(request.body);
+    const body = parseBody(ValidateDatabaseSchema, request.body, reply);
+    if (!body) return;
     const result = await validateDatabase(body);
     if (!result.success) {
+      request.log.warn({ code: result.error.code, message: result.error.message }, "Database validation failed");
       return reply.status(result.error.statusCode || 400).send({ error: result.error.message, code: result.error.code });
     }
     return { ok: true };
@@ -112,9 +124,11 @@ export default async function setupRoutes(app: FastifyInstance) {
 
   app.post("/validate/redis", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
-    const body = ValidateRedisSchema.parse(request.body);
+    const body = parseBody(ValidateRedisSchema, request.body, reply);
+    if (!body) return;
     const result = await validateRedis(body);
     if (!result.success) {
+      request.log.warn({ code: result.error.code, message: result.error.message }, "Redis validation failed");
       return reply.status(result.error.statusCode || 400).send({ error: result.error.message, code: result.error.code });
     }
     return { ok: true };
@@ -122,7 +136,8 @@ export default async function setupRoutes(app: FastifyInstance) {
 
   app.post("/validate/email", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
-    const body = ValidateEmailSchema.parse(request.body);
+    const body = parseBody(ValidateEmailSchema, request.body, reply);
+    if (!body) return;
     const { to, ...input } = body;
     const result = await validateEmail(input, to);
     if (!result.success) {
@@ -133,7 +148,8 @@ export default async function setupRoutes(app: FastifyInstance) {
 
   app.post("/validate/sms", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
-    const body = ValidateSmsSchema.parse(request.body);
+    const body = parseBody(ValidateSmsSchema, request.body, reply);
+    if (!body) return;
     const { to, ...input } = body;
     const result = await validateSms(input, to);
     if (!result.success) {
@@ -145,7 +161,8 @@ export default async function setupRoutes(app: FastifyInstance) {
   app.post("/config", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
 
-    const body = SetupConfigSchema.parse(request.body);
+    const body = parseBody(SetupConfigSchema, request.body, reply);
+    if (!body) return;
     const writer = createConfigWriter();
 
     const backup = await writer.backup();
@@ -191,7 +208,8 @@ export default async function setupRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: "Setup has already been completed" });
     }
 
-    const body = SetupInitSchema.parse(request.body);
+    const body = parseBody(SetupInitSchema, request.body, reply);
+    if (!body) return;
     const authService = new AuthenticationDomainService(new DrizzleUserRepository());
     const result = await authService.register({
       email: body.email,

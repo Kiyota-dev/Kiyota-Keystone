@@ -19,6 +19,10 @@ export function validateSetupToken(token: string | undefined): boolean {
   if (!token) return false;
   const expected = getSetupToken();
   if (!expected) return false;
+  if (token.length !== expected.length) {
+    console.log(`[debug] token length mismatch: sent=${token.length} expected=${expected.length}`);
+    return false;
+  }
   return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
 }
 
