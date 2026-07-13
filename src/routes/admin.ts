@@ -7,6 +7,7 @@ import { getSdk } from "../sdk/index.js";
 import { listRegisteredPlugins, listExtensionPoints, unregisterPlugin } from "../services/plugins/registry.js";
 import { isFeatureEnabled, listFeatureFlags, setFeatureFlag, deleteFeatureFlag } from "../services/featureFlags.js";
 import { listConfigurationProfiles, getConfigurationProfile } from "../services/configuration/profiles.js";
+import { getBillingSummary, setOrganizationPlan, provisionBillingCustomer, listPlans } from "../services/billing.js";
 import { config } from "../config.js";
 
 import type { OrgRole } from "../services/domain/authorization.js";
@@ -53,6 +54,10 @@ const RolePermissionSchema = z.object({
 const FeatureFlagSchema = z.object({
   enabled: z.boolean(),
   description: z.string().max(500).optional(),
+});
+
+const UpdatePlanSchema = z.object({
+  plan: z.enum(["free", "starter", "growth", "enterprise"]),
 });
 
 const SamlConnectionSchema = z.object({
@@ -693,6 +698,45 @@ export default async function adminRoutes(app: FastifyInstance) {
         baseUrl: `${base}/scim/v2`,
         orgId: id,
       };
+    }
+  );
+
+  // Billing and plans.
+  app.get("/billing/plans", { preHandler: [app.authenticate] }, async () => {
+    return { plans: listPlans() };
+  });
+
+  app.get(
+    "/organizations/:id/billing",
+    { preHandler: [requireAuthAndRole(["owner", "admin"], { resource: "billing", action: "read" })] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const summary = await getBillingSummary(id);
+      return summary;
+    }
+  );
+
+  app.patch(
+    "/organizations/:id/plan",
+    { preHandler: [requireAuthAndRole(["owner", "admin"], { resource: "billing", action: "update" })] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = UpdatePlanSchema.parse(request.body);
+      const result = await setOrganizationPlan(id, body.plan);
+      await request.audit("organization_plan_updated", { orgId: id, plan: body.plan });
+      return result;
+    }
+  );
+
+  app.post(
+    "/organizations/:id/billing/customer",
+    { preHandler: [requireAuthAndRole(["owner", "admin"], { resource: "billing", action: "update" })] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const user = request.user!;
+      const result = await provisionBillingCustomer(id, user.email!);
+      await request.audit("billing_customer_provisioned", { orgId: id });
+      return reply.status(201).send(result);
     }
   );
 }

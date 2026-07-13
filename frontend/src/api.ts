@@ -194,6 +194,15 @@ export const api = {
   getWorkflowRuns: (id: string) =>
     fetchJson<{ runs: Array<{ id: string; status: string; triggerEvent: string; startedAt: string | null; finishedAt: string | null; log: Array<{ step: string; status: string; error?: string }> }> }>(`/v1/admin/workflows/${id}/runs`),
 
+  // Billing
+  getPlans: () => fetchJson<{ plans: Array<{ id: string; name: string; description: string }> }>("/v1/admin/billing/plans"),
+  getBillingSummary: (orgId: string) =>
+    fetchJson<{ plan: string; provider?: string; subscription?: Record<string, unknown> }>(`/v1/admin/organizations/${orgId}/billing`),
+  updateOrganizationPlan: (orgId: string, plan: string) =>
+    fetchJson<{ plan: string }>(`/v1/admin/organizations/${orgId}/plan`, { method: "PATCH", body: JSON.stringify({ plan }) }),
+  provisionBillingCustomer: (orgId: string) =>
+    fetchJson<Record<string, unknown>>(`/v1/admin/organizations/${orgId}/billing/customer`, { method: "POST" }),
+
   // Platform admin CRUD
   createOrganization: (input: { name: string; slug?: string; plan?: string }) =>
     fetchJson<{ id: string }>("/v1/admin/organizations", { method: "POST", body: JSON.stringify(input) }),

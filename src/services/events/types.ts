@@ -50,6 +50,8 @@ export type AuditEventType =
   | "unauthorized_access"
   | "organization_created"
   | "organization_updated"
+  | "organization_plan_updated"
+  | "billing_customer_provisioned"
   | "organization_member_invited"
   | "organization_member_removed"
   | "organization_member_role_updated"

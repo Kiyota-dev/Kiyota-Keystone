@@ -53,7 +53,7 @@ export interface AnalyticsProvider {
 
 export interface BillingProvider {
   id: string;
-  name: string;
+  name?: string;
   createCustomer(tenantId: string, email: string): Promise<Record<string, unknown>>;
   subscribe(tenantId: string, planId: string): Promise<Record<string, unknown>>;
   getSubscription(tenantId: string): Promise<Record<string, unknown> | null>;

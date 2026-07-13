@@ -17,6 +17,7 @@ import {
   ToggleLeft,
   Shield,
   Workflow,
+  CreditCard,
 } from "lucide-react";
 import { api, getKeystoneAccessToken } from "./api.ts";
 import { Card } from "./components/ui/Card.tsx";
@@ -34,6 +35,7 @@ import { PluginsPanel } from "./components/PluginsPanel.tsx";
 import { FeatureFlagsPanel } from "./components/FeatureFlagsPanel.tsx";
 import { EnterpriseSsoPanel } from "./components/EnterpriseSsoPanel.tsx";
 import { WorkflowPanel } from "./components/WorkflowPanel.tsx";
+import { BillingPanel } from "./components/BillingPanel.tsx";
 
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
@@ -143,6 +145,25 @@ export default function Dashboard() {
   const handleLoadWorkflowRuns = async (id: string) => {
     loadTab({ data: null, loading: false, error: null }, setWorkflowRuns, () => api.getWorkflowRuns(id));
   };
+  const [plans, setPlans] = useState<DataTabState<{ plans: Array<{ id: string; name: string; description: string }> }>>({ data: null, loading: false, error: null });
+  const [billingSummary, setBillingSummary] = useState<DataTabState<{ plan: string; provider?: string; subscription?: Record<string, unknown> }>>({ data: null, loading: false, error: null });
+  const refreshBilling = () => {
+    loadTab({ data: null, loading: false, error: null }, setPlans, api.getPlans);
+    if (selectedOrgId) {
+      loadTab({ data: null, loading: false, error: null }, setBillingSummary, () => api.getBillingSummary(selectedOrgId));
+    }
+  };
+  const handleChangePlan = async (plan: string) => {
+    if (!selectedOrgId) return;
+    await api.updateOrganizationPlan(selectedOrgId, plan);
+    refreshBilling();
+    refreshOrganizations();
+  };
+  const handleProvisionCustomer = async () => {
+    if (!selectedOrgId) return;
+    await api.provisionBillingCustomer(selectedOrgId);
+    refreshBilling();
+  };
 
   useEffect(() => {
     setToken(getKeystoneAccessToken());
@@ -222,6 +243,9 @@ export default function Dashboard() {
       case "workflows":
         loadTab(workflows, setWorkflows, api.getWorkflows);
         break;
+      case "billing":
+        refreshBilling();
+        break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
@@ -269,6 +293,7 @@ export default function Dashboard() {
     { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" /> },
     { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" /> },
     { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" /> },
+    { id: "billing", label: "Billing", icon: <CreditCard className="w-4 h-4" /> },
     { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
   ];
 
@@ -527,6 +552,22 @@ export default function Dashboard() {
                 onCreate={handleCreateWorkflow}
                 onDelete={handleDeleteWorkflow}
                 onLoadRuns={handleLoadWorkflowRuns}
+              />
+            )}
+
+            {activeTab === "billing" && (
+              <BillingPanel
+                plansState={plans}
+                billingState={billingSummary}
+                currentPlan={
+                  (organizations.data?.organizations as Array<{ id: string; plan: string }> | undefined)?.find(
+                    (o) => o.id === selectedOrgId
+                  )?.plan ?? "free"
+                }
+                selectedOrgId={selectedOrgId}
+                onRefresh={refreshBilling}
+                onChangePlan={handleChangePlan}
+                onProvisionCustomer={handleProvisionCustomer}
               />
             )}
 
