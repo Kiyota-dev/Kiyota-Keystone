@@ -76,4 +76,6 @@ export type AuditEventType =
   | "scim_user_deleted"
   | "federation_login"
   | "workflow_triggered"
-  | "workflow_step_executed";
+  | "workflow_step_executed"
+  | "platform_user_updated"
+  | "platform_user_deactivated";

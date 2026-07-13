@@ -124,10 +124,43 @@ export default async function adminRoutes(app: FastifyInstance) {
     return { applications: allApplications };
   });
 
-  app.get("/platform/audit-logs", { preHandler: [requireOwner()] }, async () => {
-    const logs = await listAuditLogs({ limit: 100 });
+  app.get("/platform/audit-logs", { preHandler: [requireOwner()] }, async (request) => {
+    const query = request.query as { limit?: string; offset?: string; event?: string };
+    const logs = await listAuditLogs({
+      event: query.event,
+      limit: query.limit ? Number(query.limit) : 100,
+      offset: query.offset ? Number(query.offset) : 0,
+    });
     return { logs };
   });
+
+  app.patch(
+    "/platform/users/:id",
+    { preHandler: [requireOwner()] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = UpdateUserSchema.parse(request.body);
+      const result = await sdk.identity.updateUserProfile(id, body);
+      if (!result.success) return sendResultError(reply, result);
+      await request.audit("platform_user_updated", { userId: id, updates: body });
+      return result.data;
+    }
+  );
+
+  app.delete(
+    "/platform/users/:id",
+    { preHandler: [requireOwner()] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      if (request.user!.id === id) {
+        return reply.status(400).send({ error: "Cannot deactivate yourself" });
+      }
+      const result = await sdk.identity.deactivate(id);
+      if (!result.success) return sendResultError(reply, result);
+      await request.audit("platform_user_deactivated", { userId: id });
+      return { success: true };
+    }
+  );
 
   app.post(
     "/organizations",

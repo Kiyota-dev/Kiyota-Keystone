@@ -146,6 +146,33 @@ export const api = {
   getUsers: () => fetchJson<{ users: unknown[] }>("/v1/admin/platform/users"),
   getOrganizations: () => fetchJson<{ organizations: unknown[] }>("/v1/admin/platform/organizations"),
   getApplications: () => fetchJson<{ applications: unknown[] }>("/v1/admin/platform/applications"),
-  getAuditLogs: () => fetchJson<{ logs: unknown[] }>("/v1/admin/platform/audit-logs"),
+  getAuditLogs: (event?: string) =>
+    fetchJson<{ logs: unknown[] }>(`/v1/admin/platform/audit-logs${event ? `?event=${encodeURIComponent(event)}` : ""}`),
   getFederationProviders: () => fetchJson<{ providers: Array<{ type: string; name: string; configured: boolean }> }>("/federation/providers"),
+
+  // Platform admin CRUD
+  createOrganization: (input: { name: string; slug?: string; plan?: string }) =>
+    fetchJson<{ id: string }>("/v1/admin/organizations", { method: "POST", body: JSON.stringify(input) }),
+  createApplication: (orgId: string, input: { name: string; redirectUris?: string[]; allowedOrigins?: string[] }) =>
+    fetchJson<{ id: string; clientId: string; clientSecret: string }>(`/v1/admin/organizations/${orgId}/applications`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  updateApplication: (orgId: string, appId: string, input: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; isActive: boolean }>) =>
+    fetchJson<unknown>(`/v1/admin/organizations/${orgId}/applications/${appId}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  inviteUser: (orgId: string, input: { email: string; role: "owner" | "admin" | "member" }) =>
+    fetchJson<{ user: { id: string } }>(`/v1/admin/organizations/${orgId}/invites`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  updateUser: (userId: string, input: Partial<{ name: string; username: string; role: string; emailVerified: boolean }>) =>
+    fetchJson<unknown>(`/v1/admin/platform/users/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  deactivateUser: (userId: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/platform/users/${userId}`, { method: "DELETE" }),
 };
