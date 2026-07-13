@@ -24,6 +24,10 @@ export default function App() {
       });
   }, []);
 
+  if (!loading && !error && !status?.needsSetup) {
+    return <Dashboard />;
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
       <Card variant="glass" className="w-full max-w-lg p-6 md:p-8 shadow-xl">
@@ -51,8 +55,6 @@ export default function App() {
             </p>
           </div>
         )}
-
-        {!loading && !error && !status?.needsSetup && <Dashboard />}
 
         {!loading && !error && status?.needsSetup && <Wizard />}
       </Card>
