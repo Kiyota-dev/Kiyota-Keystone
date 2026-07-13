@@ -2,7 +2,7 @@
 
 > A provider-agnostic, API-first identity platform for Kiyota products and third-party applications.
 
-Keystone is not a wrapper around another identity system. It is a standalone platform that authenticates users, issues signed tokens, enforces authorization, audits every security decision, and federates identities from any OIDC provider.
+Keystone is a **standalone identity platform**, not a wrapper around another identity system. It authenticates users, issues signed tokens, enforces authorization, audits every security decision, and federates identities from any OIDC provider.
 
 ---
 
@@ -60,7 +60,7 @@ Keystone is not a wrapper around another identity system. It is a standalone pla
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐      │   │
 │  │   Identity   │  │   Token      │  │    Authorization     │      │   │
 │  │   Connectors │  │   Service    │  │    Engine            │      │   │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘      │   │
+│  └──────────────┘  ┌──────────────┘  └──────────────────────┘      │   │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐      │   │
 │  │ Versioned    │  │   Secrets    │  │   Workflow Engine    │      │   │
 │  │ Event Bus    │  │   Provider   │  │   + Background Queue │      │   │
@@ -258,7 +258,17 @@ The wizard guides you through:
 6. Enabling optional identity connectors (Google, GitHub, Azure, Okta, Keycloak, Zitadel).
 7. Creating the first owner account.
 
-When finished, the wizard writes `.env`, runs migrations, and creates the owner. Restart the server if prompted; on the next boot the main Keystone API starts with the new configuration.
+When finished, the wizard writes `.env`, runs migrations, and creates the owner. The server then automatically restarts in normal API mode.
+
+### Admin dashboard
+
+After setup, the same UI at http://localhost:5173 becomes the **admin dashboard**. Log in with the owner email and password to view:
+
+- **Overview** — API health and OIDC discovery endpoints.
+- **Organizations** — all platform organizations.
+- **Applications** — all registered OAuth/OIDC applications.
+- **Users** — all platform users.
+- **Audit Logs** — recent security events.
 
 ### Manual setup
 
@@ -280,16 +290,6 @@ If you prefer to manage each part separately:
 5. Run migrations: `npm run db:migrate`
 6. Start the backend: `npm run dev`
 7. In another terminal, start the frontend: `cd frontend && npm run dev`
-
-### Manual setup
-
-If you prefer to manage each part separately:
-
-1. Install backend dependencies: `npm install`
-2. Install frontend dependencies: `cd frontend && npm install`
-3. Run migrations: `npm run db:migrate`
-4. Start the backend: `npm run dev`
-5. In another terminal, start the frontend: `cd frontend && npm run dev`
 
 ### Running integration tests locally
 
@@ -373,7 +373,8 @@ npm start
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/auth/register` | Email/password signup (local password hashing) |
-| POST | `/auth/login` | Email/password login |
+| POST | `/auth/login` | Email/password login (sets session cookies) |
+| POST | `/auth/token-login` | Email/password login for SPA/dashboard (returns bearer token) |
 | POST | `/auth/logout` | Revoke session |
 | GET | `/auth/me` | Current user |
 | POST | `/auth/refresh` | Rotate refresh token |
@@ -408,7 +409,7 @@ npm start
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST/GET | `/v1/admin/organizations` | Create / list organizations |
+| POST/GET | `/v1/admin/organizations` | Create / list organizations for the current user |
 | GET | `/v1/admin/organizations/:id` | Organization details |
 | POST/GET | `/v1/admin/organizations/:id/applications` | Create / list apps |
 | PATCH | `/v1/admin/organizations/:id/applications/:appId` | Update app |
@@ -421,6 +422,10 @@ npm start
 | GET/POST/DELETE | `/v1/admin/roles/:role/permissions` | Manage role permissions |
 | GET/DELETE | `/v1/admin/organizations/:id/api-keys` | Org-scoped API keys |
 | GET | `/v1/admin/organizations/:id/audit-logs` | Paginated audit logs |
+| GET | `/v1/admin/platform/users` | **Owner only** — list all users |
+| GET | `/v1/admin/platform/organizations` | **Owner only** — list all organizations |
+| GET | `/v1/admin/platform/applications` | **Owner only** — list all applications |
+| GET | `/v1/admin/platform/audit-logs` | **Owner only** — list recent audit logs |
 
 ### Discovery
 
