@@ -134,7 +134,7 @@ fi
 echo ""
 ui_step "Starting Keystone setup frontend..."
 cd frontend
-npm run dev &
+VITE_KEYSTONE_API_URL="${KEYSTONE_API_URL}" npm run dev &
 FRONTEND_PID=$!
 
 cd "$SCRIPT_DIR"
@@ -144,7 +144,7 @@ echo ""
 ui_success "Keystone is starting up:"
 echo ""
 echo -e "  ${BOLD}API:${RESET}      http://localhost:${PORT}"
-echo -e "  ${BOLD}Setup UI:${RESET} http://localhost:5173"
+echo -e "  ${BOLD}UI:${RESET}       http://localhost:5173"
 echo ""
 if [ -n "${KEYSTONE_SETUP_MODE:-}" ]; then
   ui_warning "Setup mode active."

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { api } from "./api.ts";
 import Wizard from "./Wizard.tsx";
+import Dashboard from "./Dashboard.tsx";
 import { Card } from "./components/ui/Card.tsx";
 import { Alert } from "./components/ui/Alert.tsx";
 
@@ -51,19 +52,7 @@ export default function App() {
           </div>
         )}
 
-        {!loading && !error && !status?.needsSetup && (
-          <div className="py-6 flex flex-col items-center text-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle2 className="w-7 h-7 text-emerald-500" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold txt-head mb-1">Keystone is ready</h2>
-              <p className="text-[13px] txt-muted">
-                Setup has already been completed. Sign in through your application.
-              </p>
-            </div>
-          </div>
-        )}
+        {!loading && !error && !status?.needsSetup && <Dashboard />}
 
         {!loading && !error && status?.needsSetup && <Wizard />}
       </Card>

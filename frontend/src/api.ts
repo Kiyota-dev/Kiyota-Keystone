@@ -61,6 +61,10 @@ export interface SetupConfigResponse {
   backupPath?: string;
 }
 
+export interface HealthStatus {
+  status: string;
+}
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -102,4 +106,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
+
+  // Public discovery / health endpoints used by the post-setup dashboard.
+  getHealth: () => fetchJson<HealthStatus>("/health"),
+  getOpenIdConfig: () => fetchJson<Record<string, unknown>>("/.well-known/openid-configuration"),
 };
