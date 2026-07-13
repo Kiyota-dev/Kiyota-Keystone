@@ -14,6 +14,7 @@ import {
   Plug,
   Lock,
   Puzzle,
+  ToggleLeft,
 } from "lucide-react";
 import { api, getKeystoneAccessToken } from "./api.ts";
 import { Card } from "./components/ui/Card.tsx";
@@ -28,6 +29,7 @@ import { UsersPanel } from "./components/UsersPanel.tsx";
 import { AuditLogsPanel } from "./components/AuditLogsPanel.tsx";
 import { KeysPanel } from "./components/KeysPanel.tsx";
 import { PluginsPanel } from "./components/PluginsPanel.tsx";
+import { FeatureFlagsPanel } from "./components/FeatureFlagsPanel.tsx";
 
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
@@ -58,6 +60,8 @@ export default function Dashboard() {
   const [keys, setKeys] = useState<DataTabState<{ keys: Array<{ keyId: string; createdAt: string; expiresAt?: string | null }>; provider: string }>>({ data: null, loading: false, error: null });
   const [plugins, setPlugins] = useState<DataTabState<{ plugins: Array<{ metadata: { name: string; version: string; description?: string; author?: string; homepage?: string }; extensionPoints: string[] }> }>>({ data: null, loading: false, error: null });
   const [extensions, setExtensions] = useState<DataTabState<{ extensionPoints: Array<{ name: string; description: string; registered: string[] }> }>>({ data: null, loading: false, error: null });
+  const [featureFlags, setFeatureFlags] = useState<DataTabState<{ flags: Array<{ key: string; enabled: boolean; description: string | null; source: "database" | "environment" }> }>>({ data: null, loading: false, error: null });
+  const [configProfiles, setConfigProfiles] = useState<DataTabState<{ profiles: Array<{ id: string; name: string; description: string }> }>>({ data: null, loading: false, error: null });
 
   const refreshUsers = () => loadTab({ data: null, loading: false, error: null }, setUsers, api.getUsers);
   const refreshOrganizations = () => loadTab({ data: null, loading: false, error: null }, setOrganizations, api.getOrganizations);
@@ -72,6 +76,22 @@ export default function Dashboard() {
   const handleUnregisterPlugin = async (name: string) => {
     await api.unregisterPlugin(name);
     refreshPlugins();
+  };
+  const refreshFeatureFlags = () => {
+    loadTab({ data: null, loading: false, error: null }, setFeatureFlags, api.getFeatureFlags);
+    loadTab({ data: null, loading: false, error: null }, setConfigProfiles, api.getConfigurationProfiles);
+  };
+  const handleToggleFeatureFlag = async (key: string, enabled: boolean) => {
+    await api.setFeatureFlag(key, enabled);
+    refreshFeatureFlags();
+  };
+  const handleDeleteFeatureFlag = async (key: string) => {
+    await api.deleteFeatureFlag(key);
+    refreshFeatureFlags();
+  };
+  const handleCreateFeatureFlag = async (key: string, enabled: boolean, description?: string) => {
+    await api.setFeatureFlag(key, enabled, description);
+    refreshFeatureFlags();
   };
 
   useEffect(() => {
@@ -142,6 +162,10 @@ export default function Dashboard() {
         loadTab(plugins, setPlugins, api.getPlugins);
         loadTab(extensions, setExtensions, api.getPluginExtensionPoints);
         break;
+      case "feature-flags":
+        loadTab(featureFlags, setFeatureFlags, api.getFeatureFlags);
+        loadTab(configProfiles, setConfigProfiles, api.getConfigurationProfiles);
+        break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
@@ -178,6 +202,7 @@ export default function Dashboard() {
     { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" /> },
     { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" /> },
     { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" /> },
+    { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" /> },
     { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
   ];
 
@@ -382,6 +407,17 @@ export default function Dashboard() {
                 extensionsState={extensions}
                 onRefresh={refreshPlugins}
                 onUnregister={handleUnregisterPlugin}
+              />
+            )}
+
+            {activeTab === "feature-flags" && (
+              <FeatureFlagsPanel
+                flagsState={featureFlags}
+                profilesState={configProfiles}
+                onRefresh={refreshFeatureFlags}
+                onToggle={handleToggleFeatureFlag}
+                onDelete={handleDeleteFeatureFlag}
+                onCreate={handleCreateFeatureFlag}
               />
             )}
 

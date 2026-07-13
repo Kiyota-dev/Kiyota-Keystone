@@ -5,6 +5,8 @@ import { db } from "../db/index.js";
 import { orgMemberships, apiKeys, users, organizations, applications } from "../db/schema.js";
 import { getSdk } from "../sdk/index.js";
 import { listRegisteredPlugins, listExtensionPoints, unregisterPlugin } from "../services/plugins/registry.js";
+import { isFeatureEnabled, listFeatureFlags, setFeatureFlag, deleteFeatureFlag } from "../services/featureFlags.js";
+import { listConfigurationProfiles, getConfigurationProfile } from "../services/configuration/profiles.js";
 
 import type { OrgRole } from "../services/domain/authorization.js";
 
@@ -45,6 +47,11 @@ const UpdateUserSchema = z.object({
 
 const RolePermissionSchema = z.object({
   permissionId: z.string().uuid(),
+});
+
+const FeatureFlagSchema = z.object({
+  enabled: z.boolean(),
+  description: z.string().max(500).optional(),
 });
 
 function sendResultError(reply: FastifyReply, result: { success: false; error: { statusCode?: number; message: string; code: string } }) {
@@ -165,6 +172,47 @@ export default async function adminRoutes(app: FastifyInstance) {
     if (!removed) return reply.status(404).send({ error: "Plugin not found" });
     await request.audit("platform_plugin_unregistered", { pluginName: name });
     return { success: true };
+  });
+
+  app.get("/platform/feature-flags", { preHandler: [requireOwner()] }, async () => {
+    return { flags: await listFeatureFlags() };
+  });
+
+  app.get("/platform/feature-flags/:key", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { key } = request.params as { key: string };
+    const enabled = await isFeatureEnabled(key);
+    return { key, enabled };
+  });
+
+  app.put(
+    "/platform/feature-flags/:key",
+    { preHandler: [requireOwner()] },
+    async (request, reply) => {
+      const { key } = request.params as { key: string };
+      const body = FeatureFlagSchema.parse(request.body);
+      const result = await setFeatureFlag(key, body.enabled, body.description);
+      await request.audit("platform_feature_flag_updated", { key, enabled: result.enabled });
+      return reply.status(result.enabled === body.enabled ? 200 : 201).send(result);
+    }
+  );
+
+  app.delete("/platform/feature-flags/:key", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { key } = request.params as { key: string };
+    const removed = await deleteFeatureFlag(key);
+    if (!removed) return reply.status(404).send({ error: "Feature flag not found" });
+    await request.audit("platform_feature_flag_deleted", { key });
+    return { success: true };
+  });
+
+  app.get("/platform/configuration-profiles", { preHandler: [requireOwner()] }, async () => {
+    return { profiles: listConfigurationProfiles() };
+  });
+
+  app.get("/platform/configuration-profiles/:id", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const profile = getConfigurationProfile(id);
+    if (!profile) return reply.status(404).send({ error: "Profile not found" });
+    return { profile };
   });
 
   app.patch(

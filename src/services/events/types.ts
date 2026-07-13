@@ -80,4 +80,6 @@ export type AuditEventType =
   | "platform_user_updated"
   | "platform_user_deactivated"
   | "platform_signing_key_rotated"
-  | "platform_plugin_unregistered";
+  | "platform_plugin_unregistered"
+  | "platform_feature_flag_updated"
+  | "platform_feature_flag_deleted";

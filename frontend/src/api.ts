@@ -156,6 +156,18 @@ export const api = {
   getPluginExtensionPoints: () => fetchJson<{ extensionPoints: Array<{ name: string; description: string; registered: string[] }> }>("/v1/admin/platform/plugins/extensions"),
   unregisterPlugin: (name: string) => fetchJson<{ success: boolean }>(`/v1/admin/platform/plugins/${encodeURIComponent(name)}`, { method: "DELETE" }),
 
+  // Feature flags and configuration profiles
+  getFeatureFlags: () => fetchJson<{ flags: Array<{ key: string; enabled: boolean; description: string | null; source: "database" | "environment" }> }>("/v1/admin/platform/feature-flags"),
+  setFeatureFlag: (key: string, enabled: boolean, description?: string) =>
+    fetchJson<{ key: string; enabled: boolean }>(`/v1/admin/platform/feature-flags/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      body: JSON.stringify({ enabled, description }),
+    }),
+  deleteFeatureFlag: (key: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/platform/feature-flags/${encodeURIComponent(key)}`, { method: "DELETE" }),
+  getConfigurationProfiles: () => fetchJson<{ profiles: Array<{ id: string; name: string; description: string }> }>("/v1/admin/platform/configuration-profiles"),
+  getConfigurationProfile: (id: string) => fetchJson<{ profile: { name: string; description: string; values: Record<string, string> } }>(`/v1/admin/platform/configuration-profiles/${encodeURIComponent(id)}`),
+
   // Platform admin CRUD
   createOrganization: (input: { name: string; slug?: string; plan?: string }) =>
     fetchJson<{ id: string }>("/v1/admin/organizations", { method: "POST", body: JSON.stringify(input) }),
