@@ -32,12 +32,14 @@ ui_header "Kiyota Keystone Launcher" "Starting the identity platform"
 # Service status checks
 ui_step "Checking dependencies..."
 if command -v docker >/dev/null 2>&1; then
-  if docker ps --format '{{.Names}}' | grep -qx "keystone-postgres" && docker ps --format '{{.Names}}' | grep -qx "keystone-redis"; then
+  # Try to check container status quietly; start-services.sh will handle permission fallbacks.
+  if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "keystone-postgres" && \
+     docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "keystone-redis"; then
     ui_success "PostgreSQL and Redis containers are running."
   else
     ui_warning "PostgreSQL and/or Redis containers are not running."
     if ui_confirm "Start PostgreSQL and Redis now?"; then
-      ./scripts/start-services.sh
+      ./scripts/start-services.sh || true
     else
       ui_info "Continuing without starting services. You can enter external URLs in the wizard."
     fi
