@@ -16,6 +16,7 @@ import {
   Puzzle,
   ToggleLeft,
   Shield,
+  Workflow,
 } from "lucide-react";
 import { api, getKeystoneAccessToken } from "./api.ts";
 import { Card } from "./components/ui/Card.tsx";
@@ -32,6 +33,7 @@ import { KeysPanel } from "./components/KeysPanel.tsx";
 import { PluginsPanel } from "./components/PluginsPanel.tsx";
 import { FeatureFlagsPanel } from "./components/FeatureFlagsPanel.tsx";
 import { EnterpriseSsoPanel } from "./components/EnterpriseSsoPanel.tsx";
+import { WorkflowPanel } from "./components/WorkflowPanel.tsx";
 
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
@@ -125,6 +127,22 @@ export default function Dashboard() {
     await api.deleteOidcConnection(selectedOrgId, id);
     refreshEnterpriseSso();
   };
+  const [workflows, setWorkflows] = useState<DataTabState<{ workflows: Array<{ id: string; name: string; trigger: string; definition: { steps: Array<{ type: string; name?: string }> }; isActive: boolean; createdAt: string }> }>>({ data: null, loading: false, error: null });
+  const [workflowRuns, setWorkflowRuns] = useState<DataTabState<{ runs: Array<{ id: string; status: string; triggerEvent: string; startedAt: string | null; finishedAt: string | null; log: Array<{ step: string; status: string; error?: string }> }> }>>({ data: null, loading: false, error: null });
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const refreshWorkflows = () => loadTab({ data: null, loading: false, error: null }, setWorkflows, api.getWorkflows);
+  const handleCreateWorkflow = async (input: { name: string; trigger: string; definition: { steps: Array<{ type: string; name?: string }> } }) => {
+    await api.createWorkflow(input);
+    refreshWorkflows();
+  };
+  const handleDeleteWorkflow = async (id: string) => {
+    await api.deleteWorkflow(id);
+    if (selectedWorkflowId === id) setSelectedWorkflowId(null);
+    refreshWorkflows();
+  };
+  const handleLoadWorkflowRuns = async (id: string) => {
+    loadTab({ data: null, loading: false, error: null }, setWorkflowRuns, () => api.getWorkflowRuns(id));
+  };
 
   useEffect(() => {
     setToken(getKeystoneAccessToken());
@@ -201,6 +219,9 @@ export default function Dashboard() {
       case "enterprise-sso":
         refreshEnterpriseSso();
         break;
+      case "workflows":
+        loadTab(workflows, setWorkflows, api.getWorkflows);
+        break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
@@ -247,6 +268,7 @@ export default function Dashboard() {
     { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" /> },
     { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" /> },
     { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" /> },
+    { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" /> },
     { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
   ];
 
@@ -493,6 +515,19 @@ export default function Dashboard() {
                   onDeleteOidc={handleDeleteOidc}
                 />
               </>
+            )}
+
+            {activeTab === "workflows" && (
+              <WorkflowPanel
+                workflowsState={workflows}
+                runsState={workflowRuns}
+                selectedWorkflowId={selectedWorkflowId}
+                onSelectWorkflow={setSelectedWorkflowId}
+                onRefresh={refreshWorkflows}
+                onCreate={handleCreateWorkflow}
+                onDelete={handleDeleteWorkflow}
+                onLoadRuns={handleLoadWorkflowRuns}
+              />
             )}
 
             {activeTab === "audit-logs" && (

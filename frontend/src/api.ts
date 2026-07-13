@@ -186,6 +186,14 @@ export const api = {
   getScimConfig: (orgId: string) =>
     fetchJson<{ enabled: boolean; baseUrl: string; orgId: string }>(`/v1/admin/organizations/${orgId}/scim-config`),
 
+  // Workflows
+  getWorkflows: () => fetchJson<{ workflows: Array<{ id: string; name: string; trigger: string; definition: { steps: Array<{ type: string; name?: string }> }; isActive: boolean; createdAt: string }> }>("/v1/admin/workflows"),
+  createWorkflow: (input: { name: string; trigger: string; definition: { steps: Array<{ type: string; name?: string }> } }) =>
+    fetchJson<{ id: string }>("/v1/admin/workflows", { method: "POST", body: JSON.stringify(input) }),
+  deleteWorkflow: (id: string) => fetchJson<{ success: boolean }>(`/v1/admin/workflows/${id}`, { method: "DELETE" }),
+  getWorkflowRuns: (id: string) =>
+    fetchJson<{ runs: Array<{ id: string; status: string; triggerEvent: string; startedAt: string | null; finishedAt: string | null; log: Array<{ step: string; status: string; error?: string }> }> }>(`/v1/admin/workflows/${id}/runs`),
+
   // Platform admin CRUD
   createOrganization: (input: { name: string; slug?: string; plan?: string }) =>
     fetchJson<{ id: string }>("/v1/admin/organizations", { method: "POST", body: JSON.stringify(input) }),

@@ -9,6 +9,7 @@ import { executeStep, type WorkflowStep } from "./steps.js";
 
 export interface WorkflowDefinition {
   steps: WorkflowStep[];
+  [key: string]: unknown;
 }
 
 let loaded = false;

@@ -81,6 +81,8 @@ export type AuditEventType =
   | "federation_login"
   | "workflow_triggered"
   | "workflow_step_executed"
+  | "workflow_created"
+  | "workflow_deleted"
   | "platform_user_updated"
   | "platform_user_deactivated"
   | "platform_signing_key_rotated"
