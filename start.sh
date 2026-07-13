@@ -22,10 +22,10 @@ export KEYSTONE_API_URL="${KEYSTONE_API_URL:-http://localhost:${PORT}}"
 # Detect whether we are in first-run setup mode (no DATABASE_URL configured)
 if [ -z "${DATABASE_URL:-}" ]; then
   export KEYSTONE_SETUP_MODE="true"
-  BACKEND_COMMAND="KEYSTONE_SETUP_MODE=true tsx watch src/setup-server.ts"
+  BACKEND_COMMAND="npx tsx watch src/setup-server.ts"
   BACKEND_LABEL="setup server"
 else
-  BACKEND_COMMAND="tsx watch src/index.ts"
+  BACKEND_COMMAND="npx tsx watch src/index.ts"
   BACKEND_LABEL="backend API"
 fi
 
