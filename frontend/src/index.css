@@ -91,7 +91,8 @@
   }
   body {
     @apply bg-background text-foreground font-poppins antialiased;
-    overflow: hidden;
+    overflow-x: hidden;
+    min-height: 100vh;
   }
 }
 
