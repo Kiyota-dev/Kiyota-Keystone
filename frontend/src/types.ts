@@ -80,7 +80,7 @@ export const initialState: WizardState = {
     redisUrl: "redis://localhost:6379",
   },
   urls: {
-    authApiPublicUrl: typeof window !== "undefined" ? `${window.location.origin}/api` : "http://localhost:4001",
+    authApiPublicUrl: "http://localhost:4001",
     clientAppUrl: typeof window !== "undefined" ? window.location.origin : "http://localhost:5173",
     allowedOrigins: typeof window !== "undefined" ? window.location.origin : "http://localhost:5173",
   },
