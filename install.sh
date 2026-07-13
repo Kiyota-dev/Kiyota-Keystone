@@ -1,76 +1,106 @@
-#!/usr/bin/env bash
-set -euo pipefail
+: "${BOLD:=\033[1m}"
+: "${RESET:=\033[0m}"
+: "${GREEN:=\033[32m}"
+: "${YELLOW:=\033[33m}"
+: "${RED:=\033[31m}"
+: "${BLUE:=\033[34m}"
+: "${CYAN:=\033[36m}"
+: "${GRAY:=\033[90m}"
 
-# Kiyota Keystone — one-command installer
-# Installs dependencies, required tools, Docker (if needed), and starts PostgreSQL + Redis.
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# shellcheck source=scripts/ui.sh
+source "${SCRIPT_DIR}/scripts/ui.sh"
+
+ui_header "Kiyota Keystone Installer" "One-command setup for the identity platform"
+
 install_docker() {
   if command -v docker >/dev/null 2>&1; then
-    echo "✅ Docker is already installed."
+    ui_success "Docker is already installed."
     return 0
   fi
 
   echo ""
-  echo "==> Docker not found. Installing Docker..."
-  echo "    This uses the official Docker convenience script (https://get.docker.com)."
+  ui_warning "Docker is not installed."
+  if ! ui_confirm "Install Docker automatically using the official Docker script?"; then
+    ui_info "Skipping Docker installation. You will need PostgreSQL and Redis running manually."
+    return 1
+  fi
+
+  ui_step "Installing Docker..."
+  ui_info "This uses the official Docker convenience script (https://get.docker.com)."
+  ui_info "You may be prompted for your sudo password."
+  echo ""
 
   if command -v curl >/dev/null 2>&1; then
     curl -fsSL https://get.docker.com | sh
   elif command -v wget >/dev/null 2>&1; then
     wget -qO- https://get.docker.com | sh
   else
-    echo "❌ curl or wget is required to install Docker. Please install Docker manually."
+    ui_error "curl or wget is required to install Docker. Please install Docker manually."
     exit 1
   fi
 
-  # Try to start Docker service.
   if command -v systemctl >/dev/null 2>&1; then
+    ui_step "Starting Docker service..."
     sudo systemctl start docker || true
     sudo systemctl enable docker || true
   elif command -v service >/dev/null 2>&1; then
+    ui_step "Starting Docker service..."
     sudo service docker start || true
   fi
 
-  # Add current user to docker group so sudo is not required.
   if command -v usermod >/dev/null 2>&1; then
+    ui_step "Adding user to docker group..."
     sudo usermod -aG docker "${USER}" || true
     echo ""
-    echo "⚠️  You have been added to the docker group."
-    echo "   Log out and back in (or run 'newgrp docker') for this to take effect."
-    echo "   Until then, Docker commands may require sudo."
+    ui_warning "You have been added to the docker group."
+    ui_info "Log out and back in (or run 'newgrp docker') for this to take full effect."
   fi
 
-  echo "✅ Docker installation complete."
+  ui_success "Docker installation complete."
+  return 0
 }
 
-echo "==> Installing Keystone backend dependencies..."
+ui_step "Installing backend dependencies..."
 npm install
+ui_success "Backend dependencies installed."
 
-echo "==> Installing Keystone setup frontend dependencies..."
+echo ""
+ui_step "Installing frontend dependencies..."
 cd frontend
 npm install
+ui_success "Frontend dependencies installed."
 
-echo "==> Installing Playwright Chromium for E2E tests..."
+echo ""
+ui_step "Installing Playwright Chromium for E2E tests..."
 npx playwright install --with-deps chromium
+ui_success "Playwright Chromium installed."
 
 cd "$SCRIPT_DIR"
 
+echo ""
 install_docker
 
 echo ""
-echo "==> Starting PostgreSQL and Redis (via Docker)..."
-./scripts/start-services.sh || true
+ui_step "Starting PostgreSQL and Redis (via Docker)..."
+if ./scripts/start-services.sh; then
+  ui_success "PostgreSQL and Redis are ready."
+else
+  ui_warning "Could not start PostgreSQL/Redis automatically."
+  ui_info "Start them manually and use the setup wizard to enter their URLs."
+fi
 
+ui_divider
 echo ""
-echo "==> Installation complete."
+ui_success "Installation complete!"
 echo ""
-echo "Next steps:"
+ui_info "Next steps:"
 echo "  1. If Docker was just installed, log out and back in (or run 'newgrp docker')."
-echo "  2. Start everything: ./start.sh"
-echo "     (If no .env exists, Keystone will launch the browser setup wizard.)"
-echo "  3. Open http://localhost:5173 and follow the wizard."
-echo "  4. Copy the setup token from the server logs when prompted."
+echo "  2. Start Keystone: ./start.sh"
+echo "  3. Open http://localhost:5173 and complete the browser setup wizard."
+echo "  4. Copy the setup token from the terminal when prompted."
 echo ""
