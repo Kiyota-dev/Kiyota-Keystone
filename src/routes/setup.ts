@@ -80,13 +80,14 @@ async function hasNoUsers(): Promise<boolean> {
   }
 }
 
-async function ensureDbInitialized(reply: FastifyReply): Promise<boolean> {
+async function ensureDbInitialized(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
   if (db) return true;
   try {
     const writer = createConfigWriter();
     const values = await writer.read();
     const databaseUrl = values.DATABASE_URL;
     if (!databaseUrl) {
+      request.log.warn({ configKeys: Object.keys(values) }, "DATABASE_URL missing when initializing database");
       reply.status(400).send({ error: "DATABASE_URL is not configured. Apply configuration first.", code: "DATABASE_URL_MISSING" });
       return false;
     }
@@ -95,6 +96,7 @@ async function ensureDbInitialized(reply: FastifyReply): Promise<boolean> {
     return true;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    request.log.error({ err }, "Database initialization failed");
     reply.status(500).send({ error: message, code: "DB_INIT_FAILED" });
     return false;
   }
@@ -191,11 +193,12 @@ export default async function setupRoutes(app: FastifyInstance) {
 
   app.post("/migrate", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
-    if (!(await ensureDbInitialized(reply))) return;
+    if (!(await ensureDbInitialized(request, reply))) return;
     try {
       await migrate(db, { migrationsFolder: path.resolve(__dirname, "../db/migrations") });
       return { ok: true };
     } catch (err) {
+      request.log.error({ err }, "Migration failed");
       const message = err instanceof Error ? err.message : String(err);
       return reply.status(500).send({ error: message, code: "MIGRATION_FAILED" });
     }
@@ -214,7 +217,7 @@ export default async function setupRoutes(app: FastifyInstance) {
 
   app.post("/init", async (request: FastifyRequest, reply: FastifyReply) => {
     if (!assertSetupToken(request, reply)) return;
-    if (!(await ensureDbInitialized(reply))) return;
+    if (!(await ensureDbInitialized(request, reply))) return;
     if (!(await hasNoUsers())) {
       return reply.status(403).send({ error: "Setup has already been completed" });
     }
