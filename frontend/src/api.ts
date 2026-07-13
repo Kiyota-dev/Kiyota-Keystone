@@ -93,8 +93,10 @@ export const api = {
     fetchJson<{ ok: boolean }>("/setup/validate/sms", { method: "POST", body: JSON.stringify(input) }),
   applyConfig: (input: SetupConfigInput) =>
     fetchJson<SetupConfigResponse>("/setup/config", { method: "POST", body: JSON.stringify(input) }),
-  runMigrations: () => fetchJson<{ ok: boolean }>("/setup/migrate", { method: "POST" }),
-  restart: () => fetchJson<{ ok: boolean }>("/setup/restart", { method: "POST" }),
+  runMigrations: () =>
+    fetchJson<{ ok: boolean }>("/setup/migrate", { method: "POST", body: JSON.stringify({}) }),
+  restart: () =>
+    fetchJson<{ ok: boolean }>("/setup/restart", { method: "POST", body: JSON.stringify({}) }),
   init: (input: SetupInitInput) =>
     fetchJson<SetupInitResponse>("/setup/init", {
       method: "POST",
