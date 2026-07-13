@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "";
+const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
 export interface SetupStatus {
   needsSetup: boolean;

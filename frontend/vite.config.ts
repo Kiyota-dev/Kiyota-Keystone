@@ -10,6 +10,18 @@ export default defineConfig({
         target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
         changeOrigin: true,
       },
+      "/health": {
+        target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
+        changeOrigin: true,
+      },
+      "/.well-known": {
+        target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
+        changeOrigin: true,
+      },
+      "/documentation": {
+        target: process.env.KEYSTONE_API_URL || "http://localhost:4001",
+        changeOrigin: true,
+      },
     },
   },
   build: {
