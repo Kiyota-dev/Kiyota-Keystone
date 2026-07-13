@@ -329,6 +329,64 @@ npm start
 
 ---
 
+## Production deployment
+
+### Docker Compose (recommended)
+
+1. Copy and customize the environment file:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with production secrets, URLs, and provider credentials.
+   ```
+
+2. Start the stack:
+
+   ```bash
+   docker compose up -d
+   ```
+
+   This launches PostgreSQL, Redis, and the Keystone API container with health checks and restart policies. On first run, set `KEYSTONE_SETUP_MODE=true` in `.env` and visit `http://localhost:4001/setup` to complete the browser wizard.
+
+3. View logs:
+
+   ```bash
+   docker compose logs -f keystone
+   ```
+
+4. Restart after configuration changes:
+
+   ```bash
+   docker compose down && docker compose up -d
+   ```
+
+### systemd service
+
+For hosts running Docker with systemd, install the provided unit file:
+
+```bash
+sudo cp scripts/keystone.service /etc/systemd/system/kiyota-keystone.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now kiyota-keystone
+```
+
+Place the project files in `/opt/kiyota-keystone` and ensure `.env` is present there.
+
+### Managed PostgreSQL / Redis
+
+For high-availability deployments, replace the bundled `postgres` and `redis` services with managed instances and update `DATABASE_URL` and `REDIS_URL` accordingly. You can then run Keystone with a minimal compose file:
+
+```yaml
+services:
+  keystone:
+    build: .
+    ports:
+      - "4001:4001"
+    env_file: .env
+```
+
+---
+
 ## Key environment variables
 
 | Variable | Purpose |
