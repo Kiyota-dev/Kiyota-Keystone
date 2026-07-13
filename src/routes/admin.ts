@@ -4,6 +4,7 @@ import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { orgMemberships, apiKeys, users, organizations, applications } from "../db/schema.js";
 import { getSdk } from "../sdk/index.js";
+import { listRegisteredPlugins, listExtensionPoints, unregisterPlugin } from "../services/plugins/registry.js";
 
 import type { OrgRole } from "../services/domain/authorization.js";
 
@@ -148,6 +149,22 @@ export default async function adminRoutes(app: FastifyInstance) {
     const active = await app.container.secretsProvider.rotateSigningKeys();
     await request.audit("platform_signing_key_rotated", { keyId: active.keyId });
     return reply.status(201).send({ keyId: active.keyId, provider: app.container.secretsProvider.name });
+  });
+
+  app.get("/platform/plugins", { preHandler: [requireOwner()] }, async () => {
+    return { plugins: listRegisteredPlugins() };
+  });
+
+  app.get("/platform/plugins/extensions", { preHandler: [requireOwner()] }, async () => {
+    return { extensionPoints: listExtensionPoints() };
+  });
+
+  app.delete("/platform/plugins/:name", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { name } = request.params as { name: string };
+    const removed = unregisterPlugin(name);
+    if (!removed) return reply.status(404).send({ error: "Plugin not found" });
+    await request.audit("platform_plugin_unregistered", { pluginName: name });
+    return { success: true };
   });
 
   app.patch(

@@ -9,6 +9,7 @@ export interface EmailMessage {
 }
 
 export interface EmailProvider {
+  name?: string;
   send(message: EmailMessage): Promise<void>;
 }
 

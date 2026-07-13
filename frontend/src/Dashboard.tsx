@@ -13,6 +13,7 @@ import {
   LogOut,
   Plug,
   Lock,
+  Puzzle,
 } from "lucide-react";
 import { api, getKeystoneAccessToken } from "./api.ts";
 import { Card } from "./components/ui/Card.tsx";
@@ -26,6 +27,7 @@ import { ApplicationsPanel } from "./components/ApplicationsPanel.tsx";
 import { UsersPanel } from "./components/UsersPanel.tsx";
 import { AuditLogsPanel } from "./components/AuditLogsPanel.tsx";
 import { KeysPanel } from "./components/KeysPanel.tsx";
+import { PluginsPanel } from "./components/PluginsPanel.tsx";
 
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
@@ -54,6 +56,8 @@ export default function Dashboard() {
   const [auditLogs, setAuditLogs] = useState<DataTabState<{ logs: unknown[] }>>({ data: null, loading: false, error: null });
   const [providers, setProviders] = useState<DataTabState<{ providers: Array<{ type: string; name: string; configured: boolean }> }>>({ data: null, loading: false, error: null });
   const [keys, setKeys] = useState<DataTabState<{ keys: Array<{ keyId: string; createdAt: string; expiresAt?: string | null }>; provider: string }>>({ data: null, loading: false, error: null });
+  const [plugins, setPlugins] = useState<DataTabState<{ plugins: Array<{ metadata: { name: string; version: string; description?: string; author?: string; homepage?: string }; extensionPoints: string[] }> }>>({ data: null, loading: false, error: null });
+  const [extensions, setExtensions] = useState<DataTabState<{ extensionPoints: Array<{ name: string; description: string; registered: string[] }> }>>({ data: null, loading: false, error: null });
 
   const refreshUsers = () => loadTab({ data: null, loading: false, error: null }, setUsers, api.getUsers);
   const refreshOrganizations = () => loadTab({ data: null, loading: false, error: null }, setOrganizations, api.getOrganizations);
@@ -61,6 +65,14 @@ export default function Dashboard() {
   const refreshAuditLogs = (event?: string) =>
     loadTab({ data: null, loading: false, error: null }, setAuditLogs, () => api.getAuditLogs(event));
   const refreshKeys = () => loadTab({ data: null, loading: false, error: null }, setKeys, api.getSigningKeys);
+  const refreshPlugins = () => {
+    loadTab({ data: null, loading: false, error: null }, setPlugins, api.getPlugins);
+    loadTab({ data: null, loading: false, error: null }, setExtensions, api.getPluginExtensionPoints);
+  };
+  const handleUnregisterPlugin = async (name: string) => {
+    await api.unregisterPlugin(name);
+    refreshPlugins();
+  };
 
   useEffect(() => {
     setToken(getKeystoneAccessToken());
@@ -126,6 +138,10 @@ export default function Dashboard() {
       case "keys":
         loadTab(keys, setKeys, api.getSigningKeys);
         break;
+      case "plugins":
+        loadTab(plugins, setPlugins, api.getPlugins);
+        loadTab(extensions, setExtensions, api.getPluginExtensionPoints);
+        break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, token]);
@@ -161,6 +177,7 @@ export default function Dashboard() {
     { id: "users", label: "Users", icon: <Users className="w-4 h-4" /> },
     { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" /> },
     { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" /> },
+    { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" /> },
     { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
   ];
 
@@ -357,6 +374,15 @@ export default function Dashboard() {
 
             {activeTab === "keys" && (
               <KeysPanel state={keys} onRefresh={refreshKeys} />
+            )}
+
+            {activeTab === "plugins" && (
+              <PluginsPanel
+                pluginsState={plugins}
+                extensionsState={extensions}
+                onRefresh={refreshPlugins}
+                onUnregister={handleUnregisterPlugin}
+              />
             )}
 
             {activeTab === "audit-logs" && (

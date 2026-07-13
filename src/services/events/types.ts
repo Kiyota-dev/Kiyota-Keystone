@@ -79,4 +79,5 @@ export type AuditEventType =
   | "workflow_step_executed"
   | "platform_user_updated"
   | "platform_user_deactivated"
-  | "platform_signing_key_rotated";
+  | "platform_signing_key_rotated"
+  | "platform_plugin_unregistered";

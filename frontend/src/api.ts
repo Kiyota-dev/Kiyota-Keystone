@@ -152,6 +152,9 @@ export const api = {
   getSigningKeys: () => fetchJson<{ keys: Array<{ keyId: string; createdAt: string; expiresAt?: string | null }>; provider: string }>("/v1/admin/platform/keys"),
   rotateSigningKey: () => fetchJson<{ keyId: string; provider: string }>("/v1/admin/platform/keys/rotate", { method: "POST" }),
   getFederationProviders: () => fetchJson<{ providers: Array<{ type: string; name: string; configured: boolean }> }>("/federation/providers"),
+  getPlugins: () => fetchJson<{ plugins: Array<{ metadata: { name: string; version: string; description?: string; author?: string; homepage?: string }; extensionPoints: string[] }> }>("/v1/admin/platform/plugins"),
+  getPluginExtensionPoints: () => fetchJson<{ extensionPoints: Array<{ name: string; description: string; registered: string[] }> }>("/v1/admin/platform/plugins/extensions"),
+  unregisterPlugin: (name: string) => fetchJson<{ success: boolean }>(`/v1/admin/platform/plugins/${encodeURIComponent(name)}`, { method: "DELETE" }),
 
   // Platform admin CRUD
   createOrganization: (input: { name: string; slug?: string; plan?: string }) =>

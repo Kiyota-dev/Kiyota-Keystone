@@ -59,9 +59,9 @@ async function loadPluginsFromEnv(app: FastifyInstance) {
     try {
       const module = await import(pluginPath);
       const plugin = module.default || module.plugin || module;
-      if (plugin && typeof plugin === "object" && "name" in plugin) {
+      if (plugin && typeof plugin === "object" && "metadata" in plugin) {
         registerPlugin(plugin as KeystonePlugin);
-        app.log.info(`Loaded plugin from ${pluginPath}: ${plugin.name}`);
+        app.log.info(`Loaded plugin from ${pluginPath}: ${plugin.metadata.name}`);
       } else {
         app.log.warn(`Plugin ${pluginPath} did not export a valid KeystonePlugin`);
       }
@@ -148,7 +148,7 @@ export async function buildApp() {
   // Expose plugin registration on the Fastify instance.
   app.decorate("registerPlugin", (plugin: KeystonePlugin) => {
     registerPlugin(plugin);
-    app.log.info(`Registered plugin: ${plugin.name}`);
+    app.log.info(`Registered plugin: ${plugin.metadata.name}`);
   });
 
   // Load plugins configured via env (comma-separated list of module paths).

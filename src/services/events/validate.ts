@@ -60,6 +60,7 @@ const VALID_EVENT_TYPES = new Set([
   "platform_user_updated",
   "platform_user_deactivated",
   "platform_signing_key_rotated",
+  "platform_plugin_unregistered",
 ]);
 
 export function validateEvent(event: EmittableEvent): EventValidationResult {

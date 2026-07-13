@@ -7,6 +7,7 @@ export interface SmsMessage {
 }
 
 export interface SmsProvider {
+  name?: string;
   send(message: SmsMessage): Promise<void>;
 }
 
