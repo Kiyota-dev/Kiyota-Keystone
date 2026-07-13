@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [health, setHealth] = useState<{ status: string } | null>(null);
   const [config, setConfig] = useState<Record<string, unknown> | null>(null);
+  const [queueStatus, setQueueStatus] = useState<{ queue: string; stats: unknown[] } | null>(null);
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState<string | null>(null);
 
@@ -87,10 +88,11 @@ export default function Dashboard() {
     setOverviewLoading(true);
     setOverviewError(null);
 
-    Promise.all([api.getHealth(), api.getOpenIdConfig()])
-      .then(([h, c]) => {
+    Promise.all([api.getHealth(), api.getOpenIdConfig(), api.getQueueStatus()])
+      .then(([h, c, q]) => {
         setHealth(h);
         setConfig(c);
+        setQueueStatus(q);
       })
       .catch((err) => {
         setOverviewError(err instanceof Error ? err.message : String(err));
@@ -218,7 +220,7 @@ export default function Dashboard() {
 
             {activeTab === "overview" && (
               <>
-                <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Card variant="glass" className="p-5 flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center text-gold">
                       <Server className="w-5 h-5" />
@@ -250,6 +252,23 @@ export default function Dashboard() {
                       <p className="text-[13px] txt-head font-medium break-all">
                         {(config?.issuer as string) || "—"}
                       </p>
+                    </div>
+                  </Card>
+
+                  <Card variant="glass" className="p-5 flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                      <Activity className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[12px] txt-muted uppercase tracking-wide font-semibold">Queue</p>
+                      <p className="text-[13px] txt-head font-medium">
+                        {queueStatus?.queue ?? "—"}
+                      </p>
+                      {queueStatus && queueStatus.stats.length > 0 && (
+                        <p className="text-[11px] txt-muted mt-0.5">
+                          {queueStatus.stats.map((s) => `${(s as { type: string }).type}: ${(s as { count: number }).count}${(s as { failed?: number }).failed ? ` / ${(s as { failed?: number }).failed} failed` : ""}`).join(" · ")}
+                        </p>
+                      )}
                     </div>
                   </Card>
                 </div>

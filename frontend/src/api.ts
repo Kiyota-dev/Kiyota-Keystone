@@ -148,6 +148,7 @@ export const api = {
   getApplications: () => fetchJson<{ applications: unknown[] }>("/v1/admin/platform/applications"),
   getAuditLogs: (event?: string) =>
     fetchJson<{ logs: unknown[] }>(`/v1/admin/platform/audit-logs${event ? `?event=${encodeURIComponent(event)}` : ""}`),
+  getQueueStatus: () => fetchJson<{ queue: string; stats: Array<{ type: string; count: number; failed?: number; delayed?: number }> }>("/v1/admin/platform/queue"),
   getFederationProviders: () => fetchJson<{ providers: Array<{ type: string; name: string; configured: boolean }> }>("/federation/providers"),
 
   // Platform admin CRUD

@@ -134,6 +134,11 @@ export default async function adminRoutes(app: FastifyInstance) {
     return { logs };
   });
 
+  app.get("/platform/queue", { preHandler: [requireOwner()] }, async () => {
+    const stats = app.container.queue.getStats ? await app.container.queue.getStats() : [];
+    return { queue: app.container.queue.constructor.name, stats };
+  });
+
   app.patch(
     "/platform/users/:id",
     { preHandler: [requireOwner()] },

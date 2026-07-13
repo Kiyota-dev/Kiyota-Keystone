@@ -1,5 +1,5 @@
 import type { KeystoneEvent, EventHandler, EventPayload } from "./types.js";
-import { eventVersion } from "./types.js";
+import { normalizeEvent } from "./validate.js";
 
 const subscribers = new Map<string, EventHandler[]>();
 const allSubscribers: EventHandler[] = [];
@@ -25,11 +25,7 @@ export function subscribeAll(handler: EventHandler): () => void {
 export type EmittableEvent = Omit<KeystoneEvent, "timestamp" | "version"> & { version?: number };
 
 export async function emit(event: EmittableEvent): Promise<void> {
-  const fullEvent: KeystoneEvent = {
-    ...event,
-    version: event.version ?? eventVersion(event.type),
-    timestamp: new Date(),
-  };
+  const fullEvent = normalizeEvent(event);
   const handlers = [...allSubscribers, ...(subscribers.get(fullEvent.type) ?? [])];
   await Promise.all(
     handlers.map(async (handler) => {

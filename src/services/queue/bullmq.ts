@@ -1,5 +1,5 @@
 import { Queue as BullQueue, Worker, type Job as BullJob } from "bullmq";
-import type { Queue, Job, JobHandler } from "./types.js";
+import type { Queue, Job, JobHandler, QueueStats } from "./types.js";
 
 export class BullMQQueue implements Queue {
   private queue: BullQueue;
@@ -57,6 +57,18 @@ export class BullMQQueue implements Queue {
     });
 
     this.workers.set(type, worker);
+  }
+
+  async getStats(): Promise<QueueStats[]> {
+    const counts = await this.queue.getJobCounts("waiting", "active", "completed", "failed", "delayed");
+    return [
+      {
+        type: "all",
+        count: (counts.waiting ?? 0) + (counts.active ?? 0) + (counts.completed ?? 0),
+        failed: counts.failed ?? 0,
+        delayed: counts.delayed ?? 0,
+      },
+    ];
   }
 
   async close(): Promise<void> {
