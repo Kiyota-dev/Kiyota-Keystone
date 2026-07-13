@@ -5,64 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1783859907165,
-      "tag": "0000_messy_night_thrasher",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1783882895076,
-      "tag": "0001_keystone_multitenant",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1783886003432,
-      "tag": "0002_add_oauth_nonce",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1783887000000,
-      "tag": "0003_phase3_enhanced_auth",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1783888000000,
-      "tag": "0004_authorization_engine",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1783889000000,
-      "tag": "0005_service_accounts",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1783890000000,
-      "tag": "0006_enterprise_sso",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1783891200000,
-      "tag": "0007_architecture_refactor",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1783955812623,
-      "tag": "0008_add_password_reset_tokens",
+      "when": 1783974654299,
+      "tag": "0000_skinny_ben_parker",
       "breakpoints": true
     }
   ]
