@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS "api_keys" (
 	"name" text,
 	"prefix" text NOT NULL,
 	"key_hash" text NOT NULL,
-	"scopes" text[] DEFAULT api:read NOT NULL,
+	"scopes" text[] DEFAULT '{"api:read"}'::text[] NOT NULL,
 	"last_used_at" timestamp with time zone,
 	"expires_at" timestamp with time zone,
 	"revoked_at" timestamp with time zone,
