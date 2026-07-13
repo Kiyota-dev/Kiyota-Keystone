@@ -12,6 +12,9 @@ frontend/dist/
 .env.local
 .env.*.local
 
+# Setup marker
+.keystone-setup-complete
+
 # Logs
 logs/
 *.log

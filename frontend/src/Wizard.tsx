@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "./api.ts";
 import { initialState, type WizardState, type EmailProvider, type SmsProvider } from "./types.ts";
 
@@ -36,6 +36,12 @@ export default function Wizard() {
   const [success, setSuccess] = useState<string | null>(null);
   const [needsRestart, setNeedsRestart] = useState(false);
   const [setupToken, setSetupToken] = useState(() => localStorage.getItem("keystone-setup-token") || "");
+
+  useEffect(() => {
+    if (state.secrets.autoGenerate && (!state.secrets.internalApiKey || !state.secrets.encryptionKey)) {
+      generateSecrets();
+    }
+  }, []);
 
   const update = <K extends keyof WizardState>(section: K, values: Partial<WizardState[K]>) => {
     setState((prev) => ({ ...prev, [section]: { ...prev[section], ...values } }));

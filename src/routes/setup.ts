@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { eq, count } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db, initDb } from "../db/index.js";
@@ -14,6 +15,7 @@ import { getSetupToken, validateSetupToken } from "../services/setup/token.js";
 import { queue } from "../services/queue/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SETUP_MARKER_PATH = path.resolve(__dirname, "../../.keystone-setup-complete");
 
 const SetupInitSchema = z.object({
   email: z.string().email(),
@@ -233,6 +235,12 @@ export default async function setupRoutes(app: FastifyInstance) {
     }
 
     await db.update(users).set({ role: "owner" }).where(eq(users.id, result.data.user.id));
+
+    try {
+      await fs.writeFile(SETUP_MARKER_PATH, new Date().toISOString(), "utf-8");
+    } catch (err) {
+      request.log.warn({ err }, "Could not write setup completion marker");
+    }
 
     return {
       user: {

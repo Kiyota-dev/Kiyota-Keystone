@@ -97,14 +97,16 @@ else
   ui_warning "Docker is not installed. PostgreSQL and Redis must be running manually."
 fi
 
-# Detect whether we are in first-run setup mode (no DATABASE_URL configured)
-if [ -z "${DATABASE_URL:-}" ]; then
+# Detect whether we are in first-run setup mode.
+# Stay in setup mode until .env exists AND the owner has been created.
+SETUP_MARKER=".keystone-setup-complete"
+if [ -f .env ] && [ -f "$SETUP_MARKER" ]; then
+  BACKEND_COMMAND="npx tsx watch src/index.ts"
+  BACKEND_LABEL="backend API"
+else
   export KEYSTONE_SETUP_MODE="true"
   BACKEND_COMMAND="npx tsx watch src/setup-server.ts"
   BACKEND_LABEL="setup server"
-else
-  BACKEND_COMMAND="npx tsx watch src/index.ts"
-  BACKEND_LABEL="backend API"
 fi
 
 cleanup() {
