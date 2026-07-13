@@ -1,6 +1,26 @@
 import { useEffect, useState } from "react";
+import {
+  CheckCircle2,
+  Database,
+  Server,
+  Globe,
+  Key,
+  Mail,
+  MessageSquare,
+  Link,
+  User,
+  ShieldCheck,
+  RefreshCw,
+} from "lucide-react";
 import { api } from "./api.ts";
 import { initialState, type WizardState, type EmailProvider, type SmsProvider } from "./types.ts";
+import { Button } from "./components/ui/Button.tsx";
+import { Input } from "./components/ui/Input.tsx";
+import { Label } from "./components/ui/Label.tsx";
+import { Select } from "./components/ui/Select.tsx";
+import { Card } from "./components/ui/Card.tsx";
+import { Alert } from "./components/ui/Alert.tsx";
+import { StepIndicator } from "./components/ui/StepIndicator.tsx";
 
 const STEPS = [
   "Token",
@@ -13,6 +33,19 @@ const STEPS = [
   "Review",
   "Owner",
   "Done",
+];
+
+const STEP_ICONS = [
+  ShieldCheck,
+  Database,
+  Globe,
+  Key,
+  Mail,
+  MessageSquare,
+  Link,
+  ShieldCheck,
+  User,
+  CheckCircle2,
 ];
 
 function mask(value: string): string {
@@ -57,6 +90,7 @@ export default function Wizard() {
   const validateDatabase = async () => {
     setBusy(true);
     setError(null);
+    setSuccess(null);
     try {
       await api.validateDatabase({ databaseUrl: state.infrastructure.databaseUrl });
       setSuccess("Database connection successful");
@@ -71,6 +105,7 @@ export default function Wizard() {
   const validateRedis = async () => {
     setBusy(true);
     setError(null);
+    setSuccess(null);
     try {
       await api.validateRedis({ redisUrl: state.infrastructure.redisUrl });
       setSuccess("Redis connection successful");
@@ -96,6 +131,7 @@ export default function Wizard() {
   const validateEmail = async () => {
     setBusy(true);
     setError(null);
+    setSuccess(null);
     try {
       await api.validateEmail({
         provider: state.email.provider,
@@ -121,6 +157,7 @@ export default function Wizard() {
   const validateSms = async () => {
     setBusy(true);
     setError(null);
+    setSuccess(null);
     try {
       await api.validateSms({
         provider: state.sms.provider,
@@ -200,6 +237,7 @@ export default function Wizard() {
   const apply = async () => {
     setBusy(true);
     setError(null);
+    setSuccess(null);
     try {
       const env = buildEnv();
       await api.applyConfig({ env });
@@ -217,6 +255,7 @@ export default function Wizard() {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setSuccess(null);
     try {
       await api.init({
         email: state.owner.email,
@@ -242,296 +281,357 @@ export default function Wizard() {
     }
   };
 
+  const StepIcon = STEP_ICONS[step];
+
   const renderTokenStep = () => (
-    <>
-      <p className="lead">Enter the setup token shown in the server logs to continue.</p>
-      <label htmlFor="token">Setup token</label>
-      <input
-        id="token"
-        type="password"
-        value={setupToken}
-        onChange={(e) => {
-          const value = e.target.value.trim();
-          setSetupToken(value);
-          localStorage.setItem("keystone-setup-token", value);
-        }}
-        placeholder="paste-token-here"
-      />
-      <button onClick={next} disabled={!setupToken}>
+    <div className="space-y-4">
+      <p className="text-[13px] txt-muted">
+        Enter the setup token shown in the server logs to continue.
+      </p>
+      <div>
+        <Label htmlFor="token">Setup token</Label>
+        <Input
+          id="token"
+          type="password"
+          value={setupToken}
+          onChange={(e) => {
+            const value = e.target.value.trim();
+            setSetupToken(value);
+            localStorage.setItem("keystone-setup-token", value);
+          }}
+          placeholder="paste-token-here"
+          leftIcon={<ShieldCheck className="w-4 h-4" />}
+        />
+      </div>
+      <Button onClick={next} disabled={!setupToken} className="w-full sm:w-auto">
         Continue
-      </button>
-    </>
+      </Button>
+    </div>
   );
 
   const renderInfrastructureStep = () => (
-    <>
-      <p className="lead">Configure PostgreSQL and Redis. Test each connection before continuing.</p>
-      <label htmlFor="databaseUrl">Database URL</label>
-      <input
-        id="databaseUrl"
-        type="text"
-        value={state.infrastructure.databaseUrl}
-        onChange={(e) => update("infrastructure", { databaseUrl: e.target.value })}
-      />
-
-      <label htmlFor="redisUrl">Redis URL</label>
-      <input
-        id="redisUrl"
-        type="text"
-        value={state.infrastructure.redisUrl}
-        onChange={(e) => update("infrastructure", { redisUrl: e.target.value })}
-      />
-
-      <div className="actions">
-        <button onClick={validateDatabase} disabled={busy}>
-          {busy ? "Testing…" : "Test database"}
-        </button>
-        <button onClick={validateRedis} disabled={busy}>
-          {busy ? "Testing…" : "Test Redis"}
-        </button>
+    <div className="space-y-4">
+      <p className="text-[13px] txt-muted">
+        Configure PostgreSQL and Redis. Test each connection before continuing.
+      </p>
+      <div>
+        <Label htmlFor="databaseUrl">Database URL</Label>
+        <Input
+          id="databaseUrl"
+          type="text"
+          value={state.infrastructure.databaseUrl}
+          onChange={(e) => update("infrastructure", { databaseUrl: e.target.value })}
+          leftIcon={<Database className="w-4 h-4" />}
+        />
       </div>
-    </>
+      <div>
+        <Label htmlFor="redisUrl">Redis URL</Label>
+        <Input
+          id="redisUrl"
+          type="text"
+          value={state.infrastructure.redisUrl}
+          onChange={(e) => update("infrastructure", { redisUrl: e.target.value })}
+          leftIcon={<Server className="w-4 h-4" />}
+        />
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={validateDatabase} disabled={busy} isLoading={busy}>
+          Test database
+        </Button>
+        <Button onClick={validateRedis} disabled={busy} isLoading={busy}>
+          Test Redis
+        </Button>
+      </div>
+    </div>
   );
 
   const renderUrlsStep = () => (
-    <>
-      <p className="lead">Set the public URLs Keystone will use.</p>
-      <label htmlFor="authApiPublicUrl">Auth API public URL</label>
-      <input
-        id="authApiPublicUrl"
-        type="url"
-        value={state.urls.authApiPublicUrl}
-        onChange={(e) => update("urls", { authApiPublicUrl: e.target.value })}
-      />
-
-      <label htmlFor="clientAppUrl">Client app URL</label>
-      <input
-        id="clientAppUrl"
-        type="url"
-        value={state.urls.clientAppUrl}
-        onChange={(e) => update("urls", { clientAppUrl: e.target.value })}
-      />
-
-      <label htmlFor="allowedOrigins">Allowed CORS origins (comma-separated)</label>
-      <input
-        id="allowedOrigins"
-        type="text"
-        value={state.urls.allowedOrigins}
-        onChange={(e) => update("urls", { allowedOrigins: e.target.value })}
-      />
-
-      <button onClick={next}>Continue</button>
-    </>
+    <div className="space-y-4">
+      <p className="text-[13px] txt-muted">Set the public URLs Keystone will use.</p>
+      <div>
+        <Label htmlFor="authApiPublicUrl">Auth API public URL</Label>
+        <Input
+          id="authApiPublicUrl"
+          type="url"
+          value={state.urls.authApiPublicUrl}
+          onChange={(e) => update("urls", { authApiPublicUrl: e.target.value })}
+          leftIcon={<Globe className="w-4 h-4" />}
+        />
+      </div>
+      <div>
+        <Label htmlFor="clientAppUrl">Client app URL</Label>
+        <Input
+          id="clientAppUrl"
+          type="url"
+          value={state.urls.clientAppUrl}
+          onChange={(e) => update("urls", { clientAppUrl: e.target.value })}
+          leftIcon={<Globe className="w-4 h-4" />}
+        />
+      </div>
+      <div>
+        <Label htmlFor="allowedOrigins">Allowed CORS origins (comma-separated)</Label>
+        <Input
+          id="allowedOrigins"
+          type="text"
+          value={state.urls.allowedOrigins}
+          onChange={(e) => update("urls", { allowedOrigins: e.target.value })}
+          leftIcon={<Link className="w-4 h-4" />}
+        />
+      </div>
+      <Button onClick={next} className="w-full sm:w-auto">
+        Continue
+      </Button>
+    </div>
   );
 
   const renderSecretsStep = () => (
-    <>
-      <p className="lead">Generate secure platform secrets. They are masked in the review step.</p>
-      <label>
+    <div className="space-y-4">
+      <p className="text-[13px] txt-muted">
+        Generate secure platform secrets. They are masked in the review step.
+      </p>
+      <label className="flex items-center gap-2.5 text-[13px] text-foreground cursor-pointer">
         <input
           type="checkbox"
           checked={state.secrets.autoGenerate}
           onChange={(e) => update("secrets", { autoGenerate: e.target.checked })}
-        />{" "}
+          className="w-4 h-4 rounded border-theme bg-surface text-gold focus:ring-gold/30"
+        />
         Auto-generate secrets
       </label>
 
       {state.secrets.autoGenerate && (
-        <>
-          <button onClick={generateSecrets} disabled={busy}>
+        <div className="space-y-3">
+          <Button onClick={generateSecrets} disabled={busy} variant="secondary">
             Generate secrets
-          </button>
+          </Button>
           {state.secrets.internalApiKey && (
-            <p className="success">Secrets generated and will be written on apply.</p>
+            <Alert variant="success">Secrets generated and will be written on apply.</Alert>
           )}
-        </>
+        </div>
       )}
 
       {!state.secrets.autoGenerate && (
-        <>
-          <label htmlFor="internalApiKey">Internal API key</label>
-          <input
-            id="internalApiKey"
-            type="password"
-            value={state.secrets.internalApiKey}
-            onChange={(e) => update("secrets", { internalApiKey: e.target.value })}
-          />
-
-          <label htmlFor="encryptionKey">Encryption key</label>
-          <input
-            id="encryptionKey"
-            type="password"
-            value={state.secrets.encryptionKey}
-            onChange={(e) => update("secrets", { encryptionKey: e.target.value })}
-          />
-        </>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="internalApiKey">Internal API key</Label>
+            <Input
+              id="internalApiKey"
+              type="password"
+              value={state.secrets.internalApiKey}
+              onChange={(e) => update("secrets", { internalApiKey: e.target.value })}
+              leftIcon={<Key className="w-4 h-4" />}
+            />
+          </div>
+          <div>
+            <Label htmlFor="encryptionKey">Encryption key</Label>
+            <Input
+              id="encryptionKey"
+              type="password"
+              value={state.secrets.encryptionKey}
+              onChange={(e) => update("secrets", { encryptionKey: e.target.value })}
+              leftIcon={<Key className="w-4 h-4" />}
+            />
+          </div>
+        </div>
       )}
 
-      <button onClick={next} disabled={!state.secrets.internalApiKey || !state.secrets.encryptionKey}>
+      <Button
+        onClick={next}
+        disabled={!state.secrets.internalApiKey || !state.secrets.encryptionKey}
+        className="w-full sm:w-auto"
+      >
         Continue
-      </button>
-    </>
+      </Button>
+    </div>
   );
 
   const renderEmailStep = () => (
-    <>
-      <p className="lead">Choose how Keystone sends emails.</p>
-      <label htmlFor="emailProvider">Email provider</label>
-      <select
-        id="emailProvider"
-        value={state.email.provider}
-        onChange={(e) => update("email", { provider: e.target.value as EmailProvider })}
-      >
-        <option value="none">None</option>
-        <option value="console">Console (development)</option>
-        <option value="smtp">SMTP</option>
-        <option value="sendgrid">SendGrid</option>
-        <option value="mailgun">Mailgun</option>
-      </select>
+    <div className="space-y-4">
+      <p className="text-[13px] txt-muted">Choose how Keystone sends emails.</p>
+      <div>
+        <Label htmlFor="emailProvider">Email provider</Label>
+        <Select
+          id="emailProvider"
+          value={state.email.provider}
+          onChange={(e) => update("email", { provider: e.target.value as EmailProvider })}
+        >
+          <option value="none">None</option>
+          <option value="console">Console (development)</option>
+          <option value="smtp">SMTP</option>
+          <option value="sendgrid">SendGrid</option>
+          <option value="mailgun">Mailgun</option>
+        </Select>
+      </div>
 
-      <label htmlFor="emailFrom">From address</label>
-      <input
-        id="emailFrom"
-        type="email"
-        value={state.email.from}
-        onChange={(e) => update("email", { from: e.target.value })}
-      />
+      <div>
+        <Label htmlFor="emailFrom">From address</Label>
+        <Input
+          id="emailFrom"
+          type="email"
+          value={state.email.from}
+          onChange={(e) => update("email", { from: e.target.value })}
+          leftIcon={<Mail className="w-4 h-4" />}
+        />
+      </div>
 
       {state.email.provider === "smtp" && (
-        <>
-          <label htmlFor="smtpHost">SMTP host</label>
-          <input
-            id="smtpHost"
-            type="text"
-            value={state.email.smtpHost}
-            onChange={(e) => update("email", { smtpHost: e.target.value })}
-          />
-          <label htmlFor="smtpPort">SMTP port</label>
-          <input
-            id="smtpPort"
-            type="number"
-            value={state.email.smtpPort}
-            onChange={(e) => update("email", { smtpPort: Number(e.target.value) })}
-          />
-          <label htmlFor="smtpUser">SMTP user</label>
-          <input
-            id="smtpUser"
-            type="text"
-            value={state.email.smtpUser}
-            onChange={(e) => update("email", { smtpUser: e.target.value })}
-          />
-          <label htmlFor="smtpPass">SMTP password</label>
-          <input
-            id="smtpPass"
-            type="password"
-            value={state.email.smtpPass}
-            onChange={(e) => update("email", { smtpPass: e.target.value })}
-          />
-          <label>
+        <div className="space-y-4 pt-2 border-t border-theme/20">
+          <div>
+            <Label htmlFor="smtpHost">SMTP host</Label>
+            <Input
+              id="smtpHost"
+              type="text"
+              value={state.email.smtpHost}
+              onChange={(e) => update("email", { smtpHost: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="smtpPort">SMTP port</Label>
+            <Input
+              id="smtpPort"
+              type="number"
+              value={state.email.smtpPort}
+              onChange={(e) => update("email", { smtpPort: Number(e.target.value) })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="smtpUser">SMTP user</Label>
+            <Input
+              id="smtpUser"
+              type="text"
+              value={state.email.smtpUser}
+              onChange={(e) => update("email", { smtpUser: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="smtpPass">SMTP password</Label>
+            <Input
+              id="smtpPass"
+              type="password"
+              value={state.email.smtpPass}
+              onChange={(e) => update("email", { smtpPass: e.target.value })}
+            />
+          </div>
+          <label className="flex items-center gap-2.5 text-[13px] text-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={state.email.smtpSecure}
               onChange={(e) => update("email", { smtpSecure: e.target.checked })}
-            />{" "}
+              className="w-4 h-4 rounded border-theme bg-surface text-gold focus:ring-gold/30"
+            />
             Use TLS
           </label>
-        </>
+        </div>
       )}
 
       {state.email.provider === "sendgrid" && (
-        <>
-          <label htmlFor="sendgridApiKey">SendGrid API key</label>
-          <input
+        <div className="pt-2 border-t border-theme/20">
+          <Label htmlFor="sendgridApiKey">SendGrid API key</Label>
+          <Input
             id="sendgridApiKey"
             type="password"
             value={state.email.sendgridApiKey}
             onChange={(e) => update("email", { sendgridApiKey: e.target.value })}
           />
-        </>
+        </div>
       )}
 
       {state.email.provider === "mailgun" && (
-        <>
-          <label htmlFor="mailgunApiKey">Mailgun API key</label>
-          <input
-            id="mailgunApiKey"
-            type="password"
-            value={state.email.mailgunApiKey}
-            onChange={(e) => update("email", { mailgunApiKey: e.target.value })}
-          />
-          <label htmlFor="mailgunDomain">Mailgun domain</label>
-          <input
-            id="mailgunDomain"
-            type="text"
-            value={state.email.mailgunDomain}
-            onChange={(e) => update("email", { mailgunDomain: e.target.value })}
-          />
-        </>
+        <div className="space-y-4 pt-2 border-t border-theme/20">
+          <div>
+            <Label htmlFor="mailgunApiKey">Mailgun API key</Label>
+            <Input
+              id="mailgunApiKey"
+              type="password"
+              value={state.email.mailgunApiKey}
+              onChange={(e) => update("email", { mailgunApiKey: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="mailgunDomain">Mailgun domain</Label>
+            <Input
+              id="mailgunDomain"
+              type="text"
+              value={state.email.mailgunDomain}
+              onChange={(e) => update("email", { mailgunDomain: e.target.value })}
+            />
+          </div>
+        </div>
       )}
 
-      <div className="actions">
-        <button onClick={validateEmail} disabled={busy || state.email.provider === "none"}>
-          {busy ? "Sending…" : "Send test email"}
-        </button>
-        <button onClick={next}>Continue</button>
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={validateEmail} disabled={busy || state.email.provider === "none"} isLoading={busy}>
+          Send test email
+        </Button>
+        <Button onClick={next}>Continue</Button>
       </div>
-    </>
+    </div>
   );
 
   const renderSmsStep = () => (
-    <>
-      <p className="lead">Choose how Keystone sends SMS messages.</p>
-      <label htmlFor="smsProvider">SMS provider</label>
-      <select
-        id="smsProvider"
-        value={state.sms.provider}
-        onChange={(e) => update("sms", { provider: e.target.value as SmsProvider })}
-      >
-        <option value="none">None</option>
-        <option value="console">Console (development)</option>
-        <option value="twilio">Twilio</option>
-      </select>
+    <div className="space-y-4">
+      <p className="text-[13px] txt-muted">Choose how Keystone sends SMS messages.</p>
+      <div>
+        <Label htmlFor="smsProvider">SMS provider</Label>
+        <Select
+          id="smsProvider"
+          value={state.sms.provider}
+          onChange={(e) => update("sms", { provider: e.target.value as SmsProvider })}
+        >
+          <option value="none">None</option>
+          <option value="console">Console (development)</option>
+          <option value="twilio">Twilio</option>
+        </Select>
+      </div>
 
       {state.sms.provider === "twilio" && (
-        <>
-          <label htmlFor="twilioAccountSid">Account SID</label>
-          <input
-            id="twilioAccountSid"
-            type="text"
-            value={state.sms.twilioAccountSid}
-            onChange={(e) => update("sms", { twilioAccountSid: e.target.value })}
-          />
-          <label htmlFor="twilioAuthToken">Auth token</label>
-          <input
-            id="twilioAuthToken"
-            type="password"
-            value={state.sms.twilioAuthToken}
-            onChange={(e) => update("sms", { twilioAuthToken: e.target.value })}
-          />
-          <label htmlFor="twilioFromNumber">From number</label>
-          <input
-            id="twilioFromNumber"
-            type="text"
-            value={state.sms.twilioFromNumber}
-            onChange={(e) => update("sms", { twilioFromNumber: e.target.value })}
-          />
-          <label htmlFor="twilioMessagingServiceSid">Messaging service SID</label>
-          <input
-            id="twilioMessagingServiceSid"
-            type="text"
-            value={state.sms.twilioMessagingServiceSid}
-            onChange={(e) => update("sms", { twilioMessagingServiceSid: e.target.value })}
-          />
-        </>
+        <div className="space-y-4 pt-2 border-t border-theme/20">
+          <div>
+            <Label htmlFor="twilioAccountSid">Account SID</Label>
+            <Input
+              id="twilioAccountSid"
+              type="text"
+              value={state.sms.twilioAccountSid}
+              onChange={(e) => update("sms", { twilioAccountSid: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="twilioAuthToken">Auth token</Label>
+            <Input
+              id="twilioAuthToken"
+              type="password"
+              value={state.sms.twilioAuthToken}
+              onChange={(e) => update("sms", { twilioAuthToken: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="twilioFromNumber">From number</Label>
+            <Input
+              id="twilioFromNumber"
+              type="text"
+              value={state.sms.twilioFromNumber}
+              onChange={(e) => update("sms", { twilioFromNumber: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="twilioMessagingServiceSid">Messaging service SID</Label>
+            <Input
+              id="twilioMessagingServiceSid"
+              type="text"
+              value={state.sms.twilioMessagingServiceSid}
+              onChange={(e) => update("sms", { twilioMessagingServiceSid: e.target.value })}
+            />
+          </div>
+        </div>
       )}
 
-      <div className="actions">
-        <button onClick={validateSms} disabled={busy || state.sms.provider === "none"}>
-          {busy ? "Sending…" : "Send test SMS"}
-        </button>
-        <button onClick={next}>Continue</button>
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={validateSms} disabled={busy || state.sms.provider === "none"} isLoading={busy}>
+          Send test SMS
+        </Button>
+        <Button onClick={next}>Continue</Button>
       </div>
-    </>
+    </div>
   );
 
   const renderConnectorsStep = () => {
@@ -558,132 +658,160 @@ export default function Wizard() {
     const connectorCard = (key: keyof WizardState["connectors"], label: string, extra?: string) => {
       const cfg = state.connectors[key];
       return (
-        <div key={key} className="connector-card">
-          <label className="connector-header">
-            <input type="checkbox" checked={cfg.enabled} onChange={() => toggle(key)} />
-            <strong>{label}</strong>
+        <Card
+          key={key}
+          className={`p-4 transition-colors ${cfg.enabled ? "border-gold/30 bg-gold/[0.03]" : ""}`}
+        >
+          <label className="flex items-center gap-3 text-[13px] font-medium text-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={cfg.enabled}
+              onChange={() => toggle(key)}
+              className="w-4 h-4 rounded border-theme bg-surface text-gold focus:ring-gold/30"
+            />
+            {label}
           </label>
           {cfg.enabled && (
-            <div className="connector-fields">
-              <label>Client ID</label>
-              <input
-                type="text"
-                value={cfg.clientId}
-                onChange={(e) => updateConnector(key, "clientId", e.target.value)}
-              />
-              <label>Client secret</label>
-              <input
-                type="password"
-                value={cfg.clientSecret}
-                onChange={(e) => updateConnector(key, "clientSecret", e.target.value)}
-              />
+            <div className="space-y-3 mt-3 pt-3 border-t border-theme/20">
+              <div>
+                <Label className="text-[12px]">Client ID</Label>
+                <Input
+                  type="text"
+                  value={cfg.clientId}
+                  onChange={(e) => updateConnector(key, "clientId", e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-[12px]">Client secret</Label>
+                <Input
+                  type="password"
+                  value={cfg.clientSecret}
+                  onChange={(e) => updateConnector(key, "clientSecret", e.target.value)}
+                />
+              </div>
               {extra && (
-                <>
-                  <label>{extra === "issuer" ? "Issuer" : "Domain"}</label>
-                  <input
+                <div>
+                  <Label className="text-[12px]">{extra === "issuer" ? "Issuer" : "Domain"}</Label>
+                  <Input
                     type="text"
                     value={(cfg as unknown as Record<string, string>)[extra]}
                     onChange={(e) => updateConnector(key, extra, e.target.value)}
                   />
-                </>
+                </div>
               )}
             </div>
           )}
-        </div>
+        </Card>
       );
     };
 
     return (
-      <>
-        <p className="lead">Enable optional identity connectors. All are optional.</p>
-        {connectorCard("google", "Google")}
-        {connectorCard("github", "GitHub")}
-        {connectorCard("azure", "Azure AD")}
-        {connectorCard("okta", "Okta", "issuer")}
-        {connectorCard("keycloak", "Keycloak", "issuer")}
-        {connectorCard("zitadel", "Zitadel", "domain")}
-        <button onClick={next}>Continue</button>
-      </>
+      <div className="space-y-4">
+        <p className="text-[13px] txt-muted">Enable optional identity connectors. All are optional.</p>
+        <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+          {connectorCard("google", "Google")}
+          {connectorCard("github", "GitHub")}
+          {connectorCard("azure", "Azure AD")}
+          {connectorCard("okta", "Okta", "issuer")}
+          {connectorCard("keycloak", "Keycloak", "issuer")}
+          {connectorCard("zitadel", "Zitadel", "domain")}
+        </div>
+        <Button onClick={next} className="w-full sm:w-auto">
+          Continue
+        </Button>
+      </div>
     );
   };
 
   const renderOwnerStep = () => (
-    <>
-      <p className="lead">Create the first platform owner account.</p>
-      <form onSubmit={createOwner}>
-        <label htmlFor="ownerName">Full name (optional)</label>
-        <input
+    <form onSubmit={createOwner} className="space-y-4">
+      <p className="text-[13px] txt-muted">Create the first platform owner account.</p>
+      <div>
+        <Label htmlFor="ownerName">Full name (optional)</Label>
+        <Input
           id="ownerName"
           type="text"
           value={state.owner.name}
           onChange={(e) => update("owner", { name: e.target.value })}
+          leftIcon={<User className="w-4 h-4" />}
         />
-
-        <label htmlFor="ownerEmail">Email address</label>
-        <input
+      </div>
+      <div>
+        <Label htmlFor="ownerEmail">Email address</Label>
+        <Input
           id="ownerEmail"
           type="email"
           required
           value={state.owner.email}
           onChange={(e) => update("owner", { email: e.target.value })}
+          leftIcon={<Mail className="w-4 h-4" />}
         />
-
-        <label htmlFor="ownerPassword">Password</label>
-        <input
+      </div>
+      <div>
+        <Label htmlFor="ownerPassword">Password</Label>
+        <Input
           id="ownerPassword"
           type="password"
           required
           minLength={8}
           value={state.owner.password}
           onChange={(e) => update("owner", { password: e.target.value })}
+          leftIcon={<Key className="w-4 h-4" />}
         />
-
-        <button type="submit" disabled={busy}>
-          {busy ? "Creating…" : "Create owner account"}
-        </button>
-      </form>
-    </>
+      </div>
+      <Button type="submit" disabled={busy} isLoading={busy} className="w-full sm:w-auto">
+        Create owner account
+      </Button>
+    </form>
   );
 
   const renderReviewStep = () => {
     const env = buildEnv();
     return (
-      <>
-        <p className="lead">Review the configuration before applying.</p>
-        <div className="review">
+      <div className="space-y-4">
+        <p className="text-[13px] txt-muted">Review the configuration before applying.</p>
+        <div className="max-h-[320px] overflow-y-auto rounded-xl border border-theme/30 bg-surface p-4 space-y-2">
           {Object.entries(env).map(([key, value]) => (
-            <div key={key} className="review-row">
-              <span className="review-key">{key}</span>
-              <span className="review-value">{mask(value)}</span>
+            <div key={key} className="flex justify-between gap-4 text-[12px] border-b border-theme/20 last:border-0 pb-2 last:pb-0">
+              <span className="txt-muted font-mono">{key}</span>
+              <span className="txt-body">{mask(value)}</span>
             </div>
           ))}
         </div>
-        <div className="actions">
-          <button onClick={back}>Back</button>
-          <button onClick={apply} disabled={busy}>
-            {busy ? "Applying…" : "Apply configuration"}
-          </button>
+        <div className="flex flex-wrap gap-3">
+          <Button onClick={back} variant="secondary" disabled={busy}>
+            Back
+          </Button>
+          <Button onClick={apply} disabled={busy} isLoading={busy}>
+            Apply configuration
+          </Button>
         </div>
-      </>
+      </div>
     );
   };
 
   const renderDoneStep = () => (
-    <>
-      <p className="success">Setup complete. Owner account created for {state.owner.email}.</p>
+    <div className="space-y-4 text-center">
+      <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
+        <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+      </div>
+      <Alert variant="success" className="text-left">
+        Setup complete. Owner account created for {state.owner.email}.
+      </Alert>
       {needsRestart ? (
-        <>
-          <p className="lead">
+        <div className="space-y-3">
+          <p className="text-[13px] txt-muted">
             Keystone must restart to load the new database configuration.
           </p>
-          <button onClick={restart} disabled={busy}>
-            {busy ? "Restarting…" : "Restart server"}
-          </button>
-        </>
+          <Button onClick={restart} disabled={busy} isLoading={busy}>
+            <RefreshCw className="w-4 h-4" />
+            Restart server
+          </Button>
+        </div>
       ) : (
-        <p className="lead">You can now sign in to the Administration Portal.</p>
+        <p className="text-[13px] txt-muted">You can now sign in to the Administration Portal.</p>
       )}
-    </>
+    </div>
   );
 
   const stepRenderers: Record<number, () => React.ReactNode> = {
@@ -700,32 +828,42 @@ export default function Wizard() {
   };
 
   return (
-    <div className="card">
-      <h1>Welcome to Keystone</h1>
-      <p className="lead">Configure your identity platform in a few steps.</p>
-
-      <div className="steps">
-        {STEPS.map((label, idx) => (
-          <div key={label} className="step">
-            <span
-              className={`step-dot ${idx === step ? "active" : idx < step ? "done" : ""}`}
-            >
-              {idx < step ? "✓" : idx + 1}
-            </span>
-            <span>{label}</span>
-          </div>
-        ))}
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-9 h-9 rounded-lg bg-gold/10 flex items-center justify-center text-gold">
+          <StepIcon className="w-5 h-5" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold txt-head leading-tight">
+            {STEPS[step]}
+          </h2>
+          <p className="text-[11px] txt-muted">
+            Step {step + 1} of {STEPS.length}
+          </p>
+        </div>
       </div>
 
-      {success && <p className="success">{success}</p>}
-      {error && <p className="error">{error}</p>}
+      <StepIndicator steps={STEPS} current={step} />
+
+      {success && (
+        <Alert variant="success" className="mb-4">
+          {success}
+        </Alert>
+      )}
+      {error && (
+        <Alert variant="error" className="mb-4">
+          {error}
+        </Alert>
+      )}
 
       <div className="step-content">{stepRenderers[step]()}</div>
 
       {step > 0 && step < 9 && step !== 7 && (
-        <button className="secondary" onClick={back} disabled={busy}>
-          Back
-        </button>
+        <div className="mt-5 pt-4 border-t border-theme/20">
+          <Button variant="ghost" onClick={back} disabled={busy}>
+            Back
+          </Button>
+        </div>
       )}
     </div>
   );
