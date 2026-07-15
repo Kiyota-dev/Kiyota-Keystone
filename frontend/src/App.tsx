@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { api } from "./api.ts";
 import Wizard from "./Wizard.tsx";
+import SimpleWizard from "./components/wizard/SimpleWizard.tsx";
 import Dashboard from "./Dashboard.tsx";
 import { Card } from "./components/ui/Card.tsx";
 import { Alert } from "./components/ui/Alert.tsx";
@@ -11,6 +12,7 @@ export default function App() {
   const [status, setStatus] = useState<{ needsSetup: boolean; setupToken: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [useAdvancedWizard, setUseAdvancedWizard] = useState(false);
 
   useEffect(() => {
     api
@@ -61,7 +63,9 @@ export default function App() {
           </div>
         )}
 
-        {!loading && !error && status?.needsSetup && <Wizard />}
+        {!loading && !error && status?.needsSetup && (
+          useAdvancedWizard ? <Wizard /> : <SimpleWizard onSwitchAdvanced={() => setUseAdvancedWizard(true)} />
+        )}
       </Card>
     </div>
   );
