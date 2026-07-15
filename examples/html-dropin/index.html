@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keystone Drop-in Auth Example</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #e8ecf1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1a2029;
+      border: 1px solid #2a3039;
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p.subtitle { margin: 0 0 24px; color: #9ba3b0; font-size: 14px; }
+    .field { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-size: 13px; color: #c8cdd6; }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #2a3039;
+      background: #111820;
+      color: #e8ecf1;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus { border-color: #d4af37; }
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #d4af37, #b8962f);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    button.secondary {
+      background: transparent;
+      border: 1px solid #2a3039;
+      color: #c8cdd6;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: #6b7280;
+      font-size: 12px;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #2a3039;
+    }
+    .message {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      display: none;
+    }
+    .message.error { background: rgba(220, 38, 38, 0.1); color: #f87171; display: block; }
+    .message.success { background: rgba(16, 185, 129, 0.1); color: #34d399; display: block; }
+    .hidden { display: none; }
+    .profile { text-align: center; }
+    .profile h2 { margin: 0 0 8px; font-size: 20px; }
+    .profile p { margin: 0 0 24px; color: #9ba3b0; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="card" id="auth-card">
+    <!-- Login Form -->
+    <div id="login-view">
+      <h1>Welcome back</h1>
+      <p class="subtitle">Sign in to your Keystone account</p>
+      <form id="keystone-login-form">
+        <div class="field">
+          <label for="keystone-email">Email</label>
+          <input id="keystone-email" data-keystone-input="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label for="keystone-password">Password</label>
+          <input id="keystone-password" data-keystone-input="password" type="password" placeholder="••••••••" required />
+        </div>
+        <button type="submit">Sign In</button>
+        <div class="keystone-message message"></div>
+      </form>
+
+      <div class="divider">or</div>
+      <button id="keystone-google-btn" type="button" class="secondary">Sign in with Google</button>
+
+      <p class="subtitle" style="text-align: center; margin-top: 20px; margin-bottom: 0;">
+        No account?
+        <a href="#" id="show-register" style="color: #d4af37; text-decoration: none;">Create one</a>
+      </p>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-view" class="hidden">
+      <h1>Create account</h1>
+      <p class="subtitle">Sign up with Keystone</p>
+      <form id="keystone-register-form">
+        <div class="field">
+          <label for="reg-username">Username</label>
+          <input id="reg-username" data-keystone-input="username" type="text" placeholder="johndoe" required />
+        </div>
+        <div class="field">
+          <label for="reg-name">Full name</label>
+          <input id="reg-name" data-keystone-input="name" type="text" placeholder="John Doe" />
+        </div>
+        <div class="field">
+          <label for="reg-email">Email</label>
+          <input id="reg-email" data-keystone-input="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label for="reg-password">Password</label>
+          <input id="reg-password" data-keystone-input="password" type="password" placeholder="••••••••" required />
+        </div>
+        <button type="submit">Create Account</button>
+        <div class="keystone-message message"></div>
+      </form>
+
+      <p class="subtitle" style="text-align: center; margin-top: 20px; margin-bottom: 0;">
+        Already have an account?
+        <a href="#" id="show-login" style="color: #d4af37; text-decoration: none;">Sign in</a>
+      </p>
+    </div>
+
+    <!-- Profile View -->
+    <div id="profile-view" class="profile hidden">
+      <h1>You are signed in</h1>
+      <p id="profile-email"></p>
+      <button id="keystone-logout" type="button">Sign Out</button>
+    </div>
+  </div>
+
+  <!--
+    Load the Keystone drop-in SDK from your running Keystone server.
+    data-keystone-url tells the SDK where the Keystone API lives.
+  -->
+  <script src="http://localhost:4001/sdk/keystone-dropin.js"
+          data-keystone-url="http://localhost:4001"
+          data-keystone-autowire="true"></script>
+
+  <script>
+    // Toggle login / register views.
+    document.getElementById("show-register").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("login-view").classList.add("hidden");
+      document.getElementById("register-view").classList.remove("hidden");
+    });
+    document.getElementById("show-login").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("register-view").classList.add("hidden");
+      document.getElementById("login-view").classList.remove("hidden");
+    });
+
+    // Connect this project to Keystone. This creates an application entry
+    // automatically so CORS and OAuth callbacks work.
+    // IMPORTANT: serve this file from a local server (e.g. npx serve .) so it
+    // has a real http://localhost:PORT origin instead of file://.
+    async function connectProject() {
+      try {
+        await Keystone.connect("my-html-project", window.location.origin + "/callback.html");
+      } catch (err) {
+        console.error("Keystone connect failed:", err);
+      }
+    }
+
+    // Check if the user is already signed in and show the profile view.
+    async function checkSession() {
+      try {
+        const user = await Keystone.getUser();
+        if (user) showProfile(user);
+      } catch (err) {
+        // Not signed in — keep the login form visible.
+      }
+    }
+
+    function showProfile(user) {
+      document.getElementById("login-view").classList.add("hidden");
+      document.getElementById("register-view").classList.add("hidden");
+      document.getElementById("profile-view").classList.remove("hidden");
+      document.getElementById("profile-email").textContent = user.email;
+    }
+
+    connectProject();
+    checkSession();
+  </script>
+</body>
+</html>
