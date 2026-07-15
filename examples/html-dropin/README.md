@@ -10,9 +10,17 @@ This folder shows how to add Keystone authentication to a plain HTML project wit
 - Session check
 - Logout
 
+## Prerequisites
+
+Auth endpoints (`/auth/*`, `/sdk/*`, `/auth/oauth/*`) are only available after Keystone setup is complete. Make sure you have:
+
+1. Finished the setup wizard at `http://localhost:5173`.
+2. A `.keystone-setup-complete` marker file in the project root.
+3. Restarted Keystone in normal mode (not setup mode).
+
 ## Run it
 
-1. Make sure Keystone is running:
+1. Start Keystone in normal/production mode:
    ```bash
    ./start.sh --production
    ```
@@ -25,7 +33,7 @@ This folder shows how to add Keystone authentication to a plain HTML project wit
    python3 -m http.server 5500
    ```
 
-3. Open the URL it prints (usually `http://localhost:3000` or `http://localhost:5500`).
+3. Open the URL it prints, usually `http://localhost:3000` or `http://localhost:5500`.
 
 4. The first page load calls `Keystone.connect("my-html-project", ...)` which automatically registers your project origin with Keystone so CORS and OAuth work.
 
@@ -64,4 +72,5 @@ await Keystone.logout();
 
 - **Do not open `index.html` directly from the file system.** Browsers send `Origin: null` for `file://` URLs, which makes cookie-based sessions unreliable. Always serve it from `http://localhost:PORT`.
 - The `Keystone.connect()` endpoint creates a public application entry in Keystone. In production you should create applications from the Keystone admin dashboard instead.
-- For Google OAuth to work, you must configure Google client credentials in Keystone (Settings → Identity Providers → Google) and add `http://localhost:4001/auth/callback/google` as an authorized redirect URI in Google Cloud Console.
+- For Google OAuth to work, you must configure Google client credentials in Keystone (Dashboard → Identity Providers → Google) and add `http://localhost:4001/auth/callback/google` as an authorized redirect URI in Google Cloud Console.
+- If you see `CORS header missing` or `500` errors on `/auth/register`, Keystone is probably still in setup mode. Finish setup and restart with `./start.sh --production`.

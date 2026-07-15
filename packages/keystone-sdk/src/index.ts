@@ -238,6 +238,18 @@ class KeystoneSdk {
 
 let globalSdk: KeystoneSdk | null = null;
 
+// Convenience type so Keystone.connect(), Keystone.getUser(), etc. work directly.
+interface KeystoneGlobal {
+  (config?: KeystoneSdkConfig): KeystoneSdk;
+  connect(projectId: string, redirectUri?: string): Promise<ConnectResponse>;
+  request(path: string, body?: Record<string, unknown>): Promise<unknown>;
+  login(email: string, password: string): Promise<{ user: KeystoneUser }>;
+  register(username: string, email: string, password: string, name?: string): Promise<{ user: KeystoneUser }>;
+  getUser(): Promise<KeystoneUser | null>;
+  logout(): Promise<void>;
+  loginWithGoogle(): void;
+}
+
 /**
  * One-line setup. Include the script and call:
  *
@@ -245,12 +257,27 @@ let globalSdk: KeystoneSdk | null = null;
  *
  * Or just include the script with data attributes and forms auto-wire.
  */
-export function Keystone(config?: KeystoneSdkConfig): KeystoneSdk {
+function createKeystoneGlobal(config?: KeystoneSdkConfig): KeystoneSdk {
   if (!globalSdk) {
     globalSdk = new KeystoneSdk(config);
   }
   return globalSdk;
 }
+
+export const Keystone = createKeystoneGlobal as KeystoneGlobal;
+
+// Proxy common methods to the singleton instance so users can write
+// Keystone.connect(...) instead of Keystone().connect(...).
+Object.assign(Keystone, {
+  connect: (projectId: string, redirectUri?: string) => Keystone().connect(projectId, redirectUri),
+  request: (path: string, body?: Record<string, unknown>) => Keystone().request(path, body),
+  login: (email: string, password: string) => Keystone().login(email, password),
+  register: (username: string, email: string, password: string, name?: string) =>
+    Keystone().register(username, email, password, name),
+  getUser: () => Keystone().getUser(),
+  logout: () => Keystone().logout(),
+  loginWithGoogle: () => Keystone().loginWithGoogle(),
+});
 
 // Auto-initialize from script data attributes for zero-code usage.
 if (typeof document !== "undefined") {
