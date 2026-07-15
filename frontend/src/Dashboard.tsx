@@ -43,6 +43,7 @@ import { Advanced } from "./components/ui/Advanced.tsx";
 import { HealthBadge } from "./components/ui/HealthBadge.tsx";
 import { DiagnosticsDrawer } from "./components/dashboard/DiagnosticsDrawer.tsx";
 import { parseError } from "./lib/errorMessages.ts";
+import { useHashRoute } from "./hooks/useHashRoute.ts";
 
 const OrganizationsPanel = lazy(() => import("./components/OrganizationsPanel.tsx").then((m) => ({ default: m.OrganizationsPanel })));
 const ApplicationsPanel = lazy(() => import("./components/ApplicationsPanel.tsx").then((m) => ({ default: m.ApplicationsPanel })));
@@ -149,13 +150,35 @@ const TABS = [
   { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" />, group: "Platform" },
 ];
 
-export default function Dashboard() {
+interface DashboardProps {
+  initialTab?: string;
+}
+
+export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
+  const { navigate } = useHashRoute();
   const { token, user, loading: authLoading, error: authError, logout } = useAuth();
   const { mode, setMode } = useUiMode();
   const health = useHealth();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTabState] = useState(initialTab);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+
+  const setActiveTab = useCallback((tab: string) => {
+    setActiveTabState(tab);
+    navigate(`/dashboard/${encodeURIComponent(tab)}`);
+  }, [navigate]);
+
+  // Keep tab in sync with URL hash (e.g. browser back/forward).
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, "");
+    const match = hash.match(/^\/dashboard\/(.+)$/);
+    if (match) {
+      const tab = decodeURIComponent(match[1]);
+      if (tab !== activeTab) {
+        setActiveTabState(tab);
+      }
+    }
+  }, [activeTab]);
 
   const {
     data: overviewData,

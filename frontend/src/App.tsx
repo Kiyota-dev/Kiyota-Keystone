@@ -8,12 +8,18 @@ import { Card } from "./components/ui/Card.tsx";
 import { Alert } from "./components/ui/Alert.tsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary.tsx";
 import { ToastProvider } from "./components/ui/ToastProvider.tsx";
+import { useHashRoute } from "./hooks/useHashRoute.ts";
+
+function normalizeDashboardTab(path: string): string | null {
+  const match = path.match(/^\/dashboard\/(.+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export default function App() {
+  const { path, navigate } = useHashRoute();
   const [status, setStatus] = useState<{ needsSetup: boolean; setupToken: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [useAdvancedWizard, setUseAdvancedWizard] = useState(false);
 
   useEffect(() => {
     api
@@ -28,15 +34,30 @@ export default function App() {
       });
   }, []);
 
+  // Redirect to a sensible default once status is known and no route is set.
+  useEffect(() => {
+    if (loading || error || path !== "/") return;
+
+    if (status?.needsSetup) {
+      navigate("/setup/simple");
+    } else {
+      navigate("/dashboard/overview");
+    }
+  }, [loading, error, status, path, navigate]);
+
+  const dashboardTab = normalizeDashboardTab(path);
+
   if (!loading && !error && !status?.needsSetup) {
     return (
       <ErrorBoundary>
         <ToastProvider>
-          <Dashboard />
+          <Dashboard initialTab={dashboardTab ?? "overview"} />
         </ToastProvider>
       </ErrorBoundary>
     );
   }
+
+  const isAdvancedSetup = path === "/setup/advanced";
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
@@ -67,7 +88,11 @@ export default function App() {
         )}
 
         {!loading && !error && status?.needsSetup && (
-          useAdvancedWizard ? <Wizard /> : <SimpleWizard onSwitchAdvanced={() => setUseAdvancedWizard(true)} />
+          isAdvancedSetup ? (
+            <Wizard onUseSimple={() => navigate("/setup/simple")} />
+          ) : (
+            <SimpleWizard onSwitchAdvanced={() => navigate("/setup/advanced")} />
+          )
         )}
       </Card>
     </div>

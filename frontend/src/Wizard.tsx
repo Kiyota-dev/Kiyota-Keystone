@@ -61,7 +61,11 @@ function generateId(len = 32): string {
   return out;
 }
 
-export default function Wizard() {
+interface WizardProps {
+  onUseSimple?: () => void;
+}
+
+export default function Wizard({ onUseSimple }: WizardProps) {
   const [step, setStep] = useState(0);
   const [state, setState] = useState<WizardState>(initialState);
   const [busy, setBusy] = useState(false);
@@ -884,11 +888,25 @@ export default function Wizard() {
       <div className="step-content">{stepRenderers[step]()}</div>
 
       {step > 0 && step < 9 && step !== 7 && (
-        <div className="mt-5 pt-4 border-t border-theme/20">
-          <Button variant="ghost" onClick={back} disabled={busy}>
+        <div className="mt-5 pt-4 border-t border-theme/20 flex flex-col sm:flex-row gap-2">
+          <Button variant="ghost" onClick={back} disabled={busy} className="w-full sm:w-auto">
             Back
           </Button>
+          {onUseSimple && (
+            <Button variant="secondary" onClick={onUseSimple} disabled={busy} className="w-full sm:w-auto">
+              Use simple setup
+            </Button>
+          )}
         </div>
+      )}
+
+      {step === 0 && onUseSimple && (
+        <button
+          onClick={onUseSimple}
+          className="w-full text-center text-[12px] txt-muted hover:text-gold mt-4"
+        >
+          Use simple setup
+        </button>
       )}
     </div>
   );
