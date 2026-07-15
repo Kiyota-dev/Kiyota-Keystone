@@ -33,6 +33,8 @@ import { SettingsPanel } from "./components/dashboard/SettingsPanel.tsx";
 import { ConnectProjectPanel } from "./components/ConnectProjectPanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
+import { useUiMode } from "./hooks/useUiMode.ts";
+import { ModeToggle } from "./components/ui/ModeToggle.tsx";
 
 const OrganizationsPanel = lazy(() => import("./components/OrganizationsPanel.tsx").then((m) => ({ default: m.OrganizationsPanel })));
 const ApplicationsPanel = lazy(() => import("./components/ApplicationsPanel.tsx").then((m) => ({ default: m.ApplicationsPanel })));
@@ -141,6 +143,7 @@ const TABS = [
 
 export default function Dashboard() {
   const { token, user, loading: authLoading, error: authError, logout } = useAuth();
+  const { mode, setMode } = useUiMode();
   const [activeTab, setActiveTab] = useState("overview");
 
   const {
@@ -509,6 +512,8 @@ export default function Dashboard() {
     }
   };
 
+  const modeToggle = useMemo(() => <ModeToggle mode={mode} onChange={setMode} />, [mode, setMode]);
+
   return (
     <AppShell
       title="Keystone Admin"
@@ -518,6 +523,7 @@ export default function Dashboard() {
       activeTab={activeTab}
       onTabChange={setActiveTab}
       headerActions={headerActions}
+      modeToggle={modeToggle}
     >
       {renderContent()}
     </AppShell>

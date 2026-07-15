@@ -11,6 +11,7 @@ interface AppShellProps {
   activeTab: string;
   onTabChange: (id: string) => void;
   headerActions?: ReactNode;
+  modeToggle?: ReactNode;
   sidebarFooter?: ReactNode;
   children: ReactNode;
 }
@@ -23,6 +24,7 @@ function AppShellBase({
   activeTab,
   onTabChange,
   headerActions,
+  modeToggle,
   sidebarFooter,
   children,
 }: AppShellProps) {
@@ -40,7 +42,7 @@ function AppShellBase({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header logo={logo} title={title} subtitle={subtitle} actions={headerActionsNode} />
+      <Header logo={logo} title={title} subtitle={subtitle} modeToggle={modeToggle} actions={headerActionsNode} />
 
       <div className="flex">
         <Sidebar

@@ -1,5 +1,6 @@
 export type EmailProvider = "none" | "console" | "smtp" | "sendgrid" | "mailgun";
 export type SmsProvider = "none" | "console" | "twilio";
+export type UiMode = "simple" | "advanced";
 
 export interface InfrastructureConfig {
   databaseUrl: string;

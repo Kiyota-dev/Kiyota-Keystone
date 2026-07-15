@@ -5,6 +5,8 @@ import { Button } from "./ui/Button.tsx";
 import { Alert } from "./ui/Alert.tsx";
 import { Badge } from "./ui/Badge.tsx";
 import { Input } from "./ui/Input.tsx";
+import { Advanced } from "./ui/Advanced.tsx";
+import { useUiMode } from "../hooks/useUiMode.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
 interface FeatureFlag {
@@ -37,6 +39,7 @@ export function FeatureFlagsPanel({
   onDelete,
   onCreate,
 }: FeatureFlagsPanelProps) {
+  const { mode } = useUiMode();
   const [newKey, setNewKey] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [selectedProfile, setSelectedProfile] = useState<ConfigurationProfile | null>(null);
@@ -144,44 +147,46 @@ export function FeatureFlagsPanel({
         </div>
       </Card>
 
-      <Card variant="glass" className="p-5">
-        <h3 className="text-[14px] font-semibold txt-head mb-4 flex items-center gap-2">
-          <FileJson className="w-4 h-4 text-gold" />
-          Configuration Profiles
-        </h3>
+      <Advanced mode={mode}>
+        <Card variant="glass" className="p-5">
+          <h3 className="text-[14px] font-semibold txt-head mb-4 flex items-center gap-2">
+            <FileJson className="w-4 h-4 text-gold" />
+            Configuration Profiles
+          </h3>
 
-        {profiles.length === 0 ? (
-          <p className="text-[13px] txt-muted">No configuration profiles available.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {profiles.map((profile) => (
-              <button
-                key={profile.id}
-                onClick={() => setSelectedProfile(profile)}
-                className="text-left p-4 rounded-xl border border-theme/20 bg-surface hover:border-gold/50 transition-colors"
-              >
-                <span className="text-[13px] font-medium txt-head">{profile.name}</span>
-                <p className="text-[12px] txt-muted mt-1">{profile.description}</p>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {selectedProfile && (
-          <div className="mt-4 p-4 rounded-xl bg-surface border border-theme/20">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[13px] font-medium txt-head">{selectedProfile.name}</span>
-              <Button size="sm" variant="secondary" onClick={() => setSelectedProfile(null)}>
-                Close
-              </Button>
+          {profiles.length === 0 ? (
+            <p className="text-[13px] txt-muted">No configuration profiles available.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {profiles.map((profile) => (
+                <button
+                  key={profile.id}
+                  onClick={() => setSelectedProfile(profile)}
+                  className="text-left p-4 rounded-xl border border-theme/20 bg-surface hover:border-gold/50 transition-colors"
+                >
+                  <span className="text-[13px] font-medium txt-head">{profile.name}</span>
+                  <p className="text-[12px] txt-muted mt-1">{profile.description}</p>
+                </button>
+              ))}
             </div>
-            <p className="text-[12px] txt-muted mb-3">{selectedProfile.description}</p>
-            <pre className="text-[11px] txt-head bg-background p-3 rounded-lg overflow-auto max-h-64">
-              {JSON.stringify(selectedProfile, null, 2)}
-            </pre>
-          </div>
-        )}
-      </Card>
+          )}
+
+          {selectedProfile && (
+            <div className="mt-4 p-4 rounded-xl bg-surface border border-theme/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[13px] font-medium txt-head">{selectedProfile.name}</span>
+                <Button size="sm" variant="secondary" onClick={() => setSelectedProfile(null)}>
+                  Close
+                </Button>
+              </div>
+              <p className="text-[12px] txt-muted mb-3">{selectedProfile.description}</p>
+              <pre className="text-[11px] txt-head bg-background p-3 rounded-lg overflow-auto max-h-64">
+                {JSON.stringify(selectedProfile, null, 2)}
+              </pre>
+            </div>
+          )}
+        </Card>
+      </Advanced>
     </div>
   );
 }

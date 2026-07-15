@@ -7,6 +7,8 @@ import { Alert } from "./ui/Alert.tsx";
 import { Input } from "./ui/Input.tsx";
 import { Label } from "./ui/Label.tsx";
 import { DataTable } from "./DataTable.tsx";
+import { Advanced } from "./ui/Advanced.tsx";
+import { useUiMode } from "../hooks/useUiMode.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
 interface OrganizationsPanelProps {
@@ -15,6 +17,7 @@ interface OrganizationsPanelProps {
 }
 
 export function OrganizationsPanel({ state, onRefresh }: OrganizationsPanelProps) {
+  const { mode } = useUiMode();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -67,10 +70,12 @@ export function OrganizationsPanel({ state, onRefresh }: OrganizationsPanelProps
             <Label className="text-[12px]">Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Corp" required />
           </div>
-          <div>
-            <Label className="text-[12px]">Slug (optional)</Label>
-            <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="acme-corp" />
-          </div>
+          <Advanced mode={mode}>
+            <div>
+              <Label className="text-[12px]">Slug (optional)</Label>
+              <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="acme-corp" />
+            </div>
+          </Advanced>
           <div className="flex gap-2">
             <Button type="submit" size="sm" isLoading={busy} disabled={!name}>
               <Save className="w-4 h-4" />
@@ -86,7 +91,7 @@ export function OrganizationsPanel({ state, onRefresh }: OrganizationsPanelProps
 
       <DataTable
         state={state}
-        columns={["id", "name", "slug", "plan", "createdAt"]}
+        columns={mode === "simple" ? ["name"] : ["id", "name", "slug", "plan", "createdAt"]}
         rows={state.data?.organizations ?? []}
         emptyMessage="No organizations found."
       />

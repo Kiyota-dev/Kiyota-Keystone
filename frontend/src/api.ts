@@ -63,6 +63,8 @@ export interface SetupConfigResponse {
 
 export interface HealthStatus {
   status: string;
+  database?: boolean;
+  redis?: boolean;
 }
 
 export interface LoginInput {

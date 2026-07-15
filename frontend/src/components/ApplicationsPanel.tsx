@@ -8,6 +8,7 @@ import { Input } from "./ui/Input.tsx";
 import { Label } from "./ui/Label.tsx";
 import { Select } from "./ui/Select.tsx";
 import { DataTable } from "./DataTable.tsx";
+import { useUiMode } from "../hooks/useUiMode.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
 interface ApplicationsPanelProps {
@@ -17,6 +18,7 @@ interface ApplicationsPanelProps {
 }
 
 export function ApplicationsPanel({ state, organizations, onRefresh }: ApplicationsPanelProps) {
+  const { mode } = useUiMode();
   const [showForm, setShowForm] = useState(false);
   const [orgId, setOrgId] = useState("");
   const [name, setName] = useState("");
@@ -135,7 +137,7 @@ export function ApplicationsPanel({ state, organizations, onRefresh }: Applicati
 
       <DataTable
         state={state}
-        columns={["id", "orgId", "clientId", "name", "isActive", "createdAt"]}
+        columns={mode === "simple" ? ["name", "isActive"] : ["id", "orgId", "clientId", "name", "isActive", "createdAt"]}
         rows={state.data?.applications ?? []}
         emptyMessage="No applications found."
         renderRowActions={(row) => (

@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
-import { Settings, Save, RotateCcw } from "lucide-react";
+import { Settings, Save, RotateCcw, Sparkles } from "lucide-react";
 import { api } from "../../api.ts";
 import { Button } from "../ui/Button.tsx";
 import { Input } from "../ui/Input.tsx";
 import { Switch } from "../ui/Switch.tsx";
 import { Alert } from "../ui/Alert.tsx";
+import { Card } from "../ui/Card.tsx";
 import { PageHeader } from "../ui/PageHeader.tsx";
 import { SectionCard } from "../ui/SectionCard.tsx";
 import { FormField } from "../ui/FormField.tsx";
 import { LoadingState } from "../ui/LoadingState.tsx";
 import { ErrorState } from "../ui/ErrorState.tsx";
+import { Advanced } from "../ui/Advanced.tsx";
+import { useUiMode } from "../../hooks/useUiMode.ts";
 
 interface ConfigValues {
   AUTH_API_PUBLIC_URL?: string;
@@ -31,6 +34,7 @@ interface ConfigValues {
 }
 
 export function SettingsPanel() {
+  const { mode } = useUiMode();
   const [config, setConfig] = useState<ConfigValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -120,9 +124,26 @@ export function SettingsPanel() {
         </Alert>
       )}
 
-      <div className="space-y-6">
-        <SectionCard title={<><Settings className="w-4 h-4 inline mr-2 text-gold" />Platform URLs</>}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {mode === "simple" && (
+        <Card variant="glass" className="p-5 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <h3 className="text-[14px] font-semibold txt-head">Settings are in Advanced mode</h3>
+              <p className="text-[12px] txt-muted mt-1 leading-relaxed">
+                These options are usually configured during setup. Switch to Advanced mode at the top of the page to edit URLs, OAuth connectors, and email settings.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <Advanced mode={mode}>
+        <div className="space-y-6">
+          <SectionCard title={<><Settings className="w-4 h-4 inline mr-2 text-gold" />Platform URLs</>}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="Auth API public URL">
               <Input value={config.AUTH_API_PUBLIC_URL || ""} onChange={(e) => update("AUTH_API_PUBLIC_URL", e.target.value)} />
             </FormField>
@@ -214,6 +235,7 @@ export function SettingsPanel() {
           </Button>
         </div>
       </div>
+      </Advanced>
     </>
   );
 }

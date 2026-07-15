@@ -30,6 +30,8 @@ import { Badge } from "./ui/Badge.tsx";
 import { SectionCard } from "./ui/SectionCard.tsx";
 import { Tabs } from "./ui/Tabs.tsx";
 import { CodeBlock } from "./ui/CodeBlock.tsx";
+import { Advanced } from "./ui/Advanced.tsx";
+import { useUiMode } from "../hooks/useUiMode.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
 interface ConnectProjectPanelProps {
@@ -50,6 +52,7 @@ interface Application {
 type CodeTab = "html" | "react" | "vue";
 
 export function ConnectProjectPanel({ applicationsState, configState }: ConnectProjectPanelProps) {
+  const { mode } = useUiMode();
   const [selectedAppId, setSelectedAppId] = useState("");
   const [projectUrl, setProjectUrl] = useState("http://localhost:3000");
   const [callbackPath, setCallbackPath] = useState("/callback.html");
@@ -459,80 +462,82 @@ export default function AuthPage() {
         </div>
       </SectionCard>
 
-      {/* HTML reference */}
-      <SectionCard
-        title={
-          <span className="flex items-center gap-2">
-            <FileCode className="w-4 h-4 text-gold" />
-            HTML reference
-          </span>
-        }
-        description="Use these IDs and data attributes so the SDK can find your elements."
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-4 bg-surface border border-theme/20">
-            <h4 className="text-[13px] font-semibold txt-head mb-3 flex items-center gap-2">
-              <LayoutTemplate className="w-4 h-4 text-gold" />
-              Form IDs
-            </h4>
-            <div className="space-y-3">
-              {[
-                { id: "keystone-login-form", desc: "Sign-in form. Needs email and password inputs." },
-                { id: "keystone-register-form", desc: "Sign-up form. Needs username, email, and password inputs." },
-                { id: "keystone-google-btn", desc: "Button that starts Google OAuth sign-in." },
-                { id: "keystone-logout", desc: "Button that signs the user out." },
-              ].map((item) => (
-                <div key={item.id} className="flex items-start gap-3">
-                  <code className="text-[11px] text-gold shrink-0 mt-0.5">#{item.id}</code>
-                  <p className="text-[12px] txt-muted leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
+      <Advanced mode={mode}>
+        {/* HTML reference */}
+        <SectionCard
+          title={
+            <span className="flex items-center gap-2">
+              <FileCode className="w-4 h-4 text-gold" />
+              HTML reference
+            </span>
+          }
+          description="Use these IDs and data attributes so the SDK can find your elements."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 bg-surface border border-theme/20">
+              <h4 className="text-[13px] font-semibold txt-head mb-3 flex items-center gap-2">
+                <LayoutTemplate className="w-4 h-4 text-gold" />
+                Form IDs
+              </h4>
+              <div className="space-y-3">
+                {[
+                  { id: "keystone-login-form", desc: "Sign-in form. Needs email and password inputs." },
+                  { id: "keystone-register-form", desc: "Sign-up form. Needs username, email, and password inputs." },
+                  { id: "keystone-google-btn", desc: "Button that starts Google OAuth sign-in." },
+                  { id: "keystone-logout", desc: "Button that signs the user out." },
+                ].map((item) => (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <code className="text-[11px] text-gold shrink-0 mt-0.5">#{item.id}</code>
+                    <p className="text-[12px] txt-muted leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
 
-          <Card className="p-4 bg-surface border border-theme/20">
-            <h4 className="text-[13px] font-semibold txt-head mb-3 flex items-center gap-2">
-              <Braces className="w-4 h-4 text-gold" />
-              Data attributes
-            </h4>
-            <div className="space-y-3">
-              {[
-                { attr: "data-keystone-input", desc: "Use on inputs: email, password, username, name." },
-                { attr: "data-keystone-field", desc: "Use on display elements: email, name, username. Auto-filled after login." },
-                { attr: "data-keystone-url", desc: "Your Keystone API base URL." },
-                { attr: "data-keystone-client-id", desc: "Public client ID for this application." },
-              ].map((item) => (
-                <div key={item.attr} className="flex items-start gap-3">
-                  <code className="text-[11px] text-gold shrink-0 mt-0.5">{item.attr}</code>
-                  <p className="text-[12px] txt-muted leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      </SectionCard>
+            <Card className="p-4 bg-surface border border-theme/20">
+              <h4 className="text-[13px] font-semibold txt-head mb-3 flex items-center gap-2">
+                <Braces className="w-4 h-4 text-gold" />
+                Data attributes
+              </h4>
+              <div className="space-y-3">
+                {[
+                  { attr: "data-keystone-input", desc: "Use on inputs: email, password, username, name." },
+                  { attr: "data-keystone-field", desc: "Use on display elements: email, name, username. Auto-filled after login." },
+                  { attr: "data-keystone-url", desc: "Your Keystone API base URL." },
+                  { attr: "data-keystone-client-id", desc: "Public client ID for this application." },
+                ].map((item) => (
+                  <div key={item.attr} className="flex items-start gap-3">
+                    <code className="text-[11px] text-gold shrink-0 mt-0.5">{item.attr}</code>
+                    <p className="text-[12px] txt-muted leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </SectionCard>
 
-      {/* Security note */}
-      <Alert variant="info" className="text-[12px]">
-        <div className="flex items-start gap-2">
-          {showSecret ? <EyeOff className="w-4 h-4 shrink-0" /> : <Eye className="w-4 h-4 shrink-0" />}
-          <div className="flex-1">
-            <p className="font-medium">Never expose your client secret in browser code</p>
-            <p className="mt-1">
-              The drop-in SDK only needs the public <strong>client ID</strong>. Keep the client secret on your backend.
-            </p>
+        {/* Security note */}
+        <Alert variant="info" className="text-[12px]">
+          <div className="flex items-start gap-2">
+            {showSecret ? <EyeOff className="w-4 h-4 shrink-0" /> : <Eye className="w-4 h-4 shrink-0" />}
+            <div className="flex-1">
+              <p className="font-medium">Never expose your client secret in browser code</p>
+              <p className="mt-1">
+                The drop-in SDK only needs the public <strong>client ID</strong>. Keep the client secret on your backend.
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => setShowSecret((s) => !s)} className="shrink-0">
+              {showSecret ? "Hide" : "Show why"}
+            </Button>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => setShowSecret((s) => !s)} className="shrink-0">
-            {showSecret ? "Hide" : "Show why"}
-          </Button>
-        </div>
-        {showSecret && (
-          <div className="mt-3 pt-3 border-t border-gold/20 text-[11px] txt-muted">
-            The client secret is used for server-to-server communication (e.g., exchanging authorization codes).
-            Putting it in HTML or JavaScript sent to the browser would let anyone steal it.
-          </div>
-        )}
-      </Alert>
+          {showSecret && (
+            <div className="mt-3 pt-3 border-t border-gold/20 text-[11px] txt-muted">
+              The client secret is used for server-to-server communication (e.g., exchanging authorization codes).
+              Putting it in HTML or JavaScript sent to the browser would let anyone steal it.
+            </div>
+          )}
+        </Alert>
+      </Advanced>
     </div>
   );
 }
