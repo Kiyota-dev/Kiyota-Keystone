@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import {
   Activity,
   Users,
@@ -21,22 +21,23 @@ import { Alert } from "./components/ui/Alert.tsx";
 import { LoadingState } from "./components/ui/LoadingState.tsx";
 import { LoginForm } from "./components/LoginForm.tsx";
 import { AppShell } from "./components/layout/AppShell.tsx";
-import { OrganizationsPanel } from "./components/OrganizationsPanel.tsx";
-import { ApplicationsPanel } from "./components/ApplicationsPanel.tsx";
 import { UsersPanel } from "./components/UsersPanel.tsx";
-import { AuditLogsPanel } from "./components/AuditLogsPanel.tsx";
 import { KeysPanel } from "./components/KeysPanel.tsx";
 import { PluginsPanel } from "./components/PluginsPanel.tsx";
 import { FeatureFlagsPanel } from "./components/FeatureFlagsPanel.tsx";
-import { EnterpriseSsoPanel } from "./components/EnterpriseSsoPanel.tsx";
-import { WorkflowPanel } from "./components/WorkflowPanel.tsx";
-import { BillingPanel } from "./components/BillingPanel.tsx";
 import { OverviewPanel } from "./components/dashboard/OverviewPanel.tsx";
 import { IdentityProvidersPanel } from "./components/dashboard/IdentityProvidersPanel.tsx";
 import { OrganizationSelector } from "./components/dashboard/OrganizationSelector.tsx";
 import { SettingsPanel } from "./components/dashboard/SettingsPanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
+
+const OrganizationsPanel = lazy(() => import("./components/OrganizationsPanel.tsx").then((m) => ({ default: m.OrganizationsPanel })));
+const ApplicationsPanel = lazy(() => import("./components/ApplicationsPanel.tsx").then((m) => ({ default: m.ApplicationsPanel })));
+const AuditLogsPanel = lazy(() => import("./components/AuditLogsPanel.tsx").then((m) => ({ default: m.AuditLogsPanel })));
+const EnterpriseSsoPanel = lazy(() => import("./components/EnterpriseSsoPanel.tsx").then((m) => ({ default: m.EnterpriseSsoPanel })));
+const WorkflowPanel = lazy(() => import("./components/WorkflowPanel.tsx").then((m) => ({ default: m.WorkflowPanel })));
+const BillingPanel = lazy(() => import("./components/BillingPanel.tsx").then((m) => ({ default: m.BillingPanel })));
 
 export interface DataTabState<T> {
   data: T | null;
@@ -377,9 +378,17 @@ export default function Dashboard() {
       case "overview":
         return <OverviewPanel health={health} config={config} queueStatus={queueStatus} />;
       case "organizations":
-        return <OrganizationsPanel state={organizations} onRefresh={refreshOrganizations} />;
+        return (
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <OrganizationsPanel state={organizations} onRefresh={refreshOrganizations} />
+          </Suspense>
+        );
       case "applications":
-        return <ApplicationsPanel state={applications} organizations={organizations} onRefresh={refreshApplications} />;
+        return (
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <ApplicationsPanel state={applications} organizations={organizations} onRefresh={refreshApplications} />
+          </Suspense>
+        );
       case "users":
         return <UsersPanel state={users} onRefresh={refreshUsers} />;
       case "identity-providers":
@@ -408,65 +417,75 @@ export default function Dashboard() {
         );
       case "enterprise-sso":
         return (
-          <>
-            <OrganizationSelector
-              organizations={(organizations.data?.organizations as Array<{ id: string; name: string }> | undefined) ?? []}
-              selectedId={selectedOrgId}
-              onChange={setSelectedOrgId}
-              className="mb-4"
-            />
-            <EnterpriseSsoPanel
-              samlState={samlConnections}
-              oidcState={oidcConnections}
-              scimState={scimConfig}
-              selectedOrgId={selectedOrgId}
-              onRefresh={refreshEnterpriseSso}
-              onCreateSaml={handleCreateSaml}
-              onDeleteSaml={handleDeleteSaml}
-              onCreateOidc={handleCreateOidc}
-              onDeleteOidc={handleDeleteOidc}
-            />
-          </>
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <>
+              <OrganizationSelector
+                organizations={(organizations.data?.organizations as Array<{ id: string; name: string }> | undefined) ?? []}
+                selectedId={selectedOrgId}
+                onChange={setSelectedOrgId}
+                className="mb-4"
+              />
+              <EnterpriseSsoPanel
+                samlState={samlConnections}
+                oidcState={oidcConnections}
+                scimState={scimConfig}
+                selectedOrgId={selectedOrgId}
+                onRefresh={refreshEnterpriseSso}
+                onCreateSaml={handleCreateSaml}
+                onDeleteSaml={handleDeleteSaml}
+                onCreateOidc={handleCreateOidc}
+                onDeleteOidc={handleDeleteOidc}
+              />
+            </>
+          </Suspense>
         );
       case "workflows":
         return (
-          <WorkflowPanel
-            workflowsState={workflows}
-            runsState={workflowRuns}
-            selectedWorkflowId={selectedWorkflowId}
-            onSelectWorkflow={setSelectedWorkflowId}
-            onRefresh={refreshWorkflows}
-            onCreate={handleCreateWorkflow}
-            onDelete={handleDeleteWorkflow}
-            onLoadRuns={handleLoadWorkflowRuns}
-          />
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <WorkflowPanel
+              workflowsState={workflows}
+              runsState={workflowRuns}
+              selectedWorkflowId={selectedWorkflowId}
+              onSelectWorkflow={setSelectedWorkflowId}
+              onRefresh={refreshWorkflows}
+              onCreate={handleCreateWorkflow}
+              onDelete={handleDeleteWorkflow}
+              onLoadRuns={handleLoadWorkflowRuns}
+            />
+          </Suspense>
         );
       case "billing":
         return (
-          <>
-            <OrganizationSelector
-              organizations={(organizations.data?.organizations as Array<{ id: string; name: string }> | undefined) ?? []}
-              selectedId={selectedOrgId}
-              onChange={setSelectedOrgId}
-              className="mb-4"
-            />
-            <BillingPanel
-              plansState={plans}
-              billingState={billingSummary}
-              currentPlan={
-                (organizations.data?.organizations as Array<{ id: string; plan: string }> | undefined)?.find(
-                  (o) => o.id === selectedOrgId
-                )?.plan ?? "free"
-              }
-              selectedOrgId={selectedOrgId}
-              onRefresh={refreshBilling}
-              onChangePlan={handleChangePlan}
-              onProvisionCustomer={handleProvisionCustomer}
-            />
-          </>
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <>
+              <OrganizationSelector
+                organizations={(organizations.data?.organizations as Array<{ id: string; name: string }> | undefined) ?? []}
+                selectedId={selectedOrgId}
+                onChange={setSelectedOrgId}
+                className="mb-4"
+              />
+              <BillingPanel
+                plansState={plans}
+                billingState={billingSummary}
+                currentPlan={
+                  (organizations.data?.organizations as Array<{ id: string; plan: string }> | undefined)?.find(
+                    (o) => o.id === selectedOrgId
+                  )?.plan ?? "free"
+                }
+                selectedOrgId={selectedOrgId}
+                onRefresh={refreshBilling}
+                onChangePlan={handleChangePlan}
+                onProvisionCustomer={handleProvisionCustomer}
+              />
+            </>
+          </Suspense>
         );
       case "audit-logs":
-        return <AuditLogsPanel state={auditLogs} onRefresh={refreshAuditLogs} />;
+        return (
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <AuditLogsPanel state={auditLogs} onRefresh={refreshAuditLogs} />
+          </Suspense>
+        );
       case "settings":
         return <SettingsPanel />;
       default:

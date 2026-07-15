@@ -164,10 +164,19 @@ else
 fi
 
 echo ""
-ui_step "Starting Keystone setup frontend..."
-cd frontend
-VITE_KEYSTONE_API_URL="${KEYSTONE_API_URL}" npm run dev &
-FRONTEND_PID=$!
+if [ "$USE_PRODUCTION" = "true" ] && [ -f frontend/dist/index.html ]; then
+  ui_step "Starting Keystone production frontend preview..."
+  cd frontend
+  VITE_KEYSTONE_API_URL="${KEYSTONE_API_URL}" npx vite preview --port 5173 --strictPort &
+  FRONTEND_PID=$!
+  FRONTEND_MODE="production"
+else
+  ui_step "Starting Keystone setup frontend..."
+  cd frontend
+  VITE_KEYSTONE_API_URL="${KEYSTONE_API_URL}" npm run dev &
+  FRONTEND_PID=$!
+  FRONTEND_MODE="development"
+fi
 
 cd "$SCRIPT_DIR"
 
@@ -177,6 +186,11 @@ ui_success "Keystone is starting up:"
 echo ""
 echo -e "  ${BOLD}API:${RESET}      http://localhost:${PORT}"
 echo -e "  ${BOLD}UI:${RESET}       http://localhost:5173"
+if [ "$FRONTEND_MODE" = "production" ]; then
+  echo -e "  ${BOLD}Mode:${RESET}     production (compiled static files)"
+else
+  echo -e "  ${BOLD}Mode:${RESET}     development (hot reload)"
+fi
 echo ""
 if [ -n "${KEYSTONE_SETUP_MODE:-}" ]; then
   ui_warning "Setup mode active."
