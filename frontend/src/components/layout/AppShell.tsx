@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { memo, useMemo, type ReactNode } from "react";
 import { Header } from "./Header.tsx";
 import { Sidebar, type SidebarItem } from "./Sidebar.tsx";
 import { MobileNav } from "./MobileNav.tsx";
@@ -15,7 +15,7 @@ interface AppShellProps {
   children: ReactNode;
 }
 
-export function AppShell({
+function AppShellBase({
   title,
   subtitle,
   logo,
@@ -26,21 +26,21 @@ export function AppShell({
   sidebarFooter,
   children,
 }: AppShellProps) {
+  const headerActionsNode = useMemo(
+    () => (
+      <>
+        <div className="md:hidden">
+          <MobileNav items={sidebarItems} active={activeTab} onChange={onTabChange} />
+        </div>
+        {headerActions}
+      </>
+    ),
+    [sidebarItems, activeTab, onTabChange, headerActions]
+  );
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header
-        logo={logo}
-        title={title}
-        subtitle={subtitle}
-        actions={
-          <>
-            <div className="md:hidden">
-              <MobileNav items={sidebarItems} active={activeTab} onChange={onTabChange} />
-            </div>
-            {headerActions}
-          </>
-        }
-      />
+      <Header logo={logo} title={title} subtitle={subtitle} actions={headerActionsNode} />
 
       <div className="flex">
         <Sidebar
@@ -57,3 +57,5 @@ export function AppShell({
     </div>
   );
 }
+
+export const AppShell = memo(AppShellBase);

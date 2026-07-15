@@ -1,4 +1,4 @@
-import { useEffect, useState, Suspense, lazy, useMemo } from "react";
+import { useEffect, useState, Suspense, lazy, useMemo, useCallback } from "react";
 import {
   Activity,
   Users,
@@ -186,93 +186,93 @@ export default function Dashboard() {
     }
   }
 
-  const refreshUsers = () => loadTab({ data: null, loading: false, error: null }, setUsers, api.getUsers);
-  const refreshOrganizations = () => loadTab({ data: null, loading: false, error: null }, setOrganizations, api.getOrganizations);
-  const refreshApplications = () => loadTab({ data: null, loading: false, error: null }, setApplications, api.getApplications);
-  const refreshAuditLogs = (event?: string) => loadTab({ data: null, loading: false, error: null }, setAuditLogs, () => api.getAuditLogs(event));
-  const refreshKeys = () => loadTab({ data: null, loading: false, error: null }, setKeys, api.getSigningKeys);
-  const refreshPlugins = () => {
+  const refreshUsers = useCallback(() => loadTab({ data: null, loading: false, error: null }, setUsers, api.getUsers), []);
+  const refreshOrganizations = useCallback(() => loadTab({ data: null, loading: false, error: null }, setOrganizations, api.getOrganizations), []);
+  const refreshApplications = useCallback(() => loadTab({ data: null, loading: false, error: null }, setApplications, api.getApplications), []);
+  const refreshAuditLogs = useCallback((event?: string) => loadTab({ data: null, loading: false, error: null }, setAuditLogs, () => api.getAuditLogs(event)), []);
+  const refreshKeys = useCallback(() => loadTab({ data: null, loading: false, error: null }, setKeys, api.getSigningKeys), []);
+  const refreshPlugins = useCallback(() => {
     loadTab({ data: null, loading: false, error: null }, setPlugins, api.getPlugins);
     loadTab({ data: null, loading: false, error: null }, setExtensions, api.getPluginExtensionPoints);
-  };
-  const refreshFeatureFlags = () => {
+  }, []);
+  const refreshFeatureFlags = useCallback(() => {
     loadTab({ data: null, loading: false, error: null }, setFeatureFlags, api.getFeatureFlags);
     loadTab({ data: null, loading: false, error: null }, setConfigProfiles, api.getConfigurationProfiles);
-  };
-  const refreshEnterpriseSso = () => {
+  }, []);
+  const refreshEnterpriseSso = useCallback(() => {
     if (!selectedOrgId) return;
     loadTab({ data: null, loading: false, error: null }, setSamlConnections, () => api.getSamlConnections(selectedOrgId));
     loadTab({ data: null, loading: false, error: null }, setOidcConnections, () => api.getOidcConnections(selectedOrgId));
     loadTab({ data: null, loading: false, error: null }, setScimConfig, () => api.getScimConfig(selectedOrgId));
-  };
-  const refreshWorkflows = () => loadTab({ data: null, loading: false, error: null }, setWorkflows, api.getWorkflows);
-  const refreshBilling = () => {
+  }, [selectedOrgId]);
+  const refreshWorkflows = useCallback(() => loadTab({ data: null, loading: false, error: null }, setWorkflows, api.getWorkflows), []);
+  const refreshBilling = useCallback(() => {
     loadTab({ data: null, loading: false, error: null }, setPlans, api.getPlans);
     if (selectedOrgId) {
       loadTab({ data: null, loading: false, error: null }, setBillingSummary, () => api.getBillingSummary(selectedOrgId));
     }
-  };
+  }, [selectedOrgId]);
 
   // Event handlers
-  const handleUnregisterPlugin = async (name: string) => {
+  const handleUnregisterPlugin = useCallback(async (name: string) => {
     await api.unregisterPlugin(name);
     refreshPlugins();
-  };
-  const handleToggleFeatureFlag = async (key: string, enabled: boolean) => {
+  }, [refreshPlugins]);
+  const handleToggleFeatureFlag = useCallback(async (key: string, enabled: boolean) => {
     await api.setFeatureFlag(key, enabled);
     refreshFeatureFlags();
-  };
-  const handleDeleteFeatureFlag = async (key: string) => {
+  }, [refreshFeatureFlags]);
+  const handleDeleteFeatureFlag = useCallback(async (key: string) => {
     await api.deleteFeatureFlag(key);
     refreshFeatureFlags();
-  };
-  const handleCreateFeatureFlag = async (key: string, enabled: boolean, description?: string) => {
+  }, [refreshFeatureFlags]);
+  const handleCreateFeatureFlag = useCallback(async (key: string, enabled: boolean, description?: string) => {
     await api.setFeatureFlag(key, enabled, description);
     refreshFeatureFlags();
-  };
-  const handleCreateSaml = async (input: { name: string; spEntityId: string; spAcsUrl: string }) => {
+  }, [refreshFeatureFlags]);
+  const handleCreateSaml = useCallback(async (input: { name: string; spEntityId: string; spAcsUrl: string }) => {
     if (!selectedOrgId) return;
     await api.createSamlConnection(selectedOrgId, input);
     refreshEnterpriseSso();
-  };
-  const handleDeleteSaml = async (id: string) => {
+  }, [selectedOrgId, refreshEnterpriseSso]);
+  const handleDeleteSaml = useCallback(async (id: string) => {
     if (!selectedOrgId) return;
     await api.deleteSamlConnection(selectedOrgId, id);
     refreshEnterpriseSso();
-  };
-  const handleCreateOidc = async (input: { name: string; issuer: string; authorizationEndpoint: string; tokenEndpoint: string; clientId: string; clientSecret: string }) => {
+  }, [selectedOrgId, refreshEnterpriseSso]);
+  const handleCreateOidc = useCallback(async (input: { name: string; issuer: string; authorizationEndpoint: string; tokenEndpoint: string; clientId: string; clientSecret: string }) => {
     if (!selectedOrgId) return;
     await api.createOidcConnection(selectedOrgId, input);
     refreshEnterpriseSso();
-  };
-  const handleDeleteOidc = async (id: string) => {
+  }, [selectedOrgId, refreshEnterpriseSso]);
+  const handleDeleteOidc = useCallback(async (id: string) => {
     if (!selectedOrgId) return;
     await api.deleteOidcConnection(selectedOrgId, id);
     refreshEnterpriseSso();
-  };
-  const handleCreateWorkflow = async (input: { name: string; trigger: string; definition: { steps: Array<{ type: string; name?: string }> } }) => {
+  }, [selectedOrgId, refreshEnterpriseSso]);
+  const handleCreateWorkflow = useCallback(async (input: { name: string; trigger: string; definition: { steps: Array<{ type: string; name?: string }> } }) => {
     await api.createWorkflow(input);
     refreshWorkflows();
-  };
-  const handleDeleteWorkflow = async (id: string) => {
+  }, [refreshWorkflows]);
+  const handleDeleteWorkflow = useCallback(async (id: string) => {
     await api.deleteWorkflow(id);
     if (selectedWorkflowId === id) setSelectedWorkflowId(null);
     refreshWorkflows();
-  };
-  const handleLoadWorkflowRuns = async (id: string) => {
+  }, [selectedWorkflowId, refreshWorkflows]);
+  const handleLoadWorkflowRuns = useCallback(async (id: string) => {
     loadTab({ data: null, loading: false, error: null }, setWorkflowRuns, () => api.getWorkflowRuns(id));
-  };
-  const handleChangePlan = async (plan: string) => {
+  }, []);
+  const handleChangePlan = useCallback(async (plan: string) => {
     if (!selectedOrgId) return;
     await api.updateOrganizationPlan(selectedOrgId, plan);
     refreshBilling();
     refreshOrganizations();
-  };
-  const handleProvisionCustomer = async () => {
+  }, [selectedOrgId, refreshBilling, refreshOrganizations]);
+  const handleProvisionCustomer = useCallback(async () => {
     if (!selectedOrgId) return;
     await api.provisionBillingCustomer(selectedOrgId);
     refreshBilling();
-  };
+  }, [selectedOrgId, refreshBilling]);
 
   useEffect(() => {
     if (selectedOrgId) return;

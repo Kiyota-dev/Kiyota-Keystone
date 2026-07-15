@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Activity } from "lucide-react";
 import { Alert } from "./ui/Alert.tsx";
 import type { DataTabState } from "../Dashboard.tsx";
@@ -10,7 +11,7 @@ interface DataTableProps<T extends Record<string, unknown>> {
   renderRowActions?: (row: Record<string, unknown>) => React.ReactNode;
 }
 
-export function DataTable<T extends Record<string, unknown>>({
+function DataTableBase<T extends Record<string, unknown>>({
   state,
   columns,
   rows,
@@ -50,8 +51,9 @@ export function DataTable<T extends Record<string, unknown>>({
         <tbody>
           {rows.map((row, index) => {
             const record = row as Record<string, unknown>;
+            const rowKey = typeof record.id === "string" || typeof record.id === "number" ? String(record.id) : `row-${index}`;
             return (
-              <tr key={index} className="border-b border-theme/10 last:border-0">
+              <tr key={rowKey} className="border-b border-theme/10 last:border-0">
                 {columns.map((col) => (
                   <td key={col} className="py-2 pr-4 txt-body break-all">
                     {formatCellValue(record[col])}
@@ -75,3 +77,5 @@ function formatCellValue(value: unknown): string {
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
+
+export const DataTable = memo(DataTableBase) as typeof DataTableBase;

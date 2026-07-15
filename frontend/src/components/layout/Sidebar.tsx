@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 
 export interface SidebarItem {
   id: string;
@@ -14,9 +14,9 @@ interface SidebarProps {
   className?: string;
 }
 
-export function Sidebar({ items, active, onChange, footer, className = "" }: SidebarProps) {
+function SidebarBase({ items, active, onChange, footer, className = "" }: SidebarProps) {
   return (
-    <aside className={`hidden md:flex flex-col w-64 h-[calc(100vh-4rem)] sticky top-16 border-r border-theme/30 bg-background/80 backdrop-blur ${className}`}>
+    <aside className={`hidden md:flex flex-col w-64 h-[calc(100vh-4rem)] sticky top-16 border-r border-theme/30 bg-background ${className}`}>
       <nav className="flex-1 overflow-y-auto p-3 space-y-1">
         {items.map((item) => {
           const isActive = item.id === active;
@@ -39,3 +39,5 @@ export function Sidebar({ items, active, onChange, footer, className = "" }: Sid
     </aside>
   );
 }
+
+export const Sidebar = memo(SidebarBase);

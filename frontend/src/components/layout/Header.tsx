@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 
 interface HeaderProps {
   logo?: ReactNode;
@@ -8,7 +8,7 @@ interface HeaderProps {
   className?: string;
 }
 
-export function Header({ logo, title, subtitle, actions, className = "" }: HeaderProps) {
+function HeaderBase({ logo, title, subtitle, actions, className = "" }: HeaderProps) {
   return (
     <header className={`top-bar-glass sticky top-0 z-20 h-16 flex items-center justify-between px-4 md:px-6 ${className}`}>
       <div className="flex items-center gap-3 min-w-0">
@@ -22,3 +22,5 @@ export function Header({ logo, title, subtitle, actions, className = "" }: Heade
     </header>
   );
 }
+
+export const Header = memo(HeaderBase);
