@@ -4,6 +4,7 @@ export interface SidebarItem {
   id: string;
   label: string;
   icon?: ReactNode;
+  group?: string;
 }
 
 interface SidebarProps {
@@ -17,21 +18,28 @@ interface SidebarProps {
 function SidebarBase({ items, active, onChange, footer, className = "" }: SidebarProps) {
   return (
     <aside className={`hidden md:flex flex-col w-64 h-[calc(100vh-4rem)] sticky top-16 border-r border-theme/30 bg-background ${className}`}>
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-        {items.map((item) => {
+      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+        {items.map((item, idx) => {
           const isActive = item.id === active;
+          const showGroup = item.group && (idx === 0 || items[idx - 1].group !== item.group);
           return (
-            <button
-              key={item.id}
-              onClick={() => onChange(item.id)}
-              className={`nav-item w-full text-left transition-colors ${
-                isActive ? "nav-item-active txt-head" : "txt-nav-muted hover:text-foreground"
-              }`}
-              aria-current={isActive ? "page" : undefined}
-            >
-              {item.icon && <span className="shrink-0">{item.icon}</span>}
-              <span className="truncate">{item.label}</span>
-            </button>
+            <div key={item.id} className={showGroup ? "pt-2 first:pt-0" : undefined}>
+              {showGroup && (
+                <p className="px-3 mb-1.5 text-[10px] font-semibold txt-muted uppercase tracking-wider">
+                  {item.group}
+                </p>
+              )}
+              <button
+                onClick={() => onChange(item.id)}
+                className={`nav-item w-full text-left transition-colors ${
+                  isActive ? "nav-item-active txt-head" : "txt-nav-muted hover:text-foreground"
+                }`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                <span className="truncate">{item.label}</span>
+              </button>
+            </div>
           );
         })}
       </nav>

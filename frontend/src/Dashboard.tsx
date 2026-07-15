@@ -27,6 +27,7 @@ import { KeysPanel } from "./components/KeysPanel.tsx";
 import { PluginsPanel } from "./components/PluginsPanel.tsx";
 import { FeatureFlagsPanel } from "./components/FeatureFlagsPanel.tsx";
 import { OverviewPanel } from "./components/dashboard/OverviewPanel.tsx";
+import { HomePanel } from "./components/dashboard/HomePanel.tsx";
 import { IdentityProvidersPanel } from "./components/dashboard/IdentityProvidersPanel.tsx";
 import { OrganizationSelector } from "./components/dashboard/OrganizationSelector.tsx";
 import { SettingsPanel } from "./components/dashboard/SettingsPanel.tsx";
@@ -35,6 +36,8 @@ import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
 import { ModeToggle } from "./components/ui/ModeToggle.tsx";
+import { CommandPalette } from "./components/ui/CommandPalette.tsx";
+import { Advanced } from "./components/ui/Advanced.tsx";
 
 const OrganizationsPanel = lazy(() => import("./components/OrganizationsPanel.tsx").then((m) => ({ default: m.OrganizationsPanel })));
 const ApplicationsPanel = lazy(() => import("./components/ApplicationsPanel.tsx").then((m) => ({ default: m.ApplicationsPanel })));
@@ -125,26 +128,27 @@ interface Plan {
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
 const TABS = [
-  { id: "overview", label: "Overview", icon: <Activity className="w-4 h-4" /> },
-  { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" /> },
-  { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" /> },
-  { id: "connect-project", label: "Connect Project", icon: <Code2 className="w-4 h-4" /> },
-  { id: "users", label: "Users", icon: <Users className="w-4 h-4" /> },
-  { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" /> },
-  { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" /> },
-  { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" /> },
-  { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" /> },
-  { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" /> },
-  { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" /> },
-  { id: "billing", label: "Billing", icon: <CreditCard className="w-4 h-4" /> },
-  { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" /> },
-  { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
+  { id: "overview", label: "Home", icon: <Activity className="w-4 h-4" />, group: "Home" },
+  { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, group: "Authentication" },
+  { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" />, group: "Authentication" },
+  { id: "connect-project", label: "Connect Project", icon: <Code2 className="w-4 h-4" />, group: "Authentication" },
+  { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" />, group: "Authentication" },
+  { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" />, group: "Access Control" },
+  { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" />, group: "Access Control" },
+  { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" />, group: "Access Control" },
+  { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" />, group: "Platform" },
+  { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" />, group: "Platform" },
+  { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform" },
+  { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" />, group: "Platform" },
+  { id: "billing", label: "Billing", icon: <CreditCard className="w-4 h-4" />, group: "Platform" },
+  { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" />, group: "Platform" },
 ];
 
 export default function Dashboard() {
   const { token, user, loading: authLoading, error: authError, logout } = useAuth();
   const { mode, setMode } = useUiMode();
   const [activeTab, setActiveTab] = useState("overview");
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const {
     data: overviewData,
@@ -393,7 +397,16 @@ export default function Dashboard() {
 
     switch (activeTab) {
       case "overview":
-        return <OverviewPanel health={health} config={config} queueStatus={queueStatus} />;
+        return (
+          <>
+            <HomePanel onNavigate={setActiveTab} health={health} queueStatus={queueStatus} />
+            <Advanced mode={mode}>
+              <div className="mt-5">
+                <OverviewPanel health={health} config={config} queueStatus={queueStatus} />
+              </div>
+            </Advanced>
+          </>
+        );
       case "organizations":
         return (
           <Suspense fallback={<LoadingState message="Loading panel…" />}>
@@ -514,6 +527,28 @@ export default function Dashboard() {
 
   const modeToggle = useMemo(() => <ModeToggle mode={mode} onChange={setMode} />, [mode, setMode]);
 
+  const commandItems = useMemo(
+    () =>
+      TABS.map((tab) => ({
+        id: tab.id,
+        label: tab.label,
+        group: tab.group,
+        onSelect: () => setActiveTab(tab.id),
+      })),
+    []
+  );
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
   return (
     <AppShell
       title="Keystone Admin"
@@ -526,6 +561,7 @@ export default function Dashboard() {
       modeToggle={modeToggle}
     >
       {renderContent()}
+      <CommandPalette items={commandItems} isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </AppShell>
   );
 }
