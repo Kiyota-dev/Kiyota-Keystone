@@ -182,6 +182,8 @@ export default function Wizard() {
       AUTH_API_PUBLIC_URL: state.urls.authApiPublicUrl,
       CLIENT_APP_URL: state.urls.clientAppUrl,
       ALLOWED_ORIGINS: state.urls.allowedOrigins,
+      COOKIE_DOMAIN: state.urls.cookieDomain,
+      COOKIE_SECURE: String(state.urls.cookieSecure),
       KEYSTONE_INTERNAL_API_KEY: state.secrets.internalApiKey,
       KEYSTONE_ENCRYPTION_KEY: state.secrets.encryptionKey,
       EMAIL_PROVIDER: state.email.provider,
@@ -378,6 +380,29 @@ export default function Wizard() {
           leftIcon={<Link className="w-4 h-4" />}
         />
       </div>
+      <div>
+        <Label htmlFor="cookieDomain">Cookie domain</Label>
+        <Input
+          id="cookieDomain"
+          type="text"
+          placeholder="localhost or .yourdomain.com"
+          value={state.urls.cookieDomain}
+          onChange={(e) => update("urls", { cookieDomain: e.target.value })}
+          leftIcon={<Link className="w-4 h-4" />}
+        />
+        <p className="text-[11px] txt-muted mt-1">
+          Use a leading dot for production, e.g. .yourdomain.com, so cookies work across subdomains.
+        </p>
+      </div>
+      <label className="flex items-center gap-2.5 text-[13px] text-foreground cursor-pointer">
+        <input
+          type="checkbox"
+          checked={state.urls.cookieSecure}
+          onChange={(e) => update("urls", { cookieSecure: e.target.checked })}
+          className="w-4 h-4 rounded border-theme bg-surface text-gold focus:ring-gold/30"
+        />
+        Secure cookies (required for HTTPS production)
+      </label>
       <Button onClick={next} className="w-full sm:w-auto">
         Continue
       </Button>

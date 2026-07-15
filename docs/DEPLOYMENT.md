@@ -36,39 +36,61 @@ Your frontend and Keystone run as two separate services. The frontend loads the 
 
 ## Step 1 — Prepare environment variables
 
-On the server, create `.env`:
+You can configure almost everything through the Keystone setup wizard in the browser. You only need a minimal `.env` to start the wizard the first time.
+
+Create `.env` on the server with just enough to launch the setup UI:
+
+```env
+NODE_ENV=production
+PORT=4001
+HOST=0.0.0.0
+KEYSTONE_SETUP_MODE=true
+```
+
+Then run:
+
+```bash
+docker compose up -d
+```
+
+Open `https://auth.yourdomain.com/setup` and fill in:
+
+- Database URL
+- Redis URL
+- Public Keystone URL (`https://auth.yourdomain.com`)
+- Client app URL (`https://app.yourdomain.com`)
+- Allowed CORS origins (`https://app.yourdomain.com`)
+- Cookie domain (`.yourdomain.com`)
+- Secure cookies (enabled for HTTPS)
+- Auto-generated internal API key and encryption key
+- Google OAuth credentials
+- Email/SMS providers
+
+The wizard writes `.env` for you. No file editing needed after the first launch.
+
+If you prefer to pre-configure everything in `.env` instead, use:
 
 ```env
 NODE_ENV=production
 PORT=4001
 HOST=0.0.0.0
 
-# PostgreSQL and Redis URLs (managed or Docker Compose defaults)
 DATABASE_URL=postgresql://kiyota:strong-password@postgres:5432/kiyota
 REDIS_URL=redis://redis:6379
 
-# Public URL of Keystone — must be HTTPS in production
 AUTH_API_PUBLIC_URL=https://auth.yourdomain.com
 CLIENT_APP_URL=https://app.yourdomain.com
-
-# Allowed origins for CORS
 ALLOWED_ORIGINS=https://app.yourdomain.com
 
-# Cookie settings — share cookie between auth.yourdomain.com and app.yourdomain.com
 COOKIE_DOMAIN=.yourdomain.com
 COOKIE_SECURE=true
 
-# Internal API key used for cookie signing (generate a long random string)
 KEYSTONE_INTERNAL_API_KEY=change-me-to-a-long-random-string
-
-# Encryption key for secrets (generate with: openssl rand -hex 32)
 KEYSTONE_ENCRYPTION_KEY=...
 
-# Google OAuth
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 
-# Email provider (required for password reset, magic links)
 EMAIL_PROVIDER=smtp
 EMAIL_FROM=noreply@yourdomain.com
 SMTP_HOST=smtp.yourprovider.com
@@ -77,14 +99,6 @@ SMTP_USER=...
 SMTP_PASS=...
 SMTP_SECURE=true
 ```
-
-Generate strong keys:
-
-```bash
-openssl rand -hex 32
-```
-
-Use the output for `KEYSTONE_ENCRYPTION_KEY`.
 
 ---
 

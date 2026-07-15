@@ -6,8 +6,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
+COPY packages/keystone-sdk/package*.json ./packages/keystone-sdk/
+RUN cd packages/keystone-sdk && npm ci
+
 COPY . .
-RUN npm run build
+RUN npm run build:sdk && npm run build
 
 # ---------- Production stage ----------
 FROM node:22-slim
@@ -22,6 +25,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/packages/keystone-sdk/dist ./packages/keystone-sdk/dist
 
 ENV NODE_ENV=production
 EXPOSE 4001

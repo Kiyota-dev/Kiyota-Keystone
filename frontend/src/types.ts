@@ -10,6 +10,8 @@ export interface UrlsConfig {
   authApiPublicUrl: string;
   clientAppUrl: string;
   allowedOrigins: string;
+  cookieDomain: string;
+  cookieSecure: boolean;
 }
 
 export interface SecretsConfig {
@@ -83,6 +85,8 @@ export const initialState: WizardState = {
     authApiPublicUrl: "http://localhost:4001",
     clientAppUrl: typeof window !== "undefined" ? window.location.origin : "http://localhost:5173",
     allowedOrigins: typeof window !== "undefined" ? window.location.origin : "http://localhost:5173,http://localhost:5174",
+    cookieDomain: typeof window !== "undefined" ? window.location.hostname : "localhost",
+    cookieSecure: false,
   },
   secrets: {
     internalApiKey: "",
