@@ -111,6 +111,11 @@ export async function buildApp() {
       if (!origin) return cb(null, true);
       if (config.ALLOWED_ORIGINS.length === 0) return cb(null, true);
       if (config.ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      // In development, allow any localhost origin so external test projects
+      // can connect without pre-registering them in ALLOWED_ORIGINS.
+      if (config.NODE_ENV !== "production" && origin?.startsWith("http://localhost:")) {
+        return cb(null, true);
+      }
       cb(new Error("Origin not allowed"), false);
     },
     credentials: true,
