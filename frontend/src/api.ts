@@ -228,4 +228,10 @@ export const api = {
     }),
   deactivateUser: (userId: string) =>
     fetchJson<{ success: boolean }>(`/v1/admin/platform/users/${userId}`, { method: "DELETE" }),
+
+  // Platform configuration
+  getConfig: () => fetchJson<{ values: Record<string, string> }>("/v1/admin/config"),
+  updateConfig: (input: { values: Record<string, string> }) =>
+    fetchJson<{ ok: boolean }>("/v1/admin/config", { method: "PUT", body: JSON.stringify(input) }),
+  restartServer: () => fetchJson<{ ok: boolean }>("/v1/admin/config/restart", { method: "POST" }),
 };
