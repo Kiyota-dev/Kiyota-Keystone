@@ -57,6 +57,7 @@ export function ConnectProjectPanel({ applicationsState, configState }: ConnectP
   const [projectUrl, setProjectUrl] = useState("http://localhost:3000");
   const [callbackPath, setCallbackPath] = useState("/callback.html");
   const [activeTab, setActiveTab] = useState<CodeTab>("html");
+  const [framework, setFramework] = useState<"html" | "react" | "vue">("html");
   const [showSecret, setShowSecret] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -185,6 +186,14 @@ export default function AuthPage() {
     { label: "Application is active", ok: selectedApp?.isActive ?? false },
   ];
 
+  const simpleCode = codeExamples[framework];
+
+  const openTestLogin = () => {
+    if (!selectedApp) return;
+    const url = `${keystoneUrl}/sdk/test-login?client_id=${encodeURIComponent(selectedApp.clientId)}&callback=${encodeURIComponent(callbackUrl)}`;
+    window.open(url, "keystone-test", "width=480,height=640");
+  };
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -192,6 +201,58 @@ export default function AuthPage() {
         description="Generate a drop-in auth script and wire Keystone into any website or app in minutes."
       />
 
+      {mode === "simple" && (
+        <SectionCard
+          title="Quick install"
+          description="Choose your framework, pick an app, and copy one snippet."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <Label className="text-[12px]">Framework</Label>
+              <Select value={framework} onChange={(e) => setFramework(e.target.value as typeof framework)}>
+                <option value="html">HTML / Vanilla JS</option>
+                <option value="react">React</option>
+                <option value="vue">Vue</option>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[12px]">Application</Label>
+              <Select value={selectedAppId} onChange={(e) => setSelectedAppId(e.target.value)}>
+                <option value="">Select an application</option>
+                {apps.map((app) => (
+                  <option key={app.id} value={app.id}>
+                    {app.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[12px]">Website URL</Label>
+              <Input value={projectUrl} onChange={(e) => setProjectUrl(e.target.value)} placeholder="http://localhost:3000" />
+            </div>
+          </div>
+
+          <CodeBlock code={simpleCode} language={framework === "html" ? "html" : framework === "vue" ? "vue" : "tsx"} showLineNumbers />
+
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <Button size="sm" variant="secondary" onClick={handleCopy} disabled={!selectedApp}>
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied" : "Copy snippet"}
+            </Button>
+            <Button size="sm" onClick={openTestLogin} disabled={!selectedApp}>
+              Test login
+            </Button>
+          </div>
+
+          {!selectedApp && apps.length === 0 && (
+            <Alert variant="info" className="mt-4 text-[12px]">
+              Create an application first in the Applications section.
+            </Alert>
+          )}
+        </SectionCard>
+      )}
+
+      <Advanced mode={mode}>
       {/* Configuration */}
       <SectionCard
         title={
@@ -537,6 +598,7 @@ export default function AuthPage() {
             </div>
           )}
         </Alert>
+      </Advanced>
       </Advanced>
     </div>
   );
