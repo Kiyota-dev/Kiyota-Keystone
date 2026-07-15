@@ -184,7 +184,13 @@ export default function Dashboard() {
         setUser(result.user as { email?: string; role?: string });
       })
       .catch((err) => {
-        setAuthError(err instanceof Error ? err.message : String(err));
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.toLowerCase().includes("invalid token") || message.toLowerCase().includes("unauthorized")) {
+          localStorage.removeItem("keystone-access-token");
+          window.location.reload();
+          return;
+        }
+        setAuthError(message);
       })
       .finally(() => setAuthLoading(false));
   }, [token]);
