@@ -1,8 +1,9 @@
-import { Plug } from "lucide-react";
+import { Plug, ExternalLink } from "lucide-react";
 import { Card } from "../ui/Card.tsx";
 import { Badge } from "../ui/Badge.tsx";
 import { PageHeader } from "../ui/PageHeader.tsx";
 import { PanelWrapper } from "./PanelWrapper.tsx";
+import { IDENTITY_PROVIDER_PRESETS } from "../../lib/templates.ts";
 
 interface Provider {
   type: string;
@@ -60,6 +61,38 @@ export function IdentityProvidersPanel({ state }: IdentityProvidersPanelProps) {
               <code className="font-mono text-gold">GOOGLE_CLIENT_SECRET</code>. Users can then sign in
               through the federation endpoints.
             </p>
+          </div>
+
+          <div className="mt-5">
+            <h4 className="text-[13px] font-semibold txt-head mb-3">Quick setup guides</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {IDENTITY_PROVIDER_PRESETS.map((preset) => (
+                <Card key={preset.type} className="p-3 bg-surface border border-theme/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[13px] font-medium txt-head">{preset.name}</span>
+                    <a
+                      href={preset.docsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-gold hover:underline"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                  <p className="text-[11px] txt-muted mb-2">
+                    Callback URL: <code className="text-gold">{preset.callbackPath}</code>
+                  </p>
+                  <p className="text-[11px] txt-muted">
+                    Set {preset.fields.map((f, i) => (
+                      <span key={f.key}>
+                        {i > 0 && " and "}
+                        <code className="text-gold">{f.key}</code>
+                      </span>
+                    ))}
+                  </p>
+                </Card>
+              ))}
+            </div>
           </div>
         </Card>
       </PanelWrapper>

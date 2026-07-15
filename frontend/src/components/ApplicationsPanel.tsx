@@ -10,6 +10,7 @@ import { Select } from "./ui/Select.tsx";
 import { DataTable } from "./DataTable.tsx";
 import { FieldHelp } from "./ui/FieldHelp.tsx";
 import { useUiMode } from "../hooks/useUiMode.ts";
+import { APPLICATION_TEMPLATES } from "../lib/templates.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
 interface ApplicationsPanelProps {
@@ -24,6 +25,7 @@ export function ApplicationsPanel({ state, organizations, onRefresh }: Applicati
   const [orgId, setOrgId] = useState("");
   const [name, setName] = useState("");
   const [redirectUris, setRedirectUris] = useState("");
+  const [templateId, setTemplateId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -118,6 +120,32 @@ export function ApplicationsPanel({ state, organizations, onRefresh }: Applicati
           <div>
             <Label className="text-[12px]">Application name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My App" required />
+          </div>
+          <div>
+            <Label className="text-[12px]">Template</Label>
+            <Select
+              value={templateId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setTemplateId(id);
+                const tpl = APPLICATION_TEMPLATES.find((t) => t.id === id);
+                if (tpl) {
+                  setRedirectUris(tpl.redirectUris.join(", "));
+                }
+              }}
+            >
+              <option value="">No template</option>
+              {APPLICATION_TEMPLATES.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name}
+                </option>
+              ))}
+            </Select>
+            {templateId && (
+              <p className="text-[11px] txt-muted mt-1">
+                {APPLICATION_TEMPLATES.find((t) => t.id === templateId)?.description}
+              </p>
+            )}
           </div>
           <FieldHelp
             label="Redirect URIs"
