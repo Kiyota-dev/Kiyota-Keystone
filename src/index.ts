@@ -47,6 +47,7 @@ import scimRoutes from "./routes/scim.js";
 import federationRoutes from "./routes/federation.js";
 import workflowRoutes from "./routes/workflows.js";
 import setupRoutes from "./routes/setup.js";
+import sdkRoutes from "./routes/sdk.js";
 import { generateSetupToken, printSetupToken } from "./services/setup/token.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -182,6 +183,7 @@ export async function buildApp() {
   await app.register(scimRoutes, { prefix: "/" });
   await app.register(federationRoutes, { prefix: "/federation" });
   await app.register(workflowRoutes, { prefix: "/v1/admin" });
+  await app.register(sdkRoutes, { prefix: "/sdk" });
 
   const issuer = config.AUTH_API_PUBLIC_URL || `http://localhost:${config.PORT}`;
   app.get("/.well-known/openid-configuration", { schema: { tags: ["Discovery"] } }, async () => ({

@@ -73,16 +73,16 @@ Your React app runs on `http://localhost:5173` and Keystone on `http://localhost
 
 ## Step 2 — Choose how to integrate
 
-### Option A: Drop-in script (fastest — any HTML/JS site)
+### Option A: One-line CDN script (fastest — nothing in your project folder)
 
-Copy `examples/drop-in-login/dropin.js` into your project and include it:
+Add one script tag to your page. The script is served directly by Keystone, so you do not copy any files into your project.
 
 ```html
-<script>
-  window.KEYSTONE_URL = "http://localhost:4001";
-  window.KEYSTONE_AFTER_LOGIN = "/dashboard";
-</script>
-<script src="/keystone-dropin.js"></script>
+<script
+  src="http://localhost:4001/sdk/keystone-dropin.js"
+  data-keystone-url="http://localhost:4001"
+  data-keystone-after-login="/dashboard"
+></script>
 ```
 
 Then add IDs/classes to your existing form:
@@ -97,9 +97,32 @@ Then add IDs/classes to your existing form:
 <button id="keystone-google-btn">Login with Google</button>
 ```
 
-No other code needed. See `examples/drop-in-login/README.md`.
+No other code needed. The script auto-wires the forms and talks to Keystone for you.
 
-### Option B: React helper
+To connect/register your project with Keystone, add one more line:
+
+```html
+<script>
+  Keystone.connect("my-project", "http://localhost:5173/callback")
+    .then((c) => console.log("Connected:", c.clientId));
+</script>
+```
+
+### Option B: Self-hosted drop-in script
+
+If you prefer to host the script yourself, copy `examples/drop-in-login/dropin.js` into your project and include it:
+
+```html
+<script>
+  window.KEYSTONE_URL = "http://localhost:4001";
+  window.KEYSTONE_AFTER_LOGIN = "/dashboard";
+</script>
+<script src="/keystone-dropin.js"></script>
+```
+
+See `examples/drop-in-login/README.md`.
+
+### Option C: React helper
 
 Create `keystone-auth.ts` in your React project and copy the code from `examples/login-form-react/keystone-auth.ts`.
 
