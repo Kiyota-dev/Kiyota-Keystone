@@ -73,32 +73,38 @@ resolve_docker_cmd() {
 
 DOCKER_CMD="$(resolve_docker_cmd)"
 
+# Check whether the dependency containers are running and offer to start them.
+check_and_start_services() {
+  if [ "$DOCKER_CMD" = "sg docker -c docker" ]; then
+    DOCKER_PS_CMD="sg docker -c 'docker ps --format \"{{.Names}}\"'"
+  else
+    DOCKER_PS_CMD="$DOCKER_CMD ps --format '{{.Names}}'"
+  fi
+
+  if eval "$DOCKER_PS_CMD" 2>/dev/null | grep -qx "keystone-postgres" && \
+     eval "$DOCKER_PS_CMD" 2>/dev/null | grep -qx "keystone-redis"; then
+    ui_success "PostgreSQL and Redis containers are running."
+  else
+    ui_warning "PostgreSQL and/or Redis containers are not running."
+    if ui_confirm "Start PostgreSQL and Redis now?"; then
+      ./scripts/start-services.sh || true
+    else
+      ui_info "Continuing without starting services. You can enter external URLs in the wizard."
+    fi
+  fi
+}
+
 # Service status checks
 ui_step "Checking dependencies..."
 if command -v docker >/dev/null 2>&1; then
   if [ -n "$DOCKER_CMD" ]; then
-    if [ "$DOCKER_CMD" = "sg docker -c docker" ]; then
-      DOCKER_PS_CMD="sg docker -c 'docker ps --format \"{{.Names}}\"'"
-    else
-      DOCKER_PS_CMD="$DOCKER_CMD ps --format '{{.Names}}'"
-    fi
-
-    if eval "$DOCKER_PS_CMD" 2>/dev/null | grep -qx "keystone-postgres" && \
-       eval "$DOCKER_PS_CMD" 2>/dev/null | grep -qx "keystone-redis"; then
-      ui_success "PostgreSQL and Redis containers are running."
-    else
-      ui_warning "PostgreSQL and/or Redis containers are not running."
-      if ui_confirm "Start PostgreSQL and Redis now?"; then
-        ./scripts/start-services.sh || true
-      else
-        ui_info "Continuing without starting services. You can enter external URLs in the wizard."
-      fi
-    fi
+    check_and_start_services
   else
     if ui_confirm "Docker is installed but not accessible. Run Docker commands with sudo?"; then
       sudo -v || true
       if sudo -n docker ps >/dev/null 2>&1; then
         DOCKER_CMD="sudo docker"
+        check_and_start_services
       else
         ui_error "Could not authenticate sudo. Start the containers manually or log out and back in."
       fi
