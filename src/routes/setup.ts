@@ -12,6 +12,7 @@ import { DrizzleUserRepository } from "../repositories/index.js";
 import { validateDatabase, validateRedis, validateEmail, validateSms } from "../services/setup/validation.js";
 import { createConfigWriter } from "../services/setup/configWriter.js";
 import { getSetupToken, validateSetupToken } from "../services/setup/token.js";
+import { runSetupDiagnostics } from "../services/setup/diagnostics.js";
 import { queue } from "../services/queue/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -130,6 +131,36 @@ export default async function setupRoutes(app: FastifyInstance) {
     return {
       needsSetup: await hasNoOwners(),
       setupToken: Boolean(getSetupToken()),
+    };
+  });
+
+  app.get("/diagnostics", async (request: FastifyRequest, reply: FastifyReply) => {
+    if (!assertSetupToken(request, reply)) return;
+    const checks = await runSetupDiagnostics();
+    return { checks, ready: checks.every((c) => c.status === "ok" || c.status === "skipped") };
+  });
+
+  app.post("/config/dry-run", async (request: FastifyRequest, reply: FastifyReply) => {
+    if (!assertSetupToken(request, reply)) return;
+    const body = parseBody(SetupConfigSchema, request.body, reply);
+    if (!body) return;
+
+    const writer = createConfigWriter();
+    const existing = await writer.read();
+    const merged = { ...existing, ...body.env };
+
+    const validationErrors: string[] = [];
+    if (!merged.DATABASE_URL) validationErrors.push("DATABASE_URL is required");
+    if (!merged.REDIS_URL) validationErrors.push("REDIS_URL is required");
+    if (!merged.AUTH_API_PUBLIC_URL) validationErrors.push("AUTH_API_PUBLIC_URL is required");
+
+    return {
+      ok: validationErrors.length === 0,
+      validationErrors,
+      wouldWrite: Object.keys(body.env),
+      mergedPreview: Object.fromEntries(
+        Object.entries(merged).map(([k, v]) => [k, k.includes("KEY") || k.includes("SECRET") || k.includes("PASS") ? "***" : v])
+      ),
     };
   });
 
