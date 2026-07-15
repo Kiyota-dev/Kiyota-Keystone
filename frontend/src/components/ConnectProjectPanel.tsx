@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Code2, Copy, Check } from "lucide-react";
+import { Code2, Copy, Check, Info } from "lucide-react";
 import { Card } from "./ui/Card.tsx";
 import { Button } from "./ui/Button.tsx";
 import { Input } from "./ui/Input.tsx";
@@ -152,14 +152,78 @@ export function ConnectProjectPanel({ applicationsState, configState }: ConnectP
           </Button>
         </div>
 
-        <div className="mt-5 space-y-2 text-[12px] txt-muted">
-          <p>How to use it:</p>
-          <ol className="list-decimal list-inside space-y-1 ml-1">
-            <li>Copy the script above.</li>
-            <li>Paste it into the <code>&lt;head&gt;</code> of your HTML page.</li>
-            <li>Add forms with <code>id=&quot;keystone-login-form&quot;</code> and <code>id=&quot;keystone-register-form&quot;</code>.</li>
-            <li>Make sure your project URL is in the application&apos;s Allowed Origins.</li>
-          </ol>
+        <div className="mt-6 space-y-4 text-[12px] txt-muted">
+          <div className="flex items-center gap-2 txt-head">
+            <Info className="w-4 h-4 text-gold" />
+            <span className="font-medium">How the script works</span>
+          </div>
+
+          <p>
+            Copy the script above and paste it into the <code>&lt;head&gt;</code> of your HTML page.
+            The SDK connects to Keystone and automatically wires up forms and buttons by their IDs or data attributes.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="font-medium txt-head">Script attributes</p>
+              <ul className="space-y-1.5">
+                <li>
+                  <code className="text-gold">data-keystone-url</code>
+                  <p>Your Keystone API base URL. The SDK loads itself from here and sends all requests here.</p>
+                </li>
+                <li>
+                  <code className="text-gold">data-keystone-client-id</code>
+                  <p>The application&apos;s public client ID in Keystone. Tells Keystone which app the user is signing in to.</p>
+                </li>
+                <li>
+                  <code className="text-gold">data-keystone-callback</code>
+                  <p>URL where Keystone redirects after Google / OAuth login. Must match a Redirect URI in the app settings.</p>
+                </li>
+                <li>
+                  <code className="text-gold">data-keystone-autowire</code>
+                  <p>When <code>true</code>, the SDK automatically attaches to forms and buttons on the page.</p>
+                </li>
+                <li>
+                  <code className="text-gold">data-keystone-check-session</code>
+                  <p>When <code>true</code>, the SDK checks if the user is already signed in on page load.</p>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <p className="font-medium txt-head">HTML IDs and data attributes</p>
+              <ul className="space-y-1.5">
+                <li>
+                  <code className="text-gold">id=&quot;keystone-login-form&quot;</code>
+                  <p>Sign-in form. Needs email and password inputs.</p>
+                </li>
+                <li>
+                  <code className="text-gold">id=&quot;keystone-register-form&quot;</code>
+                  <p>Sign-up form. Needs username, email, and password inputs.</p>
+                </li>
+                <li>
+                  <code className="text-gold">id=&quot;keystone-google-btn&quot;</code>
+                  <p>Button that starts Google OAuth sign-in.</p>
+                </li>
+                <li>
+                  <code className="text-gold">id=&quot;keystone-logout&quot;</code>
+                  <p>Button that signs the user out.</p>
+                </li>
+                <li>
+                  <code className="text-gold">data-keystone-input</code>
+                  <p>Put on inputs: <code>email</code>, <code>password</code>, <code>username</code>, <code>name</code>.</p>
+                </li>
+                <li>
+                  <code className="text-gold">data-keystone-field</code>
+                  <p>Put on display elements: <code>email</code>, <code>name</code>, <code>username</code>. Auto-filled after login.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <Alert variant="info" className="text-[12px]">
+            Make sure your project URL is in the application&apos;s <strong>Allowed Origins</strong> and the callback URL is in <strong>Redirect URIs</strong>.
+          </Alert>
         </div>
       </Card>
     </>
