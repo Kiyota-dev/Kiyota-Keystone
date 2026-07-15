@@ -31,5 +31,5 @@ export function PanelWrapper<T>({
     return <>{emptyContent}</>;
   }
 
-  return <>{children}</>;
+  return <div className="animate-slide-up">{children}</div>;
 }

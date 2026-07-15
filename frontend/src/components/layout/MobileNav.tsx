@@ -33,20 +33,27 @@ export function MobileNav({ items, active, onChange }: MobileNavProps) {
                 <X className="w-5 h-5" />
               </Button>
             </div>
-            <nav className="flex-1 space-y-1">
-              {items.map((item) => {
+            <nav className="flex-1 space-y-4 overflow-y-auto">
+              {items.map((item, idx) => {
                 const isActive = item.id === active;
+                const showGroup = item.group && (idx === 0 || items[idx - 1].group !== item.group);
                 return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleSelect(item.id)}
-                    className={`nav-item w-full text-left ${
-                      isActive ? "nav-item-active txt-head" : "txt-nav-muted"
-                    }`}
-                  >
-                    {item.icon && <span className="shrink-0">{item.icon}</span>}
-                    <span className="truncate">{item.label}</span>
-                  </button>
+                  <div key={item.id}>
+                    {showGroup && (
+                      <p className="px-3 mb-1.5 text-[10px] font-semibold txt-muted uppercase tracking-wider">
+                        {item.group}
+                      </p>
+                    )}
+                    <button
+                      onClick={() => handleSelect(item.id)}
+                      className={`nav-item w-full text-left ${
+                        isActive ? "nav-item-active txt-head" : "txt-nav-muted"
+                      }`}
+                    >
+                      {item.icon && <span className="shrink-0">{item.icon}</span>}
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  </div>
                 );
               })}
             </nav>
