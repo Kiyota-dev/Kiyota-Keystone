@@ -34,7 +34,11 @@ function AppShellBase({
         <div className="md:hidden">
           <MobileNav items={sidebarItems} active={activeTab} onChange={onTabChange} />
         </div>
-        {headerActions}
+        {headerActions && (
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            {headerActions}
+          </div>
+        )}
       </>
     ),
     [sidebarItems, activeTab, onTabChange, headerActions]
@@ -44,7 +48,7 @@ function AppShellBase({
     <div className="min-h-screen bg-background text-foreground">
       <Header logo={logo} title={title} subtitle={subtitle} modeToggle={modeToggle} actions={headerActionsNode} />
 
-      <div className="flex">
+      <div className="flex overflow-hidden">
         <Sidebar
           items={sidebarItems}
           active={activeTab}

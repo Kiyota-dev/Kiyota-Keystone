@@ -96,17 +96,17 @@ export function EnterpriseSsoPanel({
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="flex items-center gap-2">
-        <Button size="sm" variant={activeSubtab === "saml" ? "primary" : "secondary"} onClick={() => setActiveSubtab("saml")}>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button size="sm" variant={activeSubtab === "saml" ? "primary" : "secondary"} onClick={() => setActiveSubtab("saml")} className="w-full sm:w-auto">
           SAML
         </Button>
-        <Button size="sm" variant={activeSubtab === "oidc" ? "primary" : "secondary"} onClick={() => setActiveSubtab("oidc")}>
+        <Button size="sm" variant={activeSubtab === "oidc" ? "primary" : "secondary"} onClick={() => setActiveSubtab("oidc")} className="w-full sm:w-auto">
           OIDC
         </Button>
-        <Button size="sm" variant={activeSubtab === "scim" ? "primary" : "secondary"} onClick={() => setActiveSubtab("scim")}>
+        <Button size="sm" variant={activeSubtab === "scim" ? "primary" : "secondary"} onClick={() => setActiveSubtab("scim")} className="w-full sm:w-auto">
           SCIM
         </Button>
-        <Button size="sm" variant="secondary" onClick={onRefresh} className="ml-auto">
+        <Button size="sm" variant="secondary" onClick={onRefresh} className="w-full sm:w-auto">
           Refresh
         </Button>
       </div>
@@ -131,12 +131,12 @@ export function EnterpriseSsoPanel({
                     <p className="text-[11px] txt-muted truncate">SP: {conn.spEntityId}</p>
                     <p className="text-[11px] txt-muted truncate">ACS: {conn.spAcsUrl}</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(conn.spAcsUrl)}>
+                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                    <Button size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(conn.spAcsUrl)} className="w-full sm:w-auto">
                       <ExternalLink className="w-4 h-4" />
                       Copy ACS
                     </Button>
-                    <Button size="sm" variant="danger" onClick={() => onDeleteSaml(conn.id)}>
+                    <Button size="sm" variant="danger" onClick={() => onDeleteSaml(conn.id)} className="w-full sm:w-auto">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -166,6 +166,7 @@ export function EnterpriseSsoPanel({
             </div>
             <Button
               size="sm"
+              className="w-full sm:w-auto"
               onClick={() => {
                 onCreateSaml(samlForm);
                 setSamlForm({ name: "", spEntityId: "", spAcsUrl: "" });
@@ -198,7 +199,7 @@ export function EnterpriseSsoPanel({
                     <p className="text-[11px] txt-muted truncate">Issuer: {conn.issuer}</p>
                     <p className="text-[11px] txt-muted truncate">Client ID: {conn.clientId}</p>
                   </div>
-                  <Button size="sm" variant="danger" onClick={() => onDeleteOidc(conn.id)}>
+                  <Button size="sm" variant="danger" onClick={() => onDeleteOidc(conn.id)} className="w-full sm:w-auto">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -239,6 +240,7 @@ export function EnterpriseSsoPanel({
             </div>
             <Button
               size="sm"
+              className="w-full sm:w-auto"
               onClick={() => {
                 onCreateOidc(oidcForm);
                 setOidcForm({ name: "", issuer: "", authorizationEndpoint: "", tokenEndpoint: "", clientId: "", clientSecret: "" });

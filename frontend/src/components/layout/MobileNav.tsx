@@ -19,7 +19,7 @@ export function MobileNav({ items, active, onChange }: MobileNavProps) {
 
   return (
     <div className="md:hidden">
-      <Button variant="secondary" size="icon" onClick={() => setOpen(true)} aria-label="Open menu">
+      <Button variant="secondary" size="icon" onClick={() => setOpen(true)} aria-label="Open menu" className="h-11 w-11">
         <Menu className="w-5 h-5" />
       </Button>
 
@@ -29,7 +29,7 @@ export function MobileNav({ items, active, onChange }: MobileNavProps) {
           <div className="relative w-72 max-w-[80vw] h-full bg-background border-r border-theme/30 p-4 flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[15px] font-semibold txt-head">Menu</span>
-              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Close menu">
+              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Close menu" className="h-11 w-11">
                 <X className="w-5 h-5" />
               </Button>
             </div>
@@ -46,7 +46,7 @@ export function MobileNav({ items, active, onChange }: MobileNavProps) {
                     )}
                     <button
                       onClick={() => handleSelect(item.id)}
-                      className={`nav-item w-full text-left ${
+                      className={`nav-item w-full min-h-11 text-left ${
                         isActive ? "nav-item-active txt-head" : "txt-nav-muted"
                       }`}
                     >

@@ -82,12 +82,12 @@ export function WorkflowPanel({
   return (
     <div className="mt-6 space-y-4">
       <Card variant="glass" className="p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h3 className="text-[14px] font-semibold txt-head flex items-center gap-2">
             <Workflow className="w-4 h-4 text-gold" />
             Workflows
           </h3>
-          <Button size="sm" variant="secondary" onClick={onRefresh}>
+          <Button size="sm" variant="secondary" className="w-full sm:w-auto" onClick={onRefresh}>
             Refresh
           </Button>
         </div>
@@ -109,12 +109,12 @@ export function WorkflowPanel({
                   </div>
                   <p className="text-[11px] txt-muted mt-1">{wf.definition.steps.length} step(s)</p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button size="sm" variant="secondary" onClick={() => { onSelectWorkflow(wf.id); onLoadRuns(wf.id); }}>
+                <div className="flex flex-col sm:flex-row gap-2 shrink-0 w-full sm:w-auto">
+                  <Button size="sm" variant="secondary" className="w-full sm:w-auto" onClick={() => { onSelectWorkflow(wf.id); onLoadRuns(wf.id); }}>
                     <Play className="w-4 h-4" />
                     Runs
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => setConfirmDeleteId(wf.id)}>
+                  <Button size="sm" variant="danger" className="w-full sm:w-auto" onClick={() => setConfirmDeleteId(wf.id)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -126,9 +126,9 @@ export function WorkflowPanel({
 
       {selectedWorkflowId && (
         <Card variant="glass" className="p-5">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <h3 className="text-[14px] font-semibold txt-head">Workflow Runs</h3>
-            <Button size="sm" variant="secondary" onClick={() => onSelectWorkflow(null)}>
+            <Button size="sm" variant="secondary" className="w-full sm:w-auto" onClick={() => onSelectWorkflow(null)}>
               Close
             </Button>
           </div>
@@ -141,15 +141,15 @@ export function WorkflowPanel({
               {runs.map((run) => (
                 <div key={run.id} className="p-3 rounded-xl border border-theme/20 bg-surface">
                   <button
-                    className="w-full flex items-center justify-between"
+                    className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-left"
                     onClick={() => setExpandedRuns(expandedRuns === run.id ? null : run.id)}
                   >
-                    <div className="flex items-center gap-2">
-                      {expandedRuns === run.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {expandedRuns === run.id ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
                       <span className="text-[13px] txt-head">{run.triggerEvent}</span>
                       <Badge variant={run.status === "completed" ? "success" : run.status === "failed" ? "danger" : "default"}>{run.status}</Badge>
                     </div>
-                    <span className="text-[11px] txt-muted">{run.startedAt ? new Date(run.startedAt).toLocaleString() : "—"}</span>
+                    <span className="text-[11px] txt-muted shrink-0">{run.startedAt ? new Date(run.startedAt).toLocaleString() : "—"}</span>
                   </button>
                   {expandedRuns === run.id && (
                     <div className="mt-2 pl-6 space-y-1">
@@ -197,9 +197,9 @@ export function WorkflowPanel({
             <Label className="text-[12px]">Steps</Label>
             <div className="space-y-2">
               {newSteps.map((step, idx) => (
-                <div key={idx} className="flex items-center gap-2">
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
                   <select
-                    className="bg-surface border border-theme/30 rounded-lg px-3 py-2 text-[13px] txt-head"
+                    className="w-full bg-surface border border-theme/30 rounded-lg px-3 py-2 text-[13px] txt-head"
                     value={step.type}
                     onChange={(e) => {
                       const updated = [...newSteps];
@@ -225,6 +225,7 @@ export function WorkflowPanel({
                   <Button
                     size="sm"
                     variant="danger"
+                    className="w-full md:w-auto"
                     onClick={() => setNewSteps(newSteps.filter((_, i) => i !== idx))}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -232,12 +233,13 @@ export function WorkflowPanel({
                 </div>
               ))}
             </div>
-            <Button size="sm" variant="secondary" className="mt-2" onClick={() => setNewSteps([...newSteps, { type: STEP_TYPES[0] }])}>
+            <Button size="sm" variant="secondary" className="mt-2 w-full sm:w-auto" onClick={() => setNewSteps([...newSteps, { type: STEP_TYPES[0] }])}>
               Add Step
             </Button>
           </div>
           <Button
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => {
               onCreate({ name: newName, trigger: newTrigger, definition: { steps: newSteps } });
               setNewName("");
