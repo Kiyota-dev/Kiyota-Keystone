@@ -28,7 +28,7 @@ export function DiagnosticsDrawer({ isOpen, onClose, api, database, redis, setup
       <Card className="relative w-full max-w-sm h-full bg-card border-l border-theme p-5 overflow-y-auto animate-slide-up">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[16px] font-semibold txt-head">Diagnostics</h2>
-          <Button size="icon" variant="ghost" onClick={onClose}>
+          <Button size="icon" variant="ghost" onClick={onClose} aria-label="Close diagnostics">
             <X className="w-4 h-4" />
           </Button>
         </div>

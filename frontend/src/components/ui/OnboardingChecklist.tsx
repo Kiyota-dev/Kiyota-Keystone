@@ -28,7 +28,7 @@ export function OnboardingChecklist({ items, onDismiss, className = "" }: Onboar
             Complete these steps to get your identity platform running.
           </p>
         </div>
-        <Button size="icon" variant="ghost" onClick={onDismiss} className="shrink-0">
+        <Button size="icon" variant="ghost" onClick={onDismiss} aria-label="Dismiss checklist" className="shrink-0">
           <X className="w-4 h-4" />
         </Button>
       </div>
