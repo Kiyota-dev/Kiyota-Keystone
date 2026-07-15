@@ -437,6 +437,8 @@ See [`docs/INTEGRATION.md`](docs/INTEGRATION.md) for complete examples covering:
 
 If you already have a login/signup page with email/password and Google login and just want to wire it up, start with [`docs/LOGIN_FORM_INTEGRATION.md`](docs/LOGIN_FORM_INTEGRATION.md) or load the one-line CDN script from `http://localhost:4001/sdk/keystone-dropin.js`.
 
+For production deployment with HTTPS and a custom domain, see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
 ## Endpoints
 
 ### Authentication
