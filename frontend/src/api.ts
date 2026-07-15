@@ -109,10 +109,10 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!response.ok) {
-    // If the server says we are not authenticated, clear the stored token and
-    // reload so the user sees the login screen again. This avoids showing
-    // confusing "Invalid token" errors in random panels.
-    if ((response.status === 401 || response.status === 403) && accessToken && !authReloadInProgress) {
+    // If the server rejects the token (401), clear it and reload so the user
+    // sees the login screen again. We do not reload on 403 (forbidden) because
+    // that means the user is authenticated but lacks permission for one action.
+    if (response.status === 401 && accessToken && !authReloadInProgress) {
       authReloadInProgress = true;
       localStorage.removeItem("keystone-access-token");
       window.location.reload();

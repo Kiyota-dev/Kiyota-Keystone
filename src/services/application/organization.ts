@@ -15,10 +15,7 @@ export class OrganizationApplicationService {
     userId: string,
     input: { name: string; slug?: string; plan?: string }
   ): Promise<Result<Organization>> {
-    const orgResult = await this.domain.createOrganization(input);
-    if (!orgResult.success) return orgResult;
-    await this.domain.addOrgMembership({ orgId: orgResult.data.id, userId, role: "owner" });
-    return orgResult;
+    return this.domain.createOrganization(input, userId);
   }
 
   async getOrganization(userId: string, orgId: string): Promise<Result<Organization>> {

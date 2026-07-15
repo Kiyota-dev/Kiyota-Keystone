@@ -11,8 +11,14 @@ export class OrganizationDomainService {
     private readonly applications: ApplicationRepository
   ) {}
 
-  async createOrganization(input: { name: string; slug?: string; plan?: string }): Promise<Result<Organization>> {
+  async createOrganization(
+    input: { name: string; slug?: string; plan?: string },
+    userId?: string
+  ): Promise<Result<Organization>> {
     const org = await this.organizations.create(input);
+    if (userId) {
+      await this.organizations.addMembership({ orgId: org.id, userId, role: "owner" });
+    }
     return ok(org);
   }
 
