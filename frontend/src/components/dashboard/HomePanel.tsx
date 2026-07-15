@@ -12,13 +12,29 @@ import { Card } from "../ui/Card.tsx";
 import { Badge } from "../ui/Badge.tsx";
 import { SectionCard } from "../ui/SectionCard.tsx";
 
+import { OnboardingChecklist } from "../ui/OnboardingChecklist.tsx";
+
 interface HomePanelProps {
   onNavigate: (tab: string) => void;
   health?: { database?: boolean; redis?: boolean; status?: string } | null;
-  queueStatus?: unknown;
+  orgCount?: number;
+  appCount?: number;
+  providerCount?: number;
+  userCount?: number;
+  dismissedChecklist?: boolean;
+  onDismissChecklist?: () => void;
 }
 
-export function HomePanel({ onNavigate, health }: HomePanelProps) {
+export function HomePanel({
+  onNavigate,
+  health,
+  orgCount = 0,
+  appCount = 0,
+  providerCount = 0,
+  userCount = 0,
+  dismissedChecklist,
+  onDismissChecklist,
+}: HomePanelProps) {
   const actions = [
     {
       id: "connect-project",
@@ -62,8 +78,21 @@ export function HomePanel({ onNavigate, health }: HomePanelProps) {
   const dbOk = health?.database ?? apiOk;
   const redisOk = health?.redis ?? apiOk;
 
+  const checklistItems = [
+    { id: "org", label: "Create an organization", done: orgCount > 0, onClick: () => onNavigate("organizations") },
+    { id: "app", label: "Register an application", done: appCount > 0, onClick: () => onNavigate("applications") },
+    { id: "connect", label: "Connect your website", done: appCount > 0, onClick: () => onNavigate("connect-project") },
+    { id: "provider", label: "Enable a login method", done: providerCount > 0, onClick: () => onNavigate("identity-providers") },
+    { id: "member", label: "Invite a team member", done: userCount > 1, onClick: () => onNavigate("users") },
+    { id: "audit", label: "Review audit logs", done: false, onClick: () => onNavigate("audit-logs") },
+  ];
+
   return (
     <div className="space-y-5 animate-fade-in">
+      {!dismissedChecklist && onDismissChecklist && (
+        <OnboardingChecklist items={checklistItems} onDismiss={onDismissChecklist} />
+      )}
+
       <Card variant="glass" className="p-6 relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">

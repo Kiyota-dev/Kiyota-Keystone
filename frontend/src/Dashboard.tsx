@@ -35,9 +35,12 @@ import { ConnectProjectPanel } from "./components/ConnectProjectPanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
+import { useHealth } from "./hooks/useHealth.ts";
 import { ModeToggle } from "./components/ui/ModeToggle.tsx";
 import { CommandPalette } from "./components/ui/CommandPalette.tsx";
 import { Advanced } from "./components/ui/Advanced.tsx";
+import { HealthBadge } from "./components/ui/HealthBadge.tsx";
+import { DiagnosticsDrawer } from "./components/dashboard/DiagnosticsDrawer.tsx";
 import { parseError } from "./lib/errorMessages.ts";
 
 const OrganizationsPanel = lazy(() => import("./components/OrganizationsPanel.tsx").then((m) => ({ default: m.OrganizationsPanel })));
@@ -148,8 +151,10 @@ const TABS = [
 export default function Dashboard() {
   const { token, user, loading: authLoading, error: authError, logout } = useAuth();
   const { mode, setMode } = useUiMode();
+  const health = useHealth();
   const [activeTab, setActiveTab] = useState("overview");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
 
   const {
     data: overviewData,
@@ -185,6 +190,10 @@ export default function Dashboard() {
   const [billingSummary, setBillingSummary] = useState<DataTabState<{ plan: string }>>({ data: null, loading: false, error: null });
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const [dismissedChecklist, setDismissedChecklist] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("keystone:dismiss-checklist") === "true";
+  });
 
   // Tab loaders
   async function loadTab<T>(state: DataTabState<T>, setState: (value: DataTabState<T>) => void, fetcher: () => Promise<T>) {
@@ -408,7 +417,19 @@ export default function Dashboard() {
       case "overview":
         return (
           <>
-            <HomePanel onNavigate={setActiveTab} health={health} queueStatus={queueStatus} />
+            <HomePanel
+              onNavigate={setActiveTab}
+              health={health}
+              orgCount={(organizations.data?.organizations ?? []).length}
+              appCount={(applications.data?.applications ?? []).length}
+              providerCount={(providers.data?.providers ?? []).filter((p) => p.configured).length}
+              userCount={(users.data?.users ?? []).length}
+              dismissedChecklist={dismissedChecklist}
+              onDismissChecklist={() => {
+                setDismissedChecklist(true);
+                localStorage.setItem("keystone:dismiss-checklist", "true");
+              }}
+            />
             <Advanced mode={mode}>
               <div className="mt-5">
                 <OverviewPanel health={health} config={config} queueStatus={queueStatus} />
@@ -536,6 +557,26 @@ export default function Dashboard() {
 
   const modeToggle = useMemo(() => <ModeToggle mode={mode} onChange={setMode} />, [mode, setMode]);
 
+  const sidebarFooter = useMemo(
+    () => (
+      <button
+        onClick={() => setDiagnosticsOpen(true)}
+        className="w-full p-2 rounded-xl bg-surface border border-theme/20 hover:border-gold/30 transition-colors"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-medium txt-head">Status</span>
+          <span className="text-[10px] txt-muted">Click for details</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <HealthBadge status={health.api} label="API" />
+          <HealthBadge status={health.database} label="DB" />
+          <HealthBadge status={health.redis} label="Redis" />
+        </div>
+      </button>
+    ),
+    [health]
+  );
+
   const commandItems = useMemo(
     () =>
       TABS.map((tab) => ({
@@ -568,9 +609,18 @@ export default function Dashboard() {
       onTabChange={setActiveTab}
       headerActions={headerActions}
       modeToggle={modeToggle}
+      sidebarFooter={sidebarFooter}
     >
       {renderContent()}
       <CommandPalette items={commandItems} isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <DiagnosticsDrawer
+        isOpen={diagnosticsOpen}
+        onClose={() => setDiagnosticsOpen(false)}
+        api={health.api}
+        database={health.database}
+        redis={health.redis}
+        setupComplete={health.setupComplete}
+      />
     </AppShell>
   );
 }
