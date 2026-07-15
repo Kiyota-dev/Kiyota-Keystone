@@ -247,9 +247,9 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
         </Button>
       </Card>
 
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => setStep(0)}>Back</Button>
-        <Button onClick={next}>Continue</Button>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button variant="secondary" onClick={() => setStep(0)} className="w-full sm:w-auto">Back</Button>
+        <Button onClick={next} className="w-full sm:w-auto">Continue</Button>
       </div>
     </div>
   );
@@ -287,9 +287,9 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
         <p className="text-[11px] txt-muted mt-1">Use at least 8 characters.</p>
       </div>
 
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
-        <Button onClick={next} disabled={!state.owner.email || state.owner.password.length < 8}>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button variant="secondary" onClick={() => setStep(1)} className="w-full sm:w-auto">Back</Button>
+        <Button onClick={next} disabled={!state.owner.email || state.owner.password.length < 8} className="w-full sm:w-auto">
           Continue
         </Button>
       </div>
@@ -319,9 +319,9 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
         We will generate secure secrets, save your configuration, run migrations, and create your account.
       </div>
 
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={() => setStep(2)}>Back</Button>
-        <Button onClick={finish} disabled={busy} isLoading={busy}>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button variant="secondary" onClick={() => setStep(2)} className="w-full sm:w-auto">Back</Button>
+        <Button onClick={finish} disabled={busy} isLoading={busy} className="w-full sm:w-auto">
           Finish setup
         </Button>
       </div>

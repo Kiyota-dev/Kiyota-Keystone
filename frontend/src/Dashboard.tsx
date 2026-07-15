@@ -15,6 +15,7 @@ import {
   CreditCard,
   Settings,
   Code2,
+  BookOpen,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -366,16 +367,29 @@ export default function Dashboard() {
     () => (
       <>
         {user && (
-          <span className="hidden sm:inline text-[13px] txt-muted">
+          <span className="hidden sm:inline text-[13px] txt-muted truncate max-w-[140px]">
             {user.email}
           </span>
         )}
-        <Button variant="secondary" size="sm" onClick={logout}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={logout}
+          className="px-2 sm:px-4"
+          title="Logout"
+        >
           <LogOut className="w-4 h-4" />
-          Logout
+          <span className="hidden sm:inline ml-1.5">Logout</span>
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => window.open(`${API_BASE}/documentation`, "_blank")}>
-          API Docs
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => window.open(`${API_BASE}/documentation`, "_blank")}
+          className="px-2 sm:px-4"
+          title="API Docs"
+        >
+          <BookOpen className="w-4 h-4" />
+          <span className="hidden sm:inline ml-1.5">API Docs</span>
         </Button>
       </>
     ),

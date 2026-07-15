@@ -66,7 +66,7 @@ export function OrganizationsPanel({ state, onRefresh }: OrganizationsPanelProps
       {error && <Alert variant="error" className="mb-4">{error}</Alert>}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-5 p-4 rounded-xl bg-surface border border-theme/20 space-y-3">
+        <form onSubmit={handleSubmit} className="mb-5 p-3 sm:p-4 rounded-xl bg-surface border border-theme/20 space-y-3">
           <div>
             <Label className="text-[12px]">Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Corp" required />
@@ -80,7 +80,7 @@ export function OrganizationsPanel({ state, onRefresh }: OrganizationsPanelProps
               <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="acme-corp" />
             </FieldHelp>
           </Advanced>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button type="submit" size="sm" isLoading={busy} disabled={!name}>
               <Save className="w-4 h-4" />
               Save

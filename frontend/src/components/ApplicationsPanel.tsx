@@ -106,7 +106,7 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
       )}
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-5 p-4 rounded-xl bg-surface border border-theme/20 space-y-3">
+        <form onSubmit={handleSubmit} className="mb-5 p-3 sm:p-4 rounded-xl bg-surface border border-theme/20 space-y-3">
           <div>
             <Label className="text-[12px]">Organization</Label>
             <Select value={orgId} onChange={(e) => setOrgId(e.target.value)} required>
@@ -158,7 +158,7 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
           >
             <Input value={redirectUris} onChange={(e) => setRedirectUris(e.target.value)} placeholder="http://localhost:5173/callback" />
           </FieldHelp>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button type="submit" size="sm" isLoading={busy} disabled={!name || !orgId}>
               <Save className="w-4 h-4" />
               Save

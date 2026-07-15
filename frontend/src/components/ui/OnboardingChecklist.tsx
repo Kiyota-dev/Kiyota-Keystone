@@ -20,7 +20,7 @@ export function OnboardingChecklist({ items, onDismiss, className = "" }: Onboar
   const progress = items.length > 0 ? Math.round((completed / items.length) * 100) : 0;
 
   return (
-    <Card variant="glass" className={`p-5 ${className}`}>
+    <Card variant="glass" className={`p-4 sm:p-5 ${className}`}>
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h3 className="text-[14px] font-semibold txt-head">Welcome to Keystone</h3>

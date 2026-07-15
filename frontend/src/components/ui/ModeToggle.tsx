@@ -12,7 +12,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
       <button
         type="button"
         onClick={() => onChange("simple")}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+        className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
           mode === "simple"
             ? "bg-gold text-white shadow-sm shadow-gold/10"
             : "text-muted-foreground hover:text-foreground"
@@ -20,12 +20,12 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         aria-pressed={mode === "simple"}
       >
         <Sparkles className="w-3.5 h-3.5" />
-        Simple
+        <span className="hidden sm:inline">Simple</span>
       </button>
       <button
         type="button"
         onClick={() => onChange("advanced")}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
+        className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all ${
           mode === "advanced"
             ? "bg-gold text-white shadow-sm shadow-gold/10"
             : "text-muted-foreground hover:text-foreground"
@@ -33,7 +33,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         aria-pressed={mode === "advanced"}
       >
         <SlidersHorizontal className="w-3.5 h-3.5" />
-        Advanced
+        <span className="hidden sm:inline">Advanced</span>
       </button>
     </div>
   );

@@ -93,18 +93,18 @@ export function HomePanel({
         <OnboardingChecklist items={checklistItems} onDismiss={onDismissChecklist} />
       )}
 
-      <Card variant="glass" className="p-6 relative overflow-hidden">
+      <Card variant="glass" className="p-4 sm:p-6 relative overflow-hidden">
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center">
+          <div className="flex items-start sm:items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gold/10 flex items-center justify-center shrink-0">
               <Rocket className="w-5 h-5 text-gold" />
             </div>
-            <div>
-              <h2 className="text-[18px] font-semibold txt-head">Welcome to Keystone</h2>
+            <div className="min-w-0">
+              <h2 className="text-[16px] sm:text-[18px] font-semibold txt-head">Welcome to Keystone</h2>
               <p className="text-[12px] txt-muted">Your identity platform dashboard</p>
             </div>
           </div>
-          <p className="text-[13px] txt-body max-w-2xl leading-relaxed">
+          <p className="text-[12px] sm:text-[13px] txt-body max-w-2xl leading-relaxed">
             Keystone handles authentication, users, organizations, and access control for your apps.
             Pick an action below to get started.
           </p>
@@ -120,16 +120,16 @@ export function HomePanel({
             <button
               key={action.title}
               onClick={() => onNavigate(action.id)}
-              className="group text-left p-4 rounded-xl bg-surface border border-theme/20 hover:border-gold/40 hover:bg-gold/[0.03] transition-all"
+              className="group text-left p-3 sm:p-4 rounded-xl bg-surface border border-theme/20 hover:border-gold/40 hover:bg-gold/[0.03] transition-all"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-gold/10 flex items-center justify-center">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gold/10 flex items-center justify-center">
                   {action.icon}
                 </div>
                 <ArrowRight className="w-4 h-4 txt-muted group-hover:text-gold transition-colors" />
               </div>
-              <h3 className="text-[13px] font-semibold txt-head">{action.title}</h3>
-              <p className="text-[11px] txt-muted mt-1 leading-relaxed">{action.description}</p>
+              <h3 className="text-[12px] sm:text-[13px] font-semibold txt-head">{action.title}</h3>
+              <p className="text-[10px] sm:text-[11px] txt-muted mt-1 leading-relaxed">{action.description}</p>
             </button>
           ))}
         </div>
