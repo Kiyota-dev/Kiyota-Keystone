@@ -439,6 +439,8 @@ If you already have a login/signup page with email/password and Google login and
 
 For production deployment with HTTPS and a custom domain, see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
+If Keystone feels slow or uses a lot of memory during development, see [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+
 ## Endpoints
 
 ### Authentication

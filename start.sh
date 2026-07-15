@@ -30,6 +30,20 @@ cd "$SCRIPT_DIR"
 # shellcheck source=scripts/ui.sh
 source "${SCRIPT_DIR}/scripts/ui.sh"
 
+# Kill any stale Keystone backend/frontend processes so repeated starts do not
+# leak memory or leave port 4001/5173 in use.
+kill_stale_keystone() {
+  pids=$(ps -eo pid,args | grep -E '(tsx watch src/(index|setup-server)\.ts|node dist/(index|setup-server)\.js|frontend/node_modules/.bin/vite)' | grep -v grep | awk '{print $1}' || true)
+  if [ -n "$pids" ]; then
+    # shellcheck disable=SC2086
+    kill $pids 2>/dev/null || true
+    sleep 1
+    # shellcheck disable=SC2086
+    kill -9 $pids 2>/dev/null || true
+  fi
+}
+kill_stale_keystone
+
 # Load environment variables if .env exists
 if [ -f .env ]; then
   set -a
@@ -100,12 +114,30 @@ fi
 # Detect whether we are in first-run setup mode.
 # Stay in setup mode until .env exists AND the owner has been created.
 SETUP_MARKER=".keystone-setup-complete"
+
+# Production mode uses the compiled dist/ build and less memory.
+# Usage: ./start.sh --production
+USE_PRODUCTION=false
+for arg in "$@"; do
+  if [ "$arg" = "--production" ]; then
+    USE_PRODUCTION=true
+  fi
+done
+
 if [ -f .env ] && [ -f "$SETUP_MARKER" ]; then
-  BACKEND_COMMAND="npx tsx watch src/index.ts"
+  if [ "$USE_PRODUCTION" = "true" ] && [ -f dist/index.js ]; then
+    BACKEND_COMMAND="node dist/index.js"
+  else
+    BACKEND_COMMAND="npx tsx watch src/index.ts"
+  fi
   BACKEND_LABEL="backend API"
 else
   export KEYSTONE_SETUP_MODE="true"
-  BACKEND_COMMAND="npx tsx watch src/setup-server.ts"
+  if [ "$USE_PRODUCTION" = "true" ] && [ -f dist/setup-server.js ]; then
+    BACKEND_COMMAND="node dist/setup-server.js"
+  else
+    BACKEND_COMMAND="npx tsx watch src/setup-server.ts"
+  fi
   BACKEND_LABEL="setup server"
 fi
 
@@ -162,7 +194,11 @@ while true; do
   if [ -f "$SETUP_MARKER" ] && [ "$backend_exit" -eq 0 ]; then
     echo ""
     ui_step "Setup complete. Restarting Keystone in normal mode..."
-    BACKEND_COMMAND="npx tsx watch src/index.ts"
+    if [ "$USE_PRODUCTION" = "true" ] && [ -f dist/index.js ]; then
+      BACKEND_COMMAND="node dist/index.js"
+    else
+      BACKEND_COMMAND="npx tsx watch src/index.ts"
+    fi
     $BACKEND_COMMAND &
     BACKEND_PID=$!
     ui_info "Waiting for backend health check..."
