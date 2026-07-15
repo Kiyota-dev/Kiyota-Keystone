@@ -89,6 +89,8 @@ export function getKeystoneAccessToken(): string | null {
   return localStorage.getItem("keystone-access-token")?.trim() || null;
 }
 
+let authReloadInProgress = false;
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -107,6 +109,14 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   });
   if (!response.ok) {
+    // If the server says we are not authenticated, clear the stored token and
+    // reload so the user sees the login screen again. This avoids showing
+    // confusing "Invalid token" errors in random panels.
+    if ((response.status === 401 || response.status === 403) && accessToken && !authReloadInProgress) {
+      authReloadInProgress = true;
+      localStorage.removeItem("keystone-access-token");
+      window.location.reload();
+    }
     const body = await response.json().catch(() => ({}));
     throw new Error(body.error || `Request failed: ${response.status}`);
   }
