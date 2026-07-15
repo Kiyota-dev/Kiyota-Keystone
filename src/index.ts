@@ -140,10 +140,15 @@ export async function buildApp() {
     await emailProvider.send(message);
   });
   queue.process("webhook", async (job) => {
-    const { url, method, body } = job.payload as { url: string; method?: string; body?: unknown };
+    const { url, method, body, headers } = job.payload as {
+      url: string;
+      method?: string;
+      body?: unknown;
+      headers?: Record<string, string>;
+    };
     await fetch(url, {
       method: method || "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(headers || {}) },
       body: body ? JSON.stringify(body) : undefined,
     });
   });

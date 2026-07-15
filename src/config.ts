@@ -61,6 +61,7 @@ export const config = {
   COOKIE_NAME: getEnv("COOKIE_NAME", "__Host-keystone-session"),
   COOKIE_DOMAIN: getEnv("COOKIE_DOMAIN", ".local.kiyota.ai"),
   COOKIE_SECURE: getEnv("COOKIE_SECURE", "false") === "true",
+  COOKIE_SAME_SITE: getEnv("COOKIE_SAME_SITE", getEnv("NODE_ENV", "development") === "production" ? "strict" : "lax") as "strict" | "lax" | "none",
 
   AUTH_API_PUBLIC_URL: getEnv("AUTH_API_PUBLIC_URL"),
   ACCESS_TOKEN_TTL_SECONDS: Number(getEnv("JWT_ACCESS_TOKEN_TTL", "900")),
@@ -117,6 +118,7 @@ export const config = {
   OTEL_EXPORTER_OTLP_ENDPOINT: getEnv("OTEL_EXPORTER_OTLP_ENDPOINT"),
   AUDIT_WEBHOOK_URL: getEnv("AUDIT_WEBHOOK_URL"),
   AUDIT_CONSOLE_EXPORT: getEnv("AUDIT_CONSOLE_EXPORT", "false"),
+  WEBHOOK_SIGNING_SECRET: getEnv("WEBHOOK_SIGNING_SECRET") || getEnv("KEYSTONE_WEBHOOK_SIGNING_SECRET"),
 } as const;
 
 export function zitadelBaseUrl(): string {

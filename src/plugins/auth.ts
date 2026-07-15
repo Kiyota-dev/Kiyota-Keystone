@@ -35,14 +35,15 @@ function cookieOptions(): {
   path: string;
   httpOnly: boolean;
   secure: boolean;
-  sameSite: "lax";
+  sameSite: "strict" | "lax" | "none";
   domain: string | undefined;
 } {
+  const sameSite = (config.COOKIE_SAME_SITE as "strict" | "lax" | "none") || (config.NODE_ENV === "production" ? "strict" : "lax");
   return {
     path: "/",
     httpOnly: true,
     secure: config.COOKIE_SECURE,
-    sameSite: "lax" as const,
+    sameSite,
     domain: config.COOKIE_DOMAIN || undefined,
   };
 }

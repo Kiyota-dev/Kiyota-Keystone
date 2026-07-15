@@ -1,5 +1,6 @@
 import { config } from "../../../config.js";
 import { queue } from "../../queue/index.js";
+import { signWebhookPayload } from "../../../lib/webhookSignature.js";
 import type { KeystoneEvent } from "../types.js";
 
 function shouldEmit(): boolean {
@@ -26,9 +27,13 @@ export async function webhookSubscriber(event: KeystoneEvent): Promise<void> {
 
   const webhookUrl = config.AUDIT_WEBHOOK_URL || process.env.AUDIT_WEBHOOK_URL;
   if (webhookUrl) {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (config.WEBHOOK_SIGNING_SECRET) {
+      headers["X-Keystone-Signature"] = signWebhookPayload(config.WEBHOOK_SIGNING_SECRET, record);
+    }
     await queue.enqueue({
       type: "webhook",
-      payload: { url: webhookUrl, method: "POST", body: record },
+      payload: { url: webhookUrl, method: "POST", body: record, headers },
     });
   }
 }
