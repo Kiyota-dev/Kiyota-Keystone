@@ -14,6 +14,7 @@ import {
   Workflow,
   CreditCard,
   Settings,
+  Code2,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -29,6 +30,7 @@ import { OverviewPanel } from "./components/dashboard/OverviewPanel.tsx";
 import { IdentityProvidersPanel } from "./components/dashboard/IdentityProvidersPanel.tsx";
 import { OrganizationSelector } from "./components/dashboard/OrganizationSelector.tsx";
 import { SettingsPanel } from "./components/dashboard/SettingsPanel.tsx";
+import { ConnectProjectPanel } from "./components/ConnectProjectPanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 
@@ -124,6 +126,7 @@ const TABS = [
   { id: "overview", label: "Overview", icon: <Activity className="w-4 h-4" /> },
   { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" /> },
   { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" /> },
+  { id: "connect-project", label: "Connect Project", icon: <Code2 className="w-4 h-4" /> },
   { id: "users", label: "Users", icon: <Users className="w-4 h-4" /> },
   { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" /> },
   { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" /> },
@@ -157,6 +160,7 @@ export default function Dashboard() {
   const [users, setUsers] = useState<DataTabState<{ users: unknown[] }>>({ data: null, loading: false, error: null });
   const [organizations, setOrganizations] = useState<DataTabState<{ organizations: unknown[] }>>({ data: null, loading: false, error: null });
   const [applications, setApplications] = useState<DataTabState<{ applications: unknown[] }>>({ data: null, loading: false, error: null });
+  const [platformConfig, setPlatformConfig] = useState<DataTabState<{ values: Record<string, string> }>>({ data: null, loading: false, error: null });
   const [auditLogs, setAuditLogs] = useState<DataTabState<{ logs: unknown[] }>>({ data: null, loading: false, error: null });
   const [providers, setProviders] = useState<DataTabState<{ providers: Array<{ type: string; name: string; configured: boolean }> }>>({ data: null, loading: false, error: null });
   const [keys, setKeys] = useState<DataTabState<{ keys: Array<{ keyId: string; createdAt: string; expiresAt?: string | null }>; provider: string }>>({ data: null, loading: false, error: null });
@@ -294,6 +298,10 @@ export default function Dashboard() {
       case "applications":
         loadTab(applications, setApplications, api.getApplications);
         break;
+      case "connect-project":
+        loadTab(applications, setApplications, api.getApplications);
+        loadTab(platformConfig, setPlatformConfig, api.getConfig);
+        break;
       case "audit-logs":
         loadTab(auditLogs, setAuditLogs, api.getAuditLogs);
         break;
@@ -395,6 +403,8 @@ export default function Dashboard() {
             <ApplicationsPanel state={applications} organizations={organizations} onRefresh={refreshApplications} />
           </Suspense>
         );
+      case "connect-project":
+        return <ConnectProjectPanel applicationsState={applications} configState={platformConfig} />;
       case "users":
         return <UsersPanel state={users} onRefresh={refreshUsers} />;
       case "identity-providers":
