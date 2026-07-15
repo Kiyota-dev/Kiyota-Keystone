@@ -3,12 +3,18 @@ export interface KeystoneSdkConfig {
   url?: string;
   /** Your application's client id in Keystone (optional for drop-in mode) */
   clientId?: string;
+  /** Project id used to auto-connect/register this app with Keystone */
+  projectId?: string;
+  /** Callback path or full URL for OAuth flows (defaults to /callback.html) */
+  callbackPath?: string;
   /** Where to redirect after login/register */
   afterLogin?: string;
   /** Where to redirect after logout */
   afterLogout?: string;
   /** Auto-wire forms on the page */
   autoWire?: boolean;
+  /** Check existing session on load and mark the page authenticated if found */
+  checkSession?: boolean;
 }
 
 interface KeystoneUser {
@@ -31,16 +37,28 @@ class KeystoneSdk {
   private clientId?: string;
   private afterLogin: string;
   private afterLogout: string;
+  private projectId?: string;
+  private callbackPath?: string;
 
   constructor(config: KeystoneSdkConfig = {}) {
     this.url = config.url || this.inferUrl();
     this.clientId = config.clientId;
     this.afterLogin = config.afterLogin || "/";
     this.afterLogout = config.afterLogout || "/";
+    this.projectId = config.projectId;
+    this.callbackPath = config.callbackPath;
 
     if (config.autoWire !== false) {
       this.attachAll();
       this.observeDom();
+    }
+
+    if (config.projectId) {
+      this.autoConnect();
+    }
+
+    if (config.checkSession) {
+      this.autoCheckSession();
     }
   }
 
@@ -57,6 +75,77 @@ class KeystoneSdk {
       }
     }
     return "http://localhost:4001";
+  }
+
+  private buildCallbackUrl(): string {
+    if (!this.callbackPath) return this.inferRedirectUri();
+    if (this.callbackPath.startsWith("http://") || this.callbackPath.startsWith("https://")) {
+      return this.callbackPath;
+    }
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}${this.callbackPath}`;
+    }
+    return this.callbackPath;
+  }
+
+  private async autoConnect(): Promise<void> {
+    try {
+      await this.connect(this.projectId!, this.buildCallbackUrl());
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Keystone auto-connect failed:", err);
+    }
+  }
+
+  private async autoCheckSession(): Promise<void> {
+    try {
+      const user = await this.getUser();
+      this.markAuthenticated(user);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Keystone session check failed:", err);
+    }
+  }
+
+  private markAuthenticated(user: KeystoneUser | null): void {
+    if (typeof document === "undefined") return;
+    const html = document.documentElement;
+    html.dataset.keystoneAuthenticated = user ? "true" : "false";
+    if (user) {
+      html.dataset.keystoneUserEmail = user.email;
+      html.dataset.keystoneUserName = user.name || "";
+      html.dataset.keystoneUserUsername = user.username;
+    } else {
+      delete html.dataset.keystoneUserEmail;
+      delete html.dataset.keystoneUserName;
+      delete html.dataset.keystoneUserUsername;
+    }
+    this.fillUserFields(user);
+    document.dispatchEvent(
+      new CustomEvent("keystone:session", { detail: { authenticated: Boolean(user), user } })
+    );
+  }
+
+  private fillUserFields(user: KeystoneUser | null): void {
+    if (typeof document === "undefined") return;
+    const fields: Array<{ attr: string; value: string }> = [
+      { attr: "data-keystone-field", value: user?.email || "" },
+    ];
+    if (user) {
+      document.querySelectorAll<HTMLElement>("[data-keystone-field='email']").forEach((el) => {
+        el.textContent = user.email;
+      });
+      document.querySelectorAll<HTMLElement>("[data-keystone-field='name']").forEach((el) => {
+        el.textContent = user.name || user.username;
+      });
+      document.querySelectorAll<HTMLElement>("[data-keystone-field='username']").forEach((el) => {
+        el.textContent = user.username;
+      });
+    } else {
+      document.querySelectorAll<HTMLElement>("[data-keystone-field]").forEach((el) => {
+        el.textContent = "";
+      });
+    }
   }
 
   /**
@@ -105,11 +194,14 @@ class KeystoneSdk {
 
   async login(email: string, password: string): Promise<{ user: KeystoneUser }> {
     const result = (await this.request("/auth/login", { email, password })) as { user: KeystoneUser };
+    this.markAuthenticated(result.user);
     return result;
   }
 
   async register(username: string, email: string, password: string, name?: string): Promise<{ user: KeystoneUser }> {
-    return (await this.request("/auth/register", { username, email, password, name })) as { user: KeystoneUser };
+    const result = (await this.request("/auth/register", { username, email, password, name })) as { user: KeystoneUser };
+    this.markAuthenticated(result.user);
+    return result;
   }
 
   async getUser(): Promise<KeystoneUser | null> {
@@ -121,6 +213,7 @@ class KeystoneSdk {
 
   async logout(): Promise<void> {
     await this.request("/auth/logout");
+    this.markAuthenticated(null);
     window.location.href = this.afterLogout;
   }
 
@@ -285,16 +378,22 @@ if (typeof document !== "undefined") {
   if (script) {
     const url = script.dataset.keystoneUrl;
     const clientId = script.dataset.keystoneClientId;
+    const projectId = script.dataset.keystoneProjectId;
+    const callbackPath = script.dataset.keystoneCallback;
     const afterLogin = script.dataset.keystoneAfterLogin;
     const afterLogout = script.dataset.keystoneAfterLogout;
     const autoWire = script.dataset.keystoneAutowire !== "false";
+    const checkSession = script.dataset.keystoneCheckSession === "true";
 
     globalSdk = new KeystoneSdk({
       url,
       clientId,
+      projectId,
+      callbackPath,
       afterLogin,
       afterLogout,
       autoWire,
+      checkSession,
     });
   }
 }
