@@ -6,6 +6,8 @@ import { Alert } from "./ui/Alert.tsx";
 import { Input } from "./ui/Input.tsx";
 import { Label } from "./ui/Label.tsx";
 import { Badge } from "./ui/Badge.tsx";
+import { ConfirmDialog } from "./ui/ConfirmDialog.tsx";
+import { useToastContext } from "./ui/ToastProvider.tsx";
 import type { DataTabState } from "../Dashboard.tsx";
 
 interface WorkflowItem {
@@ -54,6 +56,8 @@ export function WorkflowPanel({
   const [newTrigger, setNewTrigger] = useState(TRIGGERS[0]);
   const [newSteps, setNewSteps] = useState<Array<{ type: string; name?: string }>>([{ type: "assign_role", name: "assign_default_role" }]);
   const [expandedRuns, setExpandedRuns] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const { addToast } = useToastContext();
 
   if (workflowsState.loading) {
     return (
@@ -110,7 +114,7 @@ export function WorkflowPanel({
                     <Play className="w-4 h-4" />
                     Runs
                   </Button>
-                  <Button size="sm" variant="danger" onClick={() => onDelete(wf.id)}>
+                  <Button size="sm" variant="danger" onClick={() => setConfirmDeleteId(wf.id)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -245,6 +249,21 @@ export function WorkflowPanel({
           </Button>
         </div>
       </Card>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        title="Delete workflow"
+        message="This workflow and its run history will be permanently removed. This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (confirmDeleteId) {
+            onDelete(confirmDeleteId);
+            addToast("Workflow deleted", "success");
+          }
+          setConfirmDeleteId(null);
+        }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

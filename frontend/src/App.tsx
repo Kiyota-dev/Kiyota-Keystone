@@ -7,6 +7,7 @@ import Dashboard from "./Dashboard.tsx";
 import { Card } from "./components/ui/Card.tsx";
 import { Alert } from "./components/ui/Alert.tsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary.tsx";
+import { ToastProvider } from "./components/ui/ToastProvider.tsx";
 
 export default function App() {
   const [status, setStatus] = useState<{ needsSetup: boolean; setupToken: boolean } | null>(null);
@@ -30,7 +31,9 @@ export default function App() {
   if (!loading && !error && !status?.needsSetup) {
     return (
       <ErrorBoundary>
-        <Dashboard />
+        <ToastProvider>
+          <Dashboard />
+        </ToastProvider>
       </ErrorBoundary>
     );
   }

@@ -10,6 +10,7 @@ import { Select } from "./ui/Select.tsx";
 import { DataTable } from "./DataTable.tsx";
 import { FieldHelp } from "./ui/FieldHelp.tsx";
 import { useUiMode } from "../hooks/useUiMode.ts";
+import { useToastContext } from "./ui/ToastProvider.tsx";
 import { APPLICATION_TEMPLATES } from "../lib/templates.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
@@ -21,6 +22,7 @@ interface ApplicationsPanelProps {
 
 export function ApplicationsPanel({ state, organizations, onRefresh }: ApplicationsPanelProps) {
   const { mode } = useUiMode();
+  const { addToast } = useToastContext();
   const [showForm, setShowForm] = useState(false);
   const [orgId, setOrgId] = useState("");
   const [name, setName] = useState("");
@@ -53,6 +55,7 @@ export function ApplicationsPanel({ state, organizations, onRefresh }: Applicati
         redirectUris: redirectUris.split(",").map((s) => s.trim()).filter(Boolean),
       });
       setSuccess(`Application created. Client ID: ${result.clientId}`);
+      addToast("Application created successfully", "success");
       setCreatedSecret(result.clientSecret);
       setName("");
       setRedirectUris("");
@@ -71,6 +74,7 @@ export function ApplicationsPanel({ state, organizations, onRefresh }: Applicati
     try {
       await api.updateApplication(String(app.orgId), String(app.id), { isActive: !app.isActive });
       setSuccess("Application updated");
+      addToast("Application status updated", "success");
       onRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update application");
