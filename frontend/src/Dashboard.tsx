@@ -1,4 +1,4 @@
-import { useEffect, useState, Suspense, lazy } from "react";
+import { useEffect, useState, Suspense, lazy, useMemo } from "react";
 import {
   Activity,
   Users,
@@ -328,27 +328,33 @@ export default function Dashboard() {
     return <LoginForm onLogin={() => window.location.reload()} />;
   }
 
-  const logo = (
-    <div className="w-9 h-9 rounded-lg btn-gold flex items-center justify-center">
-      <span className="text-sm font-bold">K</span>
-    </div>
+  const logo = useMemo(
+    () => (
+      <div className="w-9 h-9 rounded-lg btn-gold flex items-center justify-center">
+        <span className="text-sm font-bold">K</span>
+      </div>
+    ),
+    []
   );
 
-  const headerActions = (
-    <>
-      {user && (
-        <span className="hidden sm:inline text-[13px] txt-muted">
-          {user.email}
-        </span>
-      )}
-      <Button variant="secondary" size="sm" onClick={logout}>
-        <LogOut className="w-4 h-4" />
-        Logout
-      </Button>
-      <Button variant="secondary" size="sm" onClick={() => window.open(`${API_BASE}/documentation`, "_blank")}>
-        API Docs
-      </Button>
-    </>
+  const headerActions = useMemo(
+    () => (
+      <>
+        {user && (
+          <span className="hidden sm:inline text-[13px] txt-muted">
+            {user.email}
+          </span>
+        )}
+        <Button variant="secondary" size="sm" onClick={logout}>
+          <LogOut className="w-4 h-4" />
+          Logout
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => window.open(`${API_BASE}/documentation`, "_blank")}>
+          API Docs
+        </Button>
+      </>
+    ),
+    [user, logout]
   );
 
   const renderContent = () => {

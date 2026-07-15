@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface AsyncState<T> {
   data: T | null;
@@ -15,7 +15,7 @@ export interface UseAsyncOptions {
  * Generic async data hook. Handles loading, error, and data states.
  *
  * Example:
- *   const { data, loading, error, refresh } = useAsync(api.getUsers);
+ *   const { data, loading, error, refresh } = useAsync(api.getUsers, []);
  */
 export function useAsync<T>(
   fetcher: () => Promise<T>,
@@ -28,10 +28,14 @@ export function useAsync<T>(
     error: null,
   });
 
+  // Keep the latest fetcher reference without making refresh unstable.
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
+
   const refresh = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      const data = await fetcher();
+      const data = await fetcherRef.current();
       setState({ data, loading: false, error: null });
       return data;
     } catch (err) {
@@ -39,8 +43,7 @@ export function useAsync<T>(
       setState({ data: null, loading: false, error: message });
       throw err;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetcher, ...deps]);
+  }, []);
 
   const reset = useCallback(() => {
     setState({ data: null, loading: false, error: null });
@@ -50,7 +53,8 @@ export function useAsync<T>(
     if (options.autoRun !== false) {
       refresh();
     }
-  }, [refresh, options.autoRun]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refresh, options.autoRun, ...deps]);
 
   return { ...state, refresh, reset, setData: (data: T | null) => setState((s) => ({ ...s, data })) };
 }
