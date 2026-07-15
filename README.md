@@ -424,6 +424,17 @@ services:
 
 ---
 
+## Integrating with your projects
+
+See [`docs/INTEGRATION.md`](docs/INTEGRATION.md) for complete examples covering:
+
+- React / Next.js / SPAs (OIDC + PKCE)
+- Backend services and microservices (API keys)
+- Python / FastAPI token verification
+- Mobile apps (system browser + custom URL scheme)
+- CLI scripts
+- Federation through external IdPs
+
 ## Endpoints
 
 ### Authentication
