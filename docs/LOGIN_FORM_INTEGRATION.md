@@ -71,7 +71,35 @@ Your React app runs on `http://localhost:5173` and Keystone on `http://localhost
 
 ---
 
-## Step 2 — Add the auth helper to your React app
+## Step 2 — Choose how to integrate
+
+### Option A: Drop-in script (fastest — any HTML/JS site)
+
+Copy `examples/drop-in-login/dropin.js` into your project and include it:
+
+```html
+<script>
+  window.KEYSTONE_URL = "http://localhost:4001";
+  window.KEYSTONE_AFTER_LOGIN = "/dashboard";
+</script>
+<script src="/keystone-dropin.js"></script>
+```
+
+Then add IDs/classes to your existing form:
+
+```html
+<form id="keystone-login-form">
+  <input class="keystone-email" type="email" />
+  <input class="keystone-password" type="password" />
+  <button type="submit">Login</button>
+</form>
+
+<button id="keystone-google-btn">Login with Google</button>
+```
+
+No other code needed. See `examples/drop-in-login/README.md`.
+
+### Option B: React helper
 
 Create `keystone-auth.ts` in your React project and copy the code from `examples/login-form-react/keystone-auth.ts`.
 
