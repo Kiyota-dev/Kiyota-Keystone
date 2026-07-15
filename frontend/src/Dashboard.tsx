@@ -38,6 +38,7 @@ import { useUiMode } from "./hooks/useUiMode.ts";
 import { ModeToggle } from "./components/ui/ModeToggle.tsx";
 import { CommandPalette } from "./components/ui/CommandPalette.tsx";
 import { Advanced } from "./components/ui/Advanced.tsx";
+import { parseError } from "./lib/errorMessages.ts";
 
 const OrganizationsPanel = lazy(() => import("./components/OrganizationsPanel.tsx").then((m) => ({ default: m.OrganizationsPanel })));
 const ApplicationsPanel = lazy(() => import("./components/ApplicationsPanel.tsx").then((m) => ({ default: m.ApplicationsPanel })));
@@ -378,17 +379,25 @@ export default function Dashboard() {
     }
 
     if (authError) {
+      const friendly = parseError(authError);
       return (
         <Alert variant="error" className="mb-4">
-          Unable to authenticate: {authError}
+          <div className="space-y-2">
+            <p>{friendly.message}</p>
+            {friendly.action && <p className="text-[12px] opacity-90">{friendly.action}</p>}
+          </div>
         </Alert>
       );
     }
 
     if (overviewError) {
+      const friendly = parseError(overviewError);
       return (
         <Alert variant="error" className="mb-4">
-          Unable to load dashboard data: {overviewError}
+          <div className="space-y-2">
+            <p>{friendly.message}</p>
+            {friendly.action && <p className="text-[12px] opacity-90">{friendly.action}</p>}
+          </div>
         </Alert>
       );
     }

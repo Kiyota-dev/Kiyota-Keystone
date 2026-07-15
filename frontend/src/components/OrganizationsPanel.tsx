@@ -8,6 +8,7 @@ import { Input } from "./ui/Input.tsx";
 import { Label } from "./ui/Label.tsx";
 import { DataTable } from "./DataTable.tsx";
 import { Advanced } from "./ui/Advanced.tsx";
+import { FieldHelp } from "./ui/FieldHelp.tsx";
 import { useUiMode } from "../hooks/useUiMode.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
@@ -71,10 +72,13 @@ export function OrganizationsPanel({ state, onRefresh }: OrganizationsPanelProps
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Corp" required />
           </div>
           <Advanced mode={mode}>
-            <div>
-              <Label className="text-[12px]">Slug (optional)</Label>
+            <FieldHelp
+              label="Slug (optional)"
+              help="A short, URL-friendly identifier for the organization. If left empty, Keystone will generate one from the name."
+              example="acme-corp"
+            >
               <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="acme-corp" />
-            </div>
+            </FieldHelp>
           </Advanced>
           <div className="flex gap-2">
             <Button type="submit" size="sm" isLoading={busy} disabled={!name}>

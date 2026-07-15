@@ -8,6 +8,7 @@ import { Input } from "./ui/Input.tsx";
 import { Label } from "./ui/Label.tsx";
 import { Select } from "./ui/Select.tsx";
 import { DataTable } from "./DataTable.tsx";
+import { FieldHelp } from "./ui/FieldHelp.tsx";
 import { useUiMode } from "../hooks/useUiMode.ts";
 import type { DataTabState } from "../Dashboard.tsx";
 
@@ -118,10 +119,13 @@ export function ApplicationsPanel({ state, organizations, onRefresh }: Applicati
             <Label className="text-[12px]">Application name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="My App" required />
           </div>
-          <div>
-            <Label className="text-[12px]">Redirect URIs (comma-separated)</Label>
+          <FieldHelp
+            label="Redirect URIs"
+            help="Where users are sent after signing in with an external provider like Google. Must match the URI configured in the provider console."
+            example="http://localhost:5173/callback, https://app.example.com/auth/callback"
+          >
             <Input value={redirectUris} onChange={(e) => setRedirectUris(e.target.value)} placeholder="http://localhost:5173/callback" />
-          </div>
+          </FieldHelp>
           <div className="flex gap-2">
             <Button type="submit" size="sm" isLoading={busy} disabled={!name || !orgId}>
               <Save className="w-4 h-4" />
