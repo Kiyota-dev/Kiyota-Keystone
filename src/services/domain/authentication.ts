@@ -132,6 +132,11 @@ export class AuthenticationDomainService {
       return err({ code: "INVALID_CREDENTIALS", message: "Invalid email or password.", statusCode: 401 });
     }
 
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      await emit({ type: "user_login_failed", payload: { reason: "account_locked", userId: user.id } });
+      return err({ code: "ACCOUNT_LOCKED", message: "Account is temporarily locked due to too many failed attempts. Try again later.", statusCode: 403 });
+    }
+
     const { verifyPassword } = await import("../secrets/index.js");
     let valid = false;
     if (user.passwordHash) {
@@ -141,14 +146,23 @@ export class AuthenticationDomainService {
     }
 
     if (!valid) {
-      await recordFailedLogin(user.id);
+      const updated = await this.users.recordFailedLogin(user.id);
       await emit({ type: "user_login_failed", payload: { reason: "invalid_password", userId: user.id } });
+
+      const attempts = updated?.failedLoginAttempts ?? 0;
+      if (attempts >= config.ACCOUNT_LOCKOUT_THRESHOLD) {
+        const lockedUntil = new Date(Date.now() + config.ACCOUNT_LOCKOUT_DURATION_SECONDS * 1000);
+        await this.users.lockAccount(user.id, lockedUntil);
+        return err({ code: "ACCOUNT_LOCKED", message: "Account locked due to too many failed attempts. Try again later.", statusCode: 403 });
+      }
+
       if (await isFailedLoginAnomaly(user.id)) {
         return err({ code: "TOO_MANY_ATTEMPTS", message: "Too many failed attempts. Please try again later.", statusCode: 429 });
       }
       return err({ code: "INVALID_CREDENTIALS", message: "Invalid email or password.", statusCode: 401 });
     }
 
+    await this.users.resetFailedLogins(user.id);
     await this.users.updateLastSeen(user.id);
     const context = await this.loadAppContext(input.clientId);
     const tokens = await createTokenSet(user, undefined, undefined, {

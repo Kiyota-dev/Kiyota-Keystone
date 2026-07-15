@@ -57,6 +57,26 @@ export class DrizzleUserRepository implements UserRepository {
     await db.update(users).set({ updatedAt: sql`now()` }).where(eq(users.id, id));
   }
 
+  async recordFailedLogin(id: string): Promise<User | undefined> {
+    const [updated] = await db
+      .update(users)
+      .set({ failedLoginAttempts: sql`${users.failedLoginAttempts} + 1`, updatedAt: sql`now()` })
+      .where(eq(users.id, id))
+      .returning();
+    return updated;
+  }
+
+  async resetFailedLogins(id: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ failedLoginAttempts: 0, lockedUntil: null, updatedAt: sql`now()` })
+      .where(eq(users.id, id));
+  }
+
+  async lockAccount(id: string, until: Date): Promise<void> {
+    await db.update(users).set({ lockedUntil: until, updatedAt: sql`now()` }).where(eq(users.id, id));
+  }
+
   async ensureUniqueUsername(base: string, excludeId?: string): Promise<string> {
     let username = base || "user";
     let counter = 2;

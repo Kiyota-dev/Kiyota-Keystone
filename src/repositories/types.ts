@@ -27,6 +27,9 @@ export interface UserRepository {
   listByOrg(orgId: string): Promise<User[]>;
   updateLastSeen(id: string): Promise<void>;
   ensureUniqueUsername(base: string, excludeId?: string): Promise<string>;
+  recordFailedLogin(id: string): Promise<User | undefined>;
+  resetFailedLogins(id: string): Promise<void>;
+  lockAccount(id: string, until: Date): Promise<void>;
 }
 
 export interface CreateOrganizationInput {

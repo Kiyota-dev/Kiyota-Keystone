@@ -11,10 +11,12 @@ declare module "fastify" {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     authenticateOrApiKey: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    requireScopes: (...scopes: string[]) => (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 
   interface FastifyRequest {
     serviceAccount?: typeof serviceAccounts.$inferSelect;
+    apiKeyScopes?: string[];
   }
 }
 
@@ -78,14 +80,18 @@ async function resolveUserFromClaims(claims: TokenClaims) {
   return user;
 }
 
-async function resolveUserFromApiKey(key: string): Promise<User | undefined> {
+async function resolveApiKeyRecord(key: string) {
   const hash = hashApiKey(key);
   const [keyRecord] = await db
     .select()
     .from(apiKeys)
     .where(and(eq(apiKeys.keyHash, hash), isNull(apiKeys.revokedAt)))
     .limit(1);
+  return keyRecord;
+}
 
+async function resolveUserFromApiKey(key: string): Promise<{ user: User; scopes: string[] } | undefined> {
+  const keyRecord = await resolveApiKeyRecord(key);
   if (!keyRecord) return undefined;
   if (keyRecord.expiresAt && keyRecord.expiresAt < new Date()) return undefined;
 
@@ -93,7 +99,8 @@ async function resolveUserFromApiKey(key: string): Promise<User | undefined> {
 
   if (keyRecord.userId) {
     const [user] = await db.select().from(users).where(eq(users.id, keyRecord.userId)).limit(1);
-    return user;
+    if (!user) return undefined;
+    return { user, scopes: keyRecord.scopes ?? [] };
   }
 
   return undefined;
@@ -151,13 +158,15 @@ export default fp(async function authPlugin(app: FastifyInstance) {
 
     const apiKeyUser = await resolveUserFromApiKey(token);
     if (apiKeyUser) {
-      request.user = apiKeyUser;
+      request.user = apiKeyUser.user;
+      request.apiKeyScopes = apiKeyUser.scopes;
       return;
     }
 
     const serviceAccount = await resolveServiceAccountFromApiKey(token);
     if (serviceAccount) {
       request.serviceAccount = serviceAccount;
+      request.apiKeyScopes = ["api:read", "api:write", "service_account"];
       // Synthesize a user so existing routes that expect request.user keep working.
       request.user = {
         id: `sa:${serviceAccount.id}`,
@@ -183,6 +192,18 @@ export default fp(async function authPlugin(app: FastifyInstance) {
     }
 
     return reply.status(401).send({ error: "Invalid token or API key" });
+  });
+
+  app.decorate("requireScopes", function requireScopes(...required: string[]) {
+    return async function scopeCheck(request: FastifyRequest, reply: FastifyReply) {
+      // Session-based authentication has full scope access.
+      if (!request.apiKeyScopes) return;
+      const scopes = request.apiKeyScopes;
+      const hasAll = required.every((scope) => scopes.includes(scope) || scopes.includes("service_account"));
+      if (!hasAll) {
+        return reply.status(403).send({ error: "Insufficient API key scope", required });
+      }
+    };
   });
 });
 
