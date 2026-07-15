@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   Code2,
   Copy,
@@ -51,7 +51,7 @@ interface Application {
 
 type CodeTab = "html" | "react" | "vue";
 
-export function ConnectProjectPanel({ applicationsState, configState }: ConnectProjectPanelProps) {
+function ConnectProjectPanelBase({ applicationsState, configState }: ConnectProjectPanelProps) {
   const { mode } = useUiMode();
   const [selectedAppId, setSelectedAppId] = useState("");
   const [projectUrl, setProjectUrl] = useState("http://localhost:3000");
@@ -201,7 +201,7 @@ export default function AuthPage() {
         description="Generate a drop-in auth script and wire Keystone into any website or app in minutes."
       />
 
-      {mode === "simple" && (
+      <div className={mode === "advanced" ? "hidden" : undefined}>
         <SectionCard
           title="Quick install"
           description="Choose your framework, pick an app, and copy one snippet."
@@ -250,7 +250,7 @@ export default function AuthPage() {
             </Alert>
           )}
         </SectionCard>
-      )}
+      </div>
 
       <Advanced mode={mode}>
       {/* Configuration */}
@@ -603,3 +603,5 @@ export default function AuthPage() {
     </div>
   );
 }
+
+export const ConnectProjectPanel = memo(ConnectProjectPanelBase);

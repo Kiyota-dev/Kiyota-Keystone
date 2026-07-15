@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { LayoutGrid, Plus, Save, X, Power } from "lucide-react";
 import { api } from "../api.ts";
 import { Card } from "./ui/Card.tsx";
@@ -20,7 +20,7 @@ interface ApplicationsPanelProps {
   onRefresh: () => void;
 }
 
-export function ApplicationsPanel({ state, organizations, onRefresh }: ApplicationsPanelProps) {
+function ApplicationsPanelBase({ state, organizations, onRefresh }: ApplicationsPanelProps) {
   const { mode } = useUiMode();
   const { addToast } = useToastContext();
   const [showForm, setShowForm] = useState(false);
@@ -186,3 +186,5 @@ export function ApplicationsPanel({ state, organizations, onRefresh }: Applicati
     </Card>
   );
 }
+
+export const ApplicationsPanel = memo(ApplicationsPanelBase);

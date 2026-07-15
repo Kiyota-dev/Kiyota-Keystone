@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "./Button.tsx";
 
@@ -9,7 +9,7 @@ interface CodeBlockProps {
   className?: string;
 }
 
-export function CodeBlock({ code, language = "html", showLineNumbers = false, className = "" }: CodeBlockProps) {
+function CodeBlockBase({ code, language = "html", showLineNumbers = false, className = "" }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   const highlighted = useMemo(() => highlightCode(code, language), [code, language]);
@@ -53,6 +53,8 @@ export function CodeBlock({ code, language = "html", showLineNumbers = false, cl
     </div>
   );
 }
+
+export const CodeBlock = memo(CodeBlockBase);
 
 function highlightCode(code: string, language: "html" | "tsx" | "vue"): React.ReactNode {
   if (language === "html" || language === "vue") {
