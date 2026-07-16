@@ -43,6 +43,13 @@
       "when": 1784221274343,
       "tag": "0005_steep_the_call",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784222220916,
+      "tag": "0006_ambitious_boomer",
+      "breakpoints": true
     }
   ]
 }

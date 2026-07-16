@@ -26,12 +26,34 @@ function extractMagicLinkToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+/**
+ * Extracts an email-verification token from the URL hash (`#verify-email=<token>`).
+ */
+function extractVerificationToken(): string | null {
+  const hash = window.location.hash.replace(/^#/, "");
+  const match = hash.match(/^verify-email=(.+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function App() {
   const { path, navigate } = useHashRoute();
   const [status, setStatus] = useState<{ needsSetup: boolean; setupToken: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [magicLinkState, setMagicLinkState] = useState<"pending" | "done" | "error" | null>(null);
+  const [verifyState, setVerifyState] = useState<"pending" | "done" | "error" | null>(null);
+
+  // Handle email-verification links before anything else.
+  useEffect(() => {
+    const token = extractVerificationToken();
+    if (!token) return;
+    setVerifyState("pending");
+    api
+      .verifyEmail(token)
+      .then(() => setVerifyState("done"))
+      .catch(() => setVerifyState("error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle magic-link sign-in before anything else.
   useEffect(() => {
@@ -78,6 +100,37 @@ export default function App() {
   }, [loading, error, status, path, navigate]);
 
   const dashboardTab = normalizeDashboardTab(path);
+
+  if (verifyState) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <Card variant="glass" className="w-full max-w-lg p-6 md:p-8 shadow-xl text-center">
+          {verifyState === "pending" && (
+            <div className="py-10 flex flex-col items-center gap-3 text-muted-foreground">
+              <Loader2 className="w-7 h-7 animate-spin text-gold" />
+              <p className="text-[14px]">Verifying your email…</p>
+            </div>
+          )}
+          {verifyState === "done" && (
+            <>
+              <Alert variant="success" className="mb-4">Your email address has been verified.</Alert>
+              <Button className="w-full" onClick={() => { window.location.hash = "#/dashboard/overview"; window.location.reload(); }}>
+                Continue
+              </Button>
+            </>
+          )}
+          {verifyState === "error" && (
+            <>
+              <Alert variant="error" className="mb-4">This verification link is invalid or has expired.</Alert>
+              <Button className="w-full" onClick={() => { window.location.hash = "#/dashboard/overview"; window.location.reload(); }}>
+                Back to sign in
+              </Button>
+            </>
+          )}
+        </Card>
+      </div>
+    );
+  }
 
   if (magicLinkState === "pending") {
     return (

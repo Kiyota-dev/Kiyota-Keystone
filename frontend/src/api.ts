@@ -266,6 +266,17 @@ export const api = {
   deactivateUser: (userId: string) =>
     fetchJson<{ success: boolean }>(`/v1/admin/platform/users/${userId}`, { method: "DELETE" }),
 
+  // Profile (self-service)
+  getProfile: () => fetchJson<{ user: { id: string; email: string; username: string; name: string | null; avatarUrl: string | null; emailVerified: boolean; phoneNumber?: string | null; phoneVerified?: boolean; metadata: Record<string, unknown> } }>("/auth/profile"),
+  updateProfile: (input: Partial<{ name: string; avatarUrl: string | null; phoneNumber: string | null; metadata: Record<string, unknown> }>) =>
+    fetchJson<{ user: unknown }>("/auth/profile", { method: "PATCH", body: JSON.stringify(input) }),
+
+  // Email verification
+  sendEmailVerification: () =>
+    fetchJson<{ success: boolean; alreadyVerified?: boolean }>("/auth/email-verification/send", { method: "POST", body: JSON.stringify({}) }),
+  verifyEmail: (token: string) =>
+    fetchJson<{ success: boolean; email: string }>(`/auth/email-verification/verify?token=${encodeURIComponent(token)}`),
+
   // Session management
   getSessions: () =>
     fetchJson<{ sessions: Array<{ id: string; deviceFingerprint: string | null; ipAddress: string | null; userAgent: string | null; lastSeenAt: string; expiresAt: string; createdAt: string }> }>("/auth/sessions"),

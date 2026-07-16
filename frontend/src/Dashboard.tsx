@@ -17,6 +17,7 @@ import {
   Code2,
   BookOpen,
   Monitor,
+  UserCircle,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -37,6 +38,7 @@ import { SettingsPanel } from "./components/dashboard/SettingsPanel.tsx";
 import { ConnectProjectPanel } from "./components/ConnectProjectPanel.tsx";
 import { SessionsPanel } from "./components/SessionsPanel.tsx";
 import { PasskeysPanel } from "./components/PasskeysPanel.tsx";
+import { ProfilePanel } from "./components/ProfilePanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
@@ -139,6 +141,7 @@ const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001
 
 const TABS = [
   { id: "overview", label: "Home", icon: <Activity className="w-4 h-4" />, group: "Home", mode: "simple" as const },
+  { id: "profile", label: "Profile", icon: <UserCircle className="w-4 h-4" />, group: "Home", mode: "simple" as const },
   { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, group: "Authentication", mode: "simple" as const },
   { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" />, group: "Authentication", mode: "simple" as const },
   { id: "connect-project", label: "Connect Project", icon: <Code2 className="w-4 h-4" />, group: "Authentication", mode: "simple" as const },
@@ -469,6 +472,8 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
     const { health, config, queueStatus } = overviewData ?? { health: null, config: null, queueStatus: null };
 
     switch (activeTab) {
+      case "profile":
+        return <ProfilePanel />;
       case "overview":
         return (
           <>

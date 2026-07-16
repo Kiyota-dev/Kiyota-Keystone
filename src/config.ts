@@ -98,6 +98,10 @@ export const config = {
   ACCOUNT_LOCKOUT_DURATION_SECONDS: Number(getEnv("ACCOUNT_LOCKOUT_DURATION_SECONDS", "1800")),
 
   HIBP_CHECK_ENABLED: getEnv("HIBP_CHECK_ENABLED", "false") === "true",
+  // When true, new registrations start unverified and a verification email
+  // is sent automatically; login still works but emailVerified stays false
+  // until the user clicks the link.
+  EMAIL_VERIFICATION_REQUIRED: getEnv("EMAIL_VERIFICATION_REQUIRED", "false") === "true",
   MAGIC_LINK_TTL_SECONDS: Number(getEnv("MAGIC_LINK_TTL_SECONDS", "900")),
   OAUTH_CODE_TTL_SECONDS: Number(getEnv("OAUTH_CODE_TTL_SECONDS", "60")),
   TOTP_ISSUER: getEnv("TOTP_ISSUER", "Kiyota"),

@@ -90,4 +90,7 @@ export type AuditEventType =
   | "platform_signing_key_rotated"
   | "platform_plugin_unregistered"
   | "platform_feature_flag_updated"
-  | "platform_feature_flag_deleted";
+  | "platform_feature_flag_deleted"
+  | "profile_updated"
+  | "email_verification_sent"
+  | "email_verified";

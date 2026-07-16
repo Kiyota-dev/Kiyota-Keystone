@@ -71,6 +71,9 @@ const VALID_EVENT_TYPES = new Set([
   "platform_plugin_unregistered",
   "platform_feature_flag_updated",
   "platform_feature_flag_deleted",
+  "profile_updated",
+  "email_verification_sent",
+  "email_verified",
 ]);
 
 export function validateEvent(event: EmittableEvent): EventValidationResult {

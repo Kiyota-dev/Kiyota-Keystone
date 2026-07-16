@@ -51,6 +51,8 @@ import setupRoutes from "./routes/setup.js";
 import sdkRoutes from "./routes/sdk.js";
 import configRoutes from "./routes/config.js";
 import sessionRoutes from "./routes/sessions.js";
+import profileRoutes from "./routes/profile.js";
+import emailVerificationRoutes from "./routes/emailVerification.js";
 import { generateSetupToken, printSetupToken } from "./services/setup/token.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -187,6 +189,8 @@ export async function buildApp() {
 
   await app.register(authRoutes, { prefix: "/auth" });
   await app.register(sessionRoutes, { prefix: "/auth" });
+  await app.register(profileRoutes, { prefix: "/auth" });
+  await app.register(emailVerificationRoutes, { prefix: "/auth" });
   await app.register(oauthRoutes, { prefix: "/auth" });
   await app.register(oauth2Routes, { prefix: "/oauth2" });
   await app.register(passwordRoutes, { prefix: "/auth" });

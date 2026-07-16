@@ -44,6 +44,8 @@ export interface PublicUser {
   name: string | null;
   avatarUrl: string | null;
   emailVerified: boolean;
+  phoneNumber?: string | null;
+  phoneVerified?: boolean;
   plan: string;
   role: string;
   provider: string;
@@ -58,6 +60,8 @@ export function toPublicUser(user: User): PublicUser {
     name: user.name,
     avatarUrl: user.avatarUrl,
     emailVerified: user.emailVerified,
+    phoneNumber: user.phoneNumber,
+    phoneVerified: user.phoneVerified,
     plan: user.plan,
     role: user.role,
     provider: user.provider,

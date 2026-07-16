@@ -284,6 +284,24 @@ export const magicLinks = pgTable(
   })
 );
 
+export const emailVerificationTokens = pgTable(
+  "email_verification_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index("email_verification_user_idx").on(table.userId),
+    hashIdx: index("email_verification_hash_idx").on(table.tokenHash),
+  })
+);
+
 export const passwordResetTokens = pgTable(
   "password_reset_tokens",
   {

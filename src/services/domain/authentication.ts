@@ -90,10 +90,17 @@ export class AuthenticationDomainService {
       name: input.name || input.username,
       passwordHash,
       provider: "password",
-      emailVerified: true,
+      emailVerified: !config.EMAIL_VERIFICATION_REQUIRED,
       zitadelUserId,
       metadata: input.metadata,
     });
+
+    if (config.EMAIL_VERIFICATION_REQUIRED) {
+      const { sendVerificationEmail } = await import("../emailVerification.js");
+      sendVerificationEmail(user).catch((err: unknown) => {
+        console.error("[auth] failed to send verification email:", err);
+      });
+    }
 
     const context = await this.loadAppContext(input.clientId);
     const tokens = await createTokenSet(user, undefined, undefined, {
