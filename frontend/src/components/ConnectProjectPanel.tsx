@@ -741,6 +741,64 @@ export class LoginComponent {}`;
         </div>
       </SectionCard>
 
+      {/* Input reference */}
+      <SectionCard
+        title={
+          <span className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-gold" />
+            What each input does
+          </span>
+        }
+        description="Understand every field before you copy the snippet."
+      >
+        <div className="space-y-4">
+          {[
+            {
+              name: "Framework",
+              description: "The frontend framework or server-side stack your project uses. Keystone generates the matching install snippet for it.",
+              example: "React",
+            },
+            {
+              name: "Application",
+              description: "The Keystone application (OAuth client) that represents this project. The snippet uses this app's public client ID.",
+              example: "My Website",
+            },
+            {
+              name: "Website URL / Project URL",
+              description: "The public URL where your project is hosted. Keystone validates this origin for CORS and builds the full callback URL from it.",
+              example: "http://localhost:3000",
+            },
+            {
+              name: "Callback path",
+              description: "The path on your site where users are sent after signing in with an external provider (Google, etc.). The full URL is Project URL + this path and must be listed in the app's Redirect URIs.",
+              example: "/callback.html",
+            },
+            {
+              name: "data-keystone-input",
+              description: "Place this attribute on your form inputs so the SDK can read them. Use email, password, username, or name.",
+              example: '<input data-keystone-input="email" />',
+            },
+            {
+              name: "data-keystone-field",
+              description: "Place this on display elements (like a span) and Keystone will auto-fill the user's email, name, or username after login.",
+              example: '<span data-keystone-field="email"></span>',
+            },
+          ].map((item) => (
+            <div key={item.name} className="border-b border-theme/10 last:border-0 pb-4 last:pb-0">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+                <code className="text-[12px] text-gold font-medium shrink-0 sm:w-48">{item.name}</code>
+                <div className="min-w-0">
+                  <p className="text-[12px] txt-body leading-relaxed">{item.description}</p>
+                  <p className="text-[11px] txt-muted mt-1">
+                    Example: <code className="text-gold break-all">{item.example}</code>
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
       <Advanced mode={mode}>
         {/* HTML reference */}
         <SectionCard
