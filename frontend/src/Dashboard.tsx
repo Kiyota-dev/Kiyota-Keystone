@@ -18,6 +18,8 @@ import {
   BookOpen,
   Monitor,
   UserCircle,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -43,6 +45,7 @@ import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
 import { useHealth } from "./hooks/useHealth.ts";
+import { useTheme } from "./hooks/useTheme.ts";
 import { ModeToggle } from "./components/ui/ModeToggle.tsx";
 import { CommandPalette } from "./components/ui/CommandPalette.tsx";
 import { Advanced } from "./components/ui/Advanced.tsx";
@@ -168,6 +171,7 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
   const { token, user, loading: authLoading, error: authError, logout } = useAuth();
   const { mode, setMode } = useUiMode();
   const health = useHealth();
+  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTabState] = useState(initialTab);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
@@ -418,6 +422,15 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
         <Button
           variant="secondary"
           size="sm"
+          onClick={toggleTheme}
+          className="px-2 sm:px-4"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={logout}
           className="px-2 sm:px-4"
           title="Logout"
@@ -437,7 +450,7 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
         </Button>
       </>
     ),
-    [user, logout]
+    [user, logout, theme, toggleTheme]
   );
 
   const renderContent = () => {
