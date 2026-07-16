@@ -2,9 +2,22 @@ import { memo, useMemo, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "./Button.tsx";
 
+type SupportedLanguage =
+  | "html"
+  | "tsx"
+  | "vue"
+  | "react"
+  | "nextjs"
+  | "angular"
+  | "svelte"
+  | "django"
+  | "rails"
+  | "go";
+
 interface CodeBlockProps {
   code: string;
-  language?: "html" | "tsx" | "vue";
+  language?: SupportedLanguage;
+  label?: string;
   showLineNumbers?: boolean;
   className?: string;
 }
@@ -56,8 +69,8 @@ function CodeBlockBase({ code, language = "html", showLineNumbers = false, class
 
 export const CodeBlock = memo(CodeBlockBase);
 
-function highlightCode(code: string, language: "html" | "tsx" | "vue"): React.ReactNode {
-  if (language === "html" || language === "vue") {
+function highlightCode(code: string, language: SupportedLanguage): React.ReactNode {
+  if (language === "html" || language === "vue" || language === "svelte" || language === "django" || language === "rails" || language === "go") {
     return highlightHtml(code);
   }
   return highlightTsx(code);

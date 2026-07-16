@@ -49,7 +49,8 @@ interface Application {
   redirectUris?: string[];
 }
 
-type CodeTab = "html" | "react" | "vue";
+type Framework = "html" | "react" | "vue" | "nextjs" | "angular" | "svelte" | "django" | "rails" | "go";
+type CodeTab = Framework;
 
 function ConnectProjectPanelBase({ applicationsState, configState }: ConnectProjectPanelProps) {
   const { mode } = useUiMode();
@@ -57,7 +58,7 @@ function ConnectProjectPanelBase({ applicationsState, configState }: ConnectProj
   const [projectUrl, setProjectUrl] = useState("http://localhost:3000");
   const [callbackPath, setCallbackPath] = useState("/callback.html");
   const [activeTab, setActiveTab] = useState<CodeTab>("html");
-  const [framework, setFramework] = useState<"html" | "react" | "vue">("html");
+  const [framework, setFramework] = useState<Framework>("html");
   const [showSecret, setShowSecret] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -157,10 +158,198 @@ export default function AuthPage() {
 <\/script>`;
   }, [selectedApp, keystoneUrl, callbackUrl]);
 
+  const nextjsCode = useMemo(() => {
+    if (!selectedApp) {
+      return "// Select an application to generate the connect code";
+    }
+    return `// app/layout.tsx (App Router) or pages/_document.tsx (Pages Router)
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <head>
+        <script
+          src="${keystoneUrl}/sdk/keystone-dropin.js"
+          data-keystone-url="${keystoneUrl}"
+          data-keystone-client-id="${selectedApp.clientId}"
+          data-keystone-callback="${callbackUrl}"
+          data-keystone-autowire="true"
+          data-keystone-check-session="true"
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+
+// Use these IDs in any page or component
+export default function LoginPage() {
+  return (
+    <div>
+      <form id="keystone-login-form">
+        <input data-keystone-input="email" type="email" />
+        <input data-keystone-input="password" type="password" />
+        <button type="submit">Sign in</button>
+      </form>
+      <button id="keystone-google-btn">Continue with Google</button>
+      <button id="keystone-logout">Sign out</button>
+    </div>
+  );
+}`;
+  }, [selectedApp, keystoneUrl, callbackUrl]);
+
+  const angularCode = useMemo(() => {
+    if (!selectedApp) {
+      return "// Select an application to generate the connect code";
+    }
+    return `// Load the SDK in src/index.html, inside <head>
+<script src="${keystoneUrl}/sdk/keystone-dropin.js"
+  data-keystone-url="${keystoneUrl}"
+  data-keystone-client-id="${selectedApp.clientId}"
+  data-keystone-callback="${callbackUrl}"
+  data-keystone-autowire="true"
+  data-keystone-check-session="true"><\/script>
+
+// src/app/login/login.component.ts
+import { Component } from "@angular/core";
+
+@Component({
+  selector: "app-login",
+  template: \`
+    <form id="keystone-login-form">
+      <input data-keystone-input="email" type="email" />
+      <input data-keystone-input="password" type="password" />
+      <button type="submit">Sign in</button>
+    </form>
+    <button id="keystone-google-btn">Continue with Google</button>
+    <button id="keystone-logout">Sign out</button>
+  \`,
+})
+export class LoginComponent {}`;
+  }, [selectedApp, keystoneUrl, callbackUrl]);
+
+  const svelteCode = useMemo(() => {
+    if (!selectedApp) {
+      return "<!-- Select an application to generate the connect code -->";
+    }
+    return `<!-- src/routes/+page.svelte (or any component) -->
+<form id="keystone-login-form">
+  <input data-keystone-input="email" type="email" />
+  <input data-keystone-input="password" type="password" />
+  <button type="submit">Sign in</button>
+</form>
+<button id="keystone-google-btn">Continue with Google</button>
+<button id="keystone-logout">Sign out</button>
+
+<!-- Load the SDK in src/app.html or src/routes/+layout.svelte -->
+<svelte:head>
+  <script src="${keystoneUrl}/sdk/keystone-dropin.js"
+    data-keystone-url="${keystoneUrl}"
+    data-keystone-client-id="${selectedApp.clientId}"
+    data-keystone-callback="${callbackUrl}"
+    data-keystone-autowire="true"
+    data-keystone-check-session="true"><\/script>
+</svelte:head>`;
+  }, [selectedApp, keystoneUrl, callbackUrl]);
+
+  const djangoCode = useMemo(() => {
+    if (!selectedApp) {
+      return "<!-- Select an application to generate the connect code -->";
+    }
+    return `<!-- templates/base.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="${keystoneUrl}/sdk/keystone-dropin.js"
+    data-keystone-url="${keystoneUrl}"
+    data-keystone-client-id="${selectedApp.clientId}"
+    data-keystone-callback="${callbackUrl}"
+    data-keystone-autowire="true"
+    data-keystone-check-session="true"></script>
+</head>
+<body>
+  <form id="keystone-login-form">
+    <input data-keystone-input="email" type="email" />
+    <input data-keystone-input="password" type="password" />
+    <button type="submit">Sign in</button>
+  </form>
+  <button id="keystone-google-btn">Continue with Google</button>
+  <button id="keystone-logout">Sign out</button>
+</body>
+</html>`;
+  }, [selectedApp, keystoneUrl, callbackUrl]);
+
+  const railsCode = useMemo(() => {
+    if (!selectedApp) {
+      return "<!-- Select an application to generate the connect code -->";
+    }
+    return `<!-- app/views/layouts/application.html.erb -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="${keystoneUrl}/sdk/keystone-dropin.js"
+      data-keystone-url="${keystoneUrl}"
+      data-keystone-client-id="${selectedApp.clientId}"
+      data-keystone-callback="${callbackUrl}"
+      data-keystone-autowire="true"
+      data-keystone-check-session="true"></script>
+  </head>
+  <body>
+    <%= yield %>
+  </body>
+</html>
+
+<!-- app/views/sessions/new.html.erb -->
+<form id="keystone-login-form">
+  <input data-keystone-input="email" type="email" />
+  <input data-keystone-input="password" type="password" />
+  <button type="submit">Sign in</button>
+</form>
+<button id="keystone-google-btn">Continue with Google</button>
+<button id="keystone-logout">Sign out</button>`;
+  }, [selectedApp, keystoneUrl, callbackUrl]);
+
+  const goCode = useMemo(() => {
+    if (!selectedApp) {
+      return "<!-- Select an application to generate the connect code -->";
+    }
+    return `<!-- templates/base.html (loaded with html/template) -->
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="${keystoneUrl}/sdk/keystone-dropin.js"
+    data-keystone-url="${keystoneUrl}"
+    data-keystone-client-id="${selectedApp.clientId}"
+    data-keystone-callback="${callbackUrl}"
+    data-keystone-autowire="true"
+    data-keystone-check-session="true"></script>
+</head>
+<body>
+  {{ template "content" . }}
+</body>
+</html>
+
+<!-- templates/login.html -->
+{{ define "content" }}
+<form id="keystone-login-form">
+  <input data-keystone-input="email" type="email" />
+  <input data-keystone-input="password" type="password" />
+  <button type="submit">Sign in</button>
+</form>
+<button id="keystone-google-btn">Continue with Google</button>
+<button id="keystone-logout">Sign out</button>
+{{ end }}`;
+  }, [selectedApp, keystoneUrl, callbackUrl]);
+
   const codeExamples = {
     html: embedCode,
     react: reactCode,
     vue: vueCode,
+    nextjs: nextjsCode,
+    angular: angularCode,
+    svelte: svelteCode,
+    django: djangoCode,
+    rails: railsCode,
+    go: goCode,
   };
 
   const handleCopy = async () => {
@@ -177,6 +366,12 @@ export default function AuthPage() {
     { id: "html" as const, label: "HTML", icon: <FileCode className="w-3.5 h-3.5" /> },
     { id: "react" as const, label: "React", icon: <Code2 className="w-3.5 h-3.5" /> },
     { id: "vue" as const, label: "Vue", icon: <LayoutTemplate className="w-3.5 h-3.5" /> },
+    { id: "nextjs" as const, label: "Next.js", icon: <Rocket className="w-3.5 h-3.5" /> },
+    { id: "angular" as const, label: "Angular", icon: <LayoutTemplate className="w-3.5 h-3.5" /> },
+    { id: "svelte" as const, label: "Svelte", icon: <Code2 className="w-3.5 h-3.5" /> },
+    { id: "django" as const, label: "Django", icon: <Globe className="w-3.5 h-3.5" /> },
+    { id: "rails" as const, label: "Rails", icon: <Globe className="w-3.5 h-3.5" /> },
+    { id: "go" as const, label: "Go", icon: <Braces className="w-3.5 h-3.5" /> },
   ];
 
   const requirements = [
@@ -209,10 +404,16 @@ export default function AuthPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
               <Label className="text-[12px]">Framework</Label>
-              <Select value={framework} onChange={(e) => setFramework(e.target.value as typeof framework)}>
+              <Select value={framework} onChange={(e) => setFramework(e.target.value as Framework)}>
                 <option value="html">HTML / Vanilla JS</option>
                 <option value="react">React</option>
                 <option value="vue">Vue</option>
+                <option value="nextjs">Next.js</option>
+                <option value="angular">Angular</option>
+                <option value="svelte">Svelte / SvelteKit</option>
+                <option value="django">Django</option>
+                <option value="rails">Ruby on Rails</option>
+                <option value="go">Go templates</option>
               </Select>
             </div>
             <div>
@@ -232,7 +433,7 @@ export default function AuthPage() {
             </div>
           </div>
 
-          <CodeBlock code={simpleCode} language={framework === "html" ? "html" : framework === "vue" ? "vue" : "tsx"} showLineNumbers />
+          <CodeBlock code={simpleCode} language={framework} showLineNumbers />
 
           <div className="flex flex-wrap items-center gap-3 mt-4">
             <Button size="sm" variant="secondary" onClick={handleCopy} disabled={!selectedApp}>
@@ -380,7 +581,7 @@ export default function AuthPage() {
 
         <CodeBlock
           code={codeExamples[activeTab]}
-          language={activeTab === "html" ? "html" : activeTab === "vue" ? "vue" : "tsx"}
+          language={activeTab}
           showLineNumbers
           className="mb-5"
         />

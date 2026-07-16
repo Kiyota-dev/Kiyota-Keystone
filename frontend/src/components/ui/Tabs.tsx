@@ -14,7 +14,7 @@ interface TabsProps {
 
 export function Tabs({ tabs, active, onChange }: TabsProps) {
   return (
-    <div className="flex items-center gap-1 p-1 bg-surface border border-theme/30 rounded-xl">
+    <div className="flex flex-wrap items-center gap-1 p-1 bg-surface border border-theme/30 rounded-xl">
       {tabs.map((tab) => (
         <button
           key={tab.id}
