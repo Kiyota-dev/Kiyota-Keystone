@@ -129,6 +129,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
       authReloadInProgress = true;
       localStorage.removeItem("keystone-access-token");
       window.location.reload();
+      return new Promise(() => {});
     }
     const body = await response.json().catch(() => ({}));
     throw new Error(body.error || `Request failed: ${response.status}`);
