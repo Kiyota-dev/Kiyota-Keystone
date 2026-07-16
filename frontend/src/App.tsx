@@ -6,6 +6,7 @@ import SimpleWizard from "./components/wizard/SimpleWizard.tsx";
 import Dashboard from "./Dashboard.tsx";
 import { Card } from "./components/ui/Card.tsx";
 import { Alert } from "./components/ui/Alert.tsx";
+import { Button } from "./components/ui/Button.tsx";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary.tsx";
 import { ToastProvider } from "./components/ui/ToastProvider.tsx";
 import { useHashRoute } from "./hooks/useHashRoute.ts";
@@ -15,11 +16,42 @@ function normalizeDashboardTab(path: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+/**
+ * Extracts a magic-link token from the URL hash (`#magic-link=<token>`).
+ * Magic link emails point here; the token is exchanged for an access token.
+ */
+function extractMagicLinkToken(): string | null {
+  const hash = window.location.hash.replace(/^#/, "");
+  const match = hash.match(/^magic-link=(.+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function App() {
   const { path, navigate } = useHashRoute();
   const [status, setStatus] = useState<{ needsSetup: boolean; setupToken: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [magicLinkState, setMagicLinkState] = useState<"pending" | "done" | "error" | null>(null);
+
+  // Handle magic-link sign-in before anything else.
+  useEffect(() => {
+    const token = extractMagicLinkToken();
+    if (!token) return;
+    setMagicLinkState("pending");
+    api
+      .verifyMagicLink(token)
+      .then((result) => {
+        localStorage.setItem("keystone-access-token", result.accessToken);
+        window.location.hash = "#/dashboard/overview";
+        setMagicLinkState("done");
+        window.location.reload();
+      })
+      .catch((err) => {
+        setMagicLinkState("error");
+        setError(err instanceof Error ? err.message : "Invalid or expired sign-in link");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     api
@@ -46,6 +78,40 @@ export default function App() {
   }, [loading, error, status, path, navigate]);
 
   const dashboardTab = normalizeDashboardTab(path);
+
+  if (magicLinkState === "pending") {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <Card variant="glass" className="w-full max-w-lg p-6 md:p-8 shadow-xl">
+          <div className="py-10 flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="w-7 h-7 animate-spin text-gold" />
+            <p className="text-[14px]">Signing you in…</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (magicLinkState === "error") {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <Card variant="glass" className="w-full max-w-lg p-6 md:p-8 shadow-xl">
+          <Alert variant="error" className="mb-4">
+            {error || "Invalid or expired sign-in link"}
+          </Alert>
+          <Button
+            className="w-full"
+            onClick={() => {
+              window.location.hash = "#/dashboard/overview";
+              window.location.reload();
+            }}
+          >
+            Back to sign in
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   if (!loading && !error && !status?.needsSetup) {
     return (

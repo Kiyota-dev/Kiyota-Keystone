@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Fingerprint, Link2 } from "lucide-react";
+import { startAuthentication } from "@simplewebauthn/browser";
 import { api } from "../api.ts";
 import { Card } from "./ui/Card.tsx";
 import { Input } from "./ui/Input.tsx";
@@ -41,6 +42,8 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -55,6 +58,43 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    if (!email) {
+      setError("Enter your email address first");
+      return;
+    }
+    setError(null);
+    setIsLoading(true);
+    try {
+      await api.sendMagicLink(email);
+      setMagicLinkSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send sign-in link");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasskey = async () => {
+    setError(null);
+    setPasskeyLoading(true);
+    try {
+      const options = await api.webauthnAuthOptions(email || undefined);
+      const assertion = await startAuthentication({ optionsJSON: options as never });
+      const result = await api.webauthnAuthVerify(assertion);
+      localStorage.setItem("keystone-access-token", result.accessToken);
+      onLogin();
+    } catch (err) {
+      if (err instanceof Error && err.name === "NotAllowedError") {
+        setError("Passkey sign-in was cancelled");
+      } else {
+        setError(err instanceof Error ? err.message : "Passkey sign-in failed");
+      }
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -117,21 +157,51 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               <div className="w-full border-t border-theme/20" />
             </div>
             <div className="relative flex justify-center text-[11px] uppercase txt-muted">
-              <span className="bg-background px-2">or</span>
+              <span className="bg-background px-2">or continue with</span>
             </div>
           </div>
 
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full"
-            onClick={() => {
-              window.location.href = `${API_BASE}/federation/google/start`;
-            }}
-          >
-            <GoogleIcon className="mr-2" />
-            Sign in with Google
-          </Button>
+          <div className="space-y-2">
+            {magicLinkSent ? (
+              <Alert variant="success">
+                Check your inbox — we sent a sign-in link to <strong>{email}</strong>.
+              </Alert>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={handleMagicLink}
+                isLoading={isLoading && !password}
+              >
+                <Link2 className="w-4 h-4 mr-2" />
+                Email me a sign-in link
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={handlePasskey}
+              isLoading={passkeyLoading}
+            >
+              <Fingerprint className="w-4 h-4 mr-2" />
+              Sign in with a passkey
+            </Button>
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => {
+                window.location.href = `${API_BASE}/federation/google/start`;
+              }}
+            >
+              <GoogleIcon className="mr-2" />
+              Sign in with Google
+            </Button>
+          </div>
         </div>
       </Card>
     </div>

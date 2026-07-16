@@ -134,7 +134,11 @@ export default async function webauthnRoutes(app: FastifyInstance) {
       setSessionCookies(reply, tokens.accessToken, tokens.refreshToken);
 
       await request.audit("webauthn_authenticated", { userId: user.id });
-      return { user: toPublicUser(user) };
+      return {
+        user: toPublicUser(user),
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : "Authentication failed";
       return reply.status(400).send({ error: message });

@@ -119,6 +119,7 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
 
   const response = await fetch(`${API_BASE}${path}`, {
     headers: { ...headers, ...init?.headers },
+    credentials: "include",
     ...init,
   });
   if (!response.ok) {
@@ -268,6 +269,21 @@ export const api = {
     fetchJson<{ success: boolean }>(`/auth/sessions/${encodeURIComponent(id)}`, { method: "DELETE" }),
   revokeAllSessions: () =>
     fetchJson<{ success: boolean }>("/auth/sessions/revoke-all", { method: "POST", body: JSON.stringify({}) }),
+
+  // Passwordless: magic links
+  sendMagicLink: (email: string) =>
+    fetchJson<{ success: boolean }>("/auth/magic-link/send", { method: "POST", body: JSON.stringify({ email }) }),
+  verifyMagicLink: (token: string) =>
+    fetchJson<{ user: unknown; accessToken: string; refreshToken: string }>(`/auth/magic-link/verify?token=${encodeURIComponent(token)}`),
+
+  // Passwordless: WebAuthn / passkeys
+  webauthnRegisterOptions: () => fetchJson<Record<string, unknown>>("/auth/webauthn/register/options"),
+  webauthnRegisterVerify: (response: unknown, deviceName?: string) =>
+    fetchJson<{ success: boolean }>("/auth/webauthn/register/verify", { method: "POST", body: JSON.stringify({ response, deviceName }) }),
+  webauthnAuthOptions: (email?: string) =>
+    fetchJson<Record<string, unknown>>("/auth/webauthn/authenticate/options", { method: "POST", body: JSON.stringify({ email }) }),
+  webauthnAuthVerify: (response: unknown) =>
+    fetchJson<{ user: unknown; accessToken: string; refreshToken: string }>("/auth/webauthn/authenticate/verify", { method: "POST", body: JSON.stringify({ response }) }),
 
   // Platform configuration
   getConfig: () => fetchJson<{ values: Record<string, string> }>("/v1/admin/config"),

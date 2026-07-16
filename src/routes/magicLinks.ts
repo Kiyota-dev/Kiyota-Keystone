@@ -10,11 +10,24 @@ import {
 import { createTokenSet } from "../services/tokens.js";
 import { fingerprintFromRequest, recordDevice } from "../services/devices.js";
 import { setSessionCookies } from "../plugins/auth.js";
+import { emailProvider } from "../services/email.js";
 import { toPublicUser } from "../types.js";
+import { config } from "../config.js";
 
 const SendSchema = z.object({
   email: z.string().email(),
 });
+
+function magicLinkUrl(token: string): string {
+  // The link lands on the client app (Keystone admin UI or a client
+  // application), which exchanges the token via the verify endpoint.
+  const base = process.env.CLIENT_APP_URL || "http://localhost:5173";
+  return `${base}/#magic-link=${encodeURIComponent(token)}`;
+}
+
+function postLoginRedirect(): string {
+  return process.env.CLIENT_APP_URL || "http://localhost:5173";
+}
 
 export default async function magicLinkRoutes(app: FastifyInstance) {
   app.post("/magic-link/send", async (request, reply) => {
@@ -27,13 +40,26 @@ export default async function magicLinkRoutes(app: FastifyInstance) {
     const { token, tokenHash } = generateMagicLink();
     await storeMagicLink(user.id, tokenHash, magicLinkExpiresAt());
 
+    try {
+      const url = magicLinkUrl(token);
+      const ttlMinutes = Math.round(config.MAGIC_LINK_TTL_SECONDS / 60);
+      await emailProvider.send({
+        to: user.email,
+        subject: "Your sign-in link",
+        text: `Click the link to sign in:\n\n${url}\n\nThis link expires in ${ttlMinutes} minutes and can only be used once.`,
+        html: `<p>Click <a href="${url}">here</a> to sign in.</p><p>This link expires in ${ttlMinutes} minutes and can only be used once.</p>`,
+      });
+    } catch (err) {
+      request.log.error({ err }, "Failed to send magic link email");
+    }
+
     await request.audit("magic_link_sent", { userId: user.id });
 
-    return { success: true, token };
+    return { success: true };
   });
 
   app.get("/magic-link/verify", async (request: FastifyRequest, reply) => {
-    const query = request.query as { token?: string };
+    const query = request.query as { token?: string; redirect?: string };
     if (!query.token) {
       return reply.status(400).send({ error: "Missing token" });
     }
@@ -57,6 +83,16 @@ export default async function magicLinkRoutes(app: FastifyInstance) {
 
     await request.audit("magic_link_verified", { userId: user.id });
 
-    return { user: toPublicUser(user) };
+    // Browser flow: redirect back to the app after setting session cookies.
+    const accept = request.headers.accept || "";
+    if (accept.includes("text/html")) {
+      return reply.redirect(postLoginRedirect());
+    }
+
+    return {
+      user: toPublicUser(user),
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   });
 }

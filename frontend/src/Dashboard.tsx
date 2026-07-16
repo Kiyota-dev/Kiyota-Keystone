@@ -36,6 +36,7 @@ import { OrganizationSelector } from "./components/dashboard/OrganizationSelecto
 import { SettingsPanel } from "./components/dashboard/SettingsPanel.tsx";
 import { ConnectProjectPanel } from "./components/ConnectProjectPanel.tsx";
 import { SessionsPanel } from "./components/SessionsPanel.tsx";
+import { PasskeysPanel } from "./components/PasskeysPanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
@@ -512,7 +513,12 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
       case "keys":
         return <KeysPanel state={keys} onRefresh={refreshKeys} />;
       case "security":
-        return <SecurityPanel />;
+        return (
+          <div className="space-y-5">
+            <SecurityPanel />
+            <PasskeysPanel />
+          </div>
+        );
       case "sessions":
         return <SessionsPanel />;
       case "plugins":

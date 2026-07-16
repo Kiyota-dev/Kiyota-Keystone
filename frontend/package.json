@@ -11,6 +11,7 @@
     "test:e2e:ci": "playwright test --ci --reporter=line"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "^13.3.0",
     "autoprefixer": "^10.5.2",
     "lucide-react": "^1.24.0",
     "postcss": "^8.5.19",
