@@ -614,6 +614,7 @@ export class LoginComponent {}`;
           </a>
         </Alert>
       </SectionCard>
+      </Advanced>
 
       {/* Live preview */}
       <SectionCard
@@ -815,7 +816,6 @@ export class LoginComponent {}`;
             </div>
           )}
         </Alert>
-      </Advanced>
       </Advanced>
     </div>
   );
