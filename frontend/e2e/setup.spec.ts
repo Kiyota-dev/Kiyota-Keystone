@@ -5,8 +5,8 @@ const DATABASE_URL = process.env.DATABASE_URL || "postgresql://kiyota:kiyota@loc
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 test.describe("Keystone setup wizard", () => {
-  test("configures a fresh install through the browser wizard", async ({ page }) => {
-    await page.goto("/");
+  test("configures a fresh install through the advanced browser wizard", async ({ page }) => {
+    await page.goto("/#/setup/advanced");
 
     await expect(page.getByText("Welcome to Keystone")).toBeVisible();
 
