@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Database, Server, Globe, User, Rocket, ArrowRight, ShieldCheck } from "lucide-react";
-import { api } from "../../api.ts";
+import { CheckCircle2, Database, Server, Globe, User, Rocket, ArrowRight, ShieldCheck, Activity, RefreshCw } from "lucide-react";
+import { api, type DiagnosticCheck } from "../../api.ts";
 import { initialState, type WizardState } from "../../types.ts";
 import { Button } from "../ui/Button.tsx";
 import { Input } from "../ui/Input.tsx";
@@ -37,6 +37,8 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
   const [profile, setProfile] = useState("development");
   const [appName, setAppName] = useState("My App");
   const [appUrl, setAppUrl] = useState("http://localhost:3000");
+  const [diagnostics, setDiagnostics] = useState<DiagnosticCheck[]>([]);
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
 
   useEffect(() => {
     if (state.secrets.autoGenerate && (!state.secrets.internalApiKey || !state.secrets.encryptionKey)) {
@@ -143,10 +145,34 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
         password: state.owner.password,
         name: state.owner.name,
       });
-      setSuccess("Setup complete! Reloading…");
-      setTimeout(() => window.location.reload(), 1500);
+      setSuccess("Setup complete! Running diagnostics…");
+      setStep(4);
+      await runDiagnostics();
     } catch (err) {
       setErrorMessage(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runDiagnostics = async () => {
+    setDiagnosticsLoading(true);
+    try {
+      const result = await api.getSetupDiagnostics();
+      setDiagnostics(result.checks);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDiagnosticsLoading(false);
+    }
+  };
+
+  const restart = async () => {
+    setBusy(true);
+    try {
+      await api.restart();
+    } catch {
+      // The request may fail because the server is restarting.
     } finally {
       setBusy(false);
     }
@@ -328,20 +354,81 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
     </div>
   );
 
-  const steps = [renderWelcome, renderDependencies, renderOwner, renderFirstApp];
+  const renderDiagnostics = () => {
+    return (
+      <div className="space-y-5">
+        <div className="text-center">
+          <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+            <Activity className="w-7 h-7 text-emerald-500" />
+          </div>
+          <h2 className="text-[18px] font-semibold txt-head">System diagnostics</h2>
+          <p className="text-[13px] txt-muted mt-1">Review the health report before restarting.</p>
+        </div>
+
+        <div className="space-y-2">
+          {diagnosticsLoading && <p className="text-[13px] txt-muted">Running checks…</p>}
+          {!diagnosticsLoading && diagnostics.length === 0 && (
+            <p className="text-[13px] txt-muted">No diagnostics available.</p>
+          )}
+          {diagnostics.map((check) => (
+            <div
+              key={check.name}
+              className={`flex items-center justify-between p-3 rounded-xl border ${
+                check.status === "ok"
+                  ? "border-emerald-500/30 bg-emerald-500/[0.05]"
+                  : check.status === "error"
+                    ? "border-red-500/30 bg-red-500/[0.05]"
+                    : "border-theme/20 bg-surface"
+              }`}
+            >
+              <div>
+                <p className="text-[13px] font-medium txt-head">{check.name}</p>
+                {check.message && <p className="text-[11px] txt-muted">{check.message}</p>}
+              </div>
+              <span
+                className={`text-[11px] font-medium ${
+                  check.status === "ok"
+                    ? "text-emerald-500"
+                    : check.status === "error"
+                      ? "text-red-500"
+                      : check.status === "warning"
+                        ? "text-amber-500"
+                        : "text-zinc-400"
+                }`}
+              >
+                {check.status === "ok" ? "OK" : check.status === "error" ? "Issue" : check.status === "warning" ? "Warning" : "Skipped"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="secondary" onClick={runDiagnostics} disabled={diagnosticsLoading} className="w-full sm:w-auto">
+            <RefreshCw className={`w-4 h-4 ${diagnosticsLoading ? "animate-spin" : ""}`} />
+            Re-run checks
+          </Button>
+          <Button onClick={restart} disabled={busy} isLoading={busy} className="w-full sm:w-auto">
+            Restart to complete
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const steps = [renderWelcome, renderDependencies, renderOwner, renderFirstApp, renderDiagnostics];
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-1">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <div
               key={i}
               className={`h-1.5 w-8 rounded-full ${i <= step ? "bg-gold" : "bg-surface border border-theme/30"}`}
             />
           ))}
         </div>
-        <span className="text-[11px] txt-muted">Step {step + 1} of 4</span>
+        <span className="text-[11px] txt-muted">Step {step + 1} of 5</span>
       </div>
 
       {success && <Alert variant="success" className="mb-4">{success}</Alert>}

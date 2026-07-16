@@ -61,6 +61,17 @@ export interface SetupConfigResponse {
   backupPath?: string;
 }
 
+export interface DiagnosticCheck {
+  name: string;
+  status: "ok" | "error" | "warning" | "skipped";
+  message?: string;
+}
+
+export interface SetupDiagnosticsResponse {
+  checks: DiagnosticCheck[];
+  ready: boolean;
+}
+
 export interface HealthStatus {
   status: string;
   database?: boolean;
@@ -139,6 +150,7 @@ export const api = {
     fetchJson<SetupConfigResponse>("/setup/config", { method: "POST", body: JSON.stringify(input) }),
   runMigrations: () =>
     fetchJson<{ ok: boolean }>("/setup/migrate", { method: "POST", body: JSON.stringify({}) }),
+  getSetupDiagnostics: () => fetchJson<SetupDiagnosticsResponse>("/setup/diagnostics"),
   restart: () =>
     fetchJson<{ ok: boolean }>("/setup/restart", { method: "POST", body: JSON.stringify({}) }),
   init: (input: SetupInitInput) =>
