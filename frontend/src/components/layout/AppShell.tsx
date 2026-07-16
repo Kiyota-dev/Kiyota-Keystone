@@ -48,7 +48,7 @@ function AppShellBase({
     <div className="min-h-screen bg-background text-foreground">
       <Header logo={logo} title={title} subtitle={subtitle} modeToggle={modeToggle} actions={headerActionsNode} />
 
-      <div className="flex overflow-hidden">
+      <div className="flex">
         <Sidebar
           items={sidebarItems}
           active={activeTab}
@@ -56,7 +56,7 @@ function AppShellBase({
           footer={sidebarFooter}
         />
 
-        <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-6 md:pl-72 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>

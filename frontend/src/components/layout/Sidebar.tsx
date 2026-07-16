@@ -17,7 +17,7 @@ interface SidebarProps {
 
 function SidebarBase({ items, active, onChange, footer, className = "" }: SidebarProps) {
   return (
-    <aside className={`hidden md:flex flex-col w-64 h-[calc(100vh-4rem)] sticky top-16 border-r border-theme/30 bg-background ${className}`}>
+    <aside className={`hidden md:flex flex-col w-64 h-[calc(100vh-4rem)] fixed left-0 top-16 z-10 border-r border-theme/30 bg-background ${className}`}>
       <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-1">
         {items.map((item, idx) => {
           const isActive = item.id === active;
