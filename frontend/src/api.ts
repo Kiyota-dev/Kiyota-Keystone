@@ -277,6 +277,22 @@ export const api = {
   verifyEmail: (token: string) =>
     fetchJson<{ success: boolean; email: string }>(`/auth/email-verification/verify?token=${encodeURIComponent(token)}`),
 
+  // Webhooks
+  getWebhooks: (appId?: string) =>
+    fetchJson<{ endpoints: Array<{ id: string; appId: string | null; url: string; description: string | null; events: string[]; isActive: boolean; createdAt: string }> }>(`/v1/admin/platform/webhooks${appId ? `?appId=${encodeURIComponent(appId)}` : ""}`),
+  createWebhook: (input: { appId?: string | null; url: string; description?: string; events?: string[] }) =>
+    fetchJson<{ endpoint: { id: string }; signingSecret: string }>("/v1/admin/platform/webhooks", { method: "POST", body: JSON.stringify(input) }),
+  updateWebhook: (id: string, input: Partial<{ url: string; description: string | null; events: string[]; isActive: boolean }>) =>
+    fetchJson<{ endpoint: unknown }>(`/v1/admin/platform/webhooks/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(input) }),
+  deleteWebhook: (id: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/platform/webhooks/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  rotateWebhookSecret: (id: string) =>
+    fetchJson<{ signingSecret: string }>(`/v1/admin/platform/webhooks/${encodeURIComponent(id)}/rotate-secret`, { method: "POST", body: JSON.stringify({}) }),
+  getWebhookDeliveries: (id: string) =>
+    fetchJson<{ deliveries: Array<{ id: string; endpointId: string; eventType: string; status: string; attempts: number; responseStatus: number | null; responseBody: string | null; lastAttemptAt: string | null; createdAt: string }> }>(`/v1/admin/platform/webhooks/${encodeURIComponent(id)}/deliveries`),
+  retryWebhookDelivery: (id: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/platform/webhook-deliveries/${encodeURIComponent(id)}/retry`, { method: "POST", body: JSON.stringify({}) }),
+
   // Session management
   getSessions: () =>
     fetchJson<{ sessions: Array<{ id: string; deviceFingerprint: string | null; ipAddress: string | null; userAgent: string | null; lastSeenAt: string; expiresAt: string; createdAt: string }> }>("/auth/sessions"),

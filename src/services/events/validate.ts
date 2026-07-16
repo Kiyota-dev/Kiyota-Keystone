@@ -74,6 +74,8 @@ const VALID_EVENT_TYPES = new Set([
   "profile_updated",
   "email_verification_sent",
   "email_verified",
+  "platform_webhook_created",
+  "platform_webhook_deleted",
 ]);
 
 export function validateEvent(event: EmittableEvent): EventValidationResult {

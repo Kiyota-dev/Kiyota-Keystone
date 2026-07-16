@@ -93,4 +93,6 @@ export type AuditEventType =
   | "platform_feature_flag_deleted"
   | "profile_updated"
   | "email_verification_sent"
-  | "email_verified";
+  | "email_verified"
+  | "platform_webhook_created"
+  | "platform_webhook_deleted";

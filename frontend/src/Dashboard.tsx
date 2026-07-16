@@ -20,6 +20,7 @@ import {
   UserCircle,
   Sun,
   Moon,
+  Webhook,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -41,6 +42,7 @@ import { ConnectProjectPanel } from "./components/ConnectProjectPanel.tsx";
 import { SessionsPanel } from "./components/SessionsPanel.tsx";
 import { PasskeysPanel } from "./components/PasskeysPanel.tsx";
 import { ProfilePanel } from "./components/ProfilePanel.tsx";
+import { WebhooksPanel } from "./components/WebhooksPanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
@@ -156,6 +158,7 @@ const TABS = [
   { id: "security", label: "Security", icon: <Shield className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "sessions", label: "Sessions", icon: <Monitor className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "webhooks", label: "Webhooks", icon: <Webhook className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
@@ -607,6 +610,8 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
             />
           </Suspense>
         );
+      case "webhooks":
+        return <WebhooksPanel />;
       case "billing":
         return (
           <Suspense fallback={<LoadingState message="Loading panel…" />}>

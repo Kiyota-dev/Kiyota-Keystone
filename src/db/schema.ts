@@ -612,6 +612,47 @@ export const workflowRuns = pgTable(
   })
 );
 
+export const webhookEndpoints = pgTable(
+  "webhook_endpoints",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    appId: uuid("app_id").references(() => applications.id, { onDelete: "cascade" }),
+    url: text("url").notNull(),
+    description: text("description"),
+    // Event types to deliver, e.g. ["user_login", "user_registered"]. Empty = all.
+    events: text("events").array().default(sql`'{}'::text[]`).notNull(),
+    secret: text("secret").notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    appIdx: index("webhook_endpoints_app_idx").on(table.appId),
+  })
+);
+
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    endpointId: uuid("endpoint_id")
+      .notNull()
+      .references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+    eventType: text("event_type").notNull(),
+    payload: jsonb("payload").default({}).notNull(),
+    status: text("status").default("pending").notNull(), // pending | success | failed
+    attempts: integer("attempts").default(0).notNull(),
+    responseStatus: integer("response_status"),
+    responseBody: text("response_body"),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    endpointIdx: index("webhook_deliveries_endpoint_idx").on(table.endpointId),
+    statusIdx: index("webhook_deliveries_status_idx").on(table.status),
+  })
+);
+
 export type Permission = typeof permissions.$inferSelect;
 export type RolePermission = typeof rolePermissions.$inferSelect;
 export type ServiceAccount = typeof serviceAccounts.$inferSelect;
@@ -628,6 +669,8 @@ export type NewFeatureFlag = typeof featureFlags.$inferInsert;
 export type Workflow = typeof workflows.$inferSelect;
 export type NewWorkflow = typeof workflows.$inferInsert;
 export type WorkflowRun = typeof workflowRuns.$inferSelect;
+export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
+export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 export type NewWorkflowRun = typeof workflowRuns.$inferInsert;

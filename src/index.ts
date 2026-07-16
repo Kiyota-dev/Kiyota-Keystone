@@ -20,6 +20,8 @@ import requestLogger from "./plugins/requestLogger.js";
 import { subscribe, subscribeAll } from "./services/events/bus.js";
 import { auditLogSubscriber } from "./services/events/subscribers/auditLog.js";
 import { webhookSubscriber } from "./services/events/subscribers/webhook.js";
+import { webhookDispatchSubscriber } from "./services/events/subscribers/webhookDispatch.js";
+import { startWebhookWorker } from "./services/webhooks.js";
 import { anomalySubscriber } from "./services/events/subscribers/anomaly.js";
 import { queue } from "./services/queue/index.js";
 import { emailProvider } from "./services/email.js";
@@ -135,6 +137,7 @@ export async function buildApp() {
   // Wire up event-bus subscribers.
   subscribeAll(auditLogSubscriber);
   subscribeAll(webhookSubscriber);
+  subscribeAll(webhookDispatchSubscriber);
   subscribe("user_login_failed", anomalySubscriber);
   subscribe("new_device_detected", anomalySubscriber);
 
@@ -143,6 +146,7 @@ export async function buildApp() {
     const { message } = job.payload as { message: import("./services/email.js").EmailMessage };
     await emailProvider.send(message);
   });
+  startWebhookWorker();
   queue.process("webhook", async (job) => {
     const { url, method, body, headers } = job.payload as {
       url: string;

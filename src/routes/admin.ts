@@ -255,6 +255,81 @@ export default async function adminRoutes(app: FastifyInstance) {
     return { queue: app.container.queue.constructor.name, stats };
   });
 
+  // Webhook endpoint management.
+  const CreateWebhookSchema = z.object({
+    appId: z.string().uuid().nullable().optional(),
+    url: z.string().url().max(2048),
+    description: z.string().max(255).optional(),
+    events: z.array(z.string().max(64)).optional(),
+  });
+
+  const UpdateWebhookSchema = z.object({
+    url: z.string().url().max(2048).optional(),
+    description: z.string().max(255).nullable().optional(),
+    events: z.array(z.string().max(64)).optional(),
+    isActive: z.boolean().optional(),
+  });
+
+  app.get("/platform/webhooks", { preHandler: [requireOwner()] }, async (request) => {
+    const query = request.query as { appId?: string };
+    const { listEndpoints } = await import("../services/webhooks.js");
+    const endpoints = await listEndpoints(query.appId);
+    // Never expose signing secrets in list responses.
+    return { endpoints: endpoints.map(({ secret: _secret, ...rest }) => rest) };
+  });
+
+  app.post("/platform/webhooks", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const body = CreateWebhookSchema.parse(request.body);
+    const { createEndpoint } = await import("../services/webhooks.js");
+    const endpoint = await createEndpoint(body);
+    await request.audit("platform_webhook_created", { endpointId: endpoint.id, url: endpoint.url });
+    // The signing secret is returned exactly once, at creation time.
+    const { secret: _secret, ...rest } = endpoint;
+    return reply.status(201).send({ endpoint: rest, signingSecret: endpoint.signingSecret });
+  });
+
+  app.patch("/platform/webhooks/:id", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = UpdateWebhookSchema.parse(request.body);
+    const { updateEndpoint } = await import("../services/webhooks.js");
+    const updated = await updateEndpoint(id, body);
+    if (!updated) return reply.status(404).send({ error: "Webhook not found" });
+    const { secret: _secret, ...rest } = updated;
+    return { endpoint: rest };
+  });
+
+  app.delete("/platform/webhooks/:id", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { deleteEndpoint } = await import("../services/webhooks.js");
+    const deleted = await deleteEndpoint(id);
+    if (!deleted) return reply.status(404).send({ error: "Webhook not found" });
+    await request.audit("platform_webhook_deleted", { endpointId: id });
+    return { success: true };
+  });
+
+  app.post("/platform/webhooks/:id/rotate-secret", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { rotateEndpointSecret } = await import("../services/webhooks.js");
+    const result = await rotateEndpointSecret(id);
+    if (!result) return reply.status(404).send({ error: "Webhook not found" });
+    return { signingSecret: result.signingSecret };
+  });
+
+  app.get("/platform/webhooks/:id/deliveries", { preHandler: [requireOwner()] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const { listDeliveries } = await import("../services/webhooks.js");
+    const deliveries = await listDeliveries(id);
+    return { deliveries };
+  });
+
+  app.post("/platform/webhook-deliveries/:id/retry", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { retryDelivery } = await import("../services/webhooks.js");
+    const ok = await retryDelivery(id);
+    if (!ok) return reply.status(400).send({ error: "Delivery is not in a failed state" });
+    return { success: true };
+  });
+
   app.get("/platform/keys", { preHandler: [requireOwner()] }, async () => {
     const keys = await app.container.secretsProvider.listActiveSigningKeys();
     return { keys, provider: app.container.secretsProvider.name };
