@@ -233,6 +233,10 @@ export const api = {
     last24h: { logins: number; failedLogins: number };
     activeSessions: number;
     mfa: { enabled: number; total: number };
+    anomalies?: {
+      newDevices24h: number;
+      recentFailedLogins: Array<{ id: string; event: string; userId: string | null; ipAddress: string | null; userAgent: string | null; createdAt: string }>;
+    };
     recentLogins: Array<{ id: string; event: string; userId: string | null; ipAddress: string | null; userAgent: string | null; createdAt: string }>;
   }>("/v1/admin/platform/security-summary"),
 

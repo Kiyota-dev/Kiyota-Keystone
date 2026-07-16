@@ -7,7 +7,30 @@ import {
   getRefreshToken,
 } from "../plugins/auth.js";
 import { rateLimit } from "../plugins/rateLimit.js";
+import { checkImpossibleTravel } from "../services/anomalyDetection.js";
+import { sendSuspiciousLoginAlert } from "../services/email.js";
 import { toPublicUser } from "../types.js";
+
+/**
+ * Fire-and-forget impossible-travel check after a successful login.
+ * Emits a suspicious-login email when the user's previous login came from a
+ * different IP within the anomaly window.
+ */
+function detectImpossibleTravel(user: { id: string; email: string }, ip?: string, userAgent?: string): void {
+  checkImpossibleTravel(user.id, ip)
+    .then(async (suspicious) => {
+      if (!suspicious) return;
+      await sendSuspiciousLoginAlert({
+        email: user.email,
+        ipAddress: ip,
+        userAgent,
+        reason: "Sign-in from a new location within minutes of the previous one",
+      });
+    })
+    .catch((err: unknown) => {
+      console.error("[anomaly] impossible-travel check failed:", err);
+    });
+}
 
 const RegisterSchema = z.object({
   username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_-]+$/),
@@ -96,6 +119,7 @@ export default async function authRoutes(app: FastifyInstance) {
         }
       }
 
+      detectImpossibleTravel(result.data.user, request.ip, request.headers["user-agent"]);
       setSessionCookies(reply, result.data.accessToken, result.data.refreshToken, body.client_id);
       return { user: toPublicUser(result.data.user) };
     }
@@ -131,6 +155,7 @@ export default async function authRoutes(app: FastifyInstance) {
         }
       }
 
+      detectImpossibleTravel(result.data.user, request.ip, request.headers["user-agent"]);
       return {
         accessToken: result.data.accessToken,
         user: toPublicUser(result.data.user),

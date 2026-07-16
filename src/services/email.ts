@@ -151,3 +151,17 @@ export async function sendNewDeviceAlert(input: {
     text: `A new device was used to sign in to your Kiyota account.\n\nIP: ${input.ipAddress || "unknown"}\nDevice: ${input.deviceName || input.userAgent || "unknown"}\n\nIf this wasn't you, please change your password immediately.`,
   });
 }
+
+export async function sendSuspiciousLoginAlert(input: {
+  email: string;
+  ipAddress?: string;
+  userAgent?: string;
+  reason: string;
+}): Promise<void> {
+  await emailProvider.send({
+    to: input.email,
+    subject: "Suspicious sign-in activity detected",
+    text: `We detected suspicious sign-in activity on your Kiyota account.\n\nReason: ${input.reason}\nIP: ${input.ipAddress || "unknown"}\nDevice: ${input.userAgent || "unknown"}\n\nIf this wasn't you, please change your password immediately and review your active sessions.`,
+    html: `<p>We detected suspicious sign-in activity on your Kiyota account.</p><ul><li><strong>Reason:</strong> ${input.reason}</li><li><strong>IP:</strong> ${input.ipAddress || "unknown"}</li><li><strong>Device:</strong> ${input.userAgent || "unknown"}</li></ul><p>If this wasn't you, please change your password immediately and review your active sessions.</p>`,
+  });
+}

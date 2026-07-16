@@ -205,6 +205,25 @@ export default async function adminRoutes(app: FastifyInstance) {
       .orderBy(desc(auditLog.createdAt))
       .limit(10);
 
+    // Anomaly signals: failed-login spikes and new-device detections.
+    const [newDeviceEvents] = await db
+      .select({ total: count() })
+      .from(auditLog)
+      .where(and(eq(auditLog.event, "new_device_detected"), gte(auditLog.createdAt, since)));
+    const recentFailedLogins = await db
+      .select({
+        id: auditLog.id,
+        event: auditLog.event,
+        userId: auditLog.userId,
+        ipAddress: auditLog.ipAddress,
+        userAgent: auditLog.userAgent,
+        createdAt: auditLog.createdAt,
+      })
+      .from(auditLog)
+      .where(and(eq(auditLog.event, "user_login_failed"), gte(auditLog.createdAt, since)))
+      .orderBy(desc(auditLog.createdAt))
+      .limit(10);
+
     return {
       last24h: {
         logins: loginEvents.total,
@@ -214,6 +233,10 @@ export default async function adminRoutes(app: FastifyInstance) {
       mfa: {
         enabled: mfaUsers[0].total,
         total: totalUsers[0].total,
+      },
+      anomalies: {
+        newDevices24h: newDeviceEvents.total,
+        recentFailedLogins,
       },
       recentLogins,
     };

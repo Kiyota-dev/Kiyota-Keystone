@@ -11,6 +11,17 @@ interface SecuritySummary {
   last24h: { logins: number; failedLogins: number };
   activeSessions: number;
   mfa: { enabled: number; total: number };
+  anomalies?: {
+    newDevices24h: number;
+    recentFailedLogins: Array<{
+      id: string;
+      event: string;
+      userId: string | null;
+      ipAddress: string | null;
+      userAgent: string | null;
+      createdAt: string;
+    }>;
+  };
   recentLogins: Array<{
     id: string;
     event: string;
@@ -82,6 +93,39 @@ export function SecurityPanel() {
             <p className="text-[22px] font-semibold txt-head">{mfaRate}%</p>
           </Card>
         </div>
+      </SectionCard>
+
+      <SectionCard title="Anomaly detection" description="Suspicious activity signals from the last 24 hours.">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <Card className="p-4 bg-surface border border-theme/20">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <span className="text-[12px] txt-muted">New devices detected</span>
+            </div>
+            <p className="text-[22px] font-semibold txt-head">{summary.anomalies?.newDevices24h ?? 0}</p>
+          </Card>
+          <Card className="p-4 bg-surface border border-theme/20">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <span className="text-[12px] txt-muted">Failed login attempts</span>
+            </div>
+            <p className="text-[22px] font-semibold txt-head">{summary.last24h.failedLogins}</p>
+          </Card>
+        </div>
+        {summary.anomalies && summary.anomalies.recentFailedLogins.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[12px] font-medium txt-head">Recent failed logins</p>
+            {summary.anomalies.recentFailedLogins.map((login) => (
+              <div key={login.id} className="p-3 rounded-xl border border-theme/20 bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium txt-head">{login.event}</p>
+                  <p className="text-[11px] txt-muted truncate">{login.ipAddress || "Unknown IP"} · {login.userAgent || "Unknown device"}</p>
+                </div>
+                <span className="text-[11px] txt-muted shrink-0">{new Date(login.createdAt).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </SectionCard>
 
       <SectionCard title="Recent login activity" description="Latest successful sign-ins across the platform.">
