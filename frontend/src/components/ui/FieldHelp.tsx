@@ -17,6 +17,7 @@ export function FieldHelp({ label, help, example, children, className = "" }: Fi
         {help && <Tooltip content={help} icon />}
       </div>
       {children}
+      {help && <p className="text-[11px] txt-muted leading-relaxed">{help}</p>}
       {example && (
         <p className="text-[11px] txt-muted">
           Example: <code className="text-gold">{example}</code>
