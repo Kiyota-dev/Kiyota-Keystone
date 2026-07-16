@@ -746,53 +746,180 @@ export class LoginComponent {}`;
         title={
           <span className="flex items-center gap-2">
             <Info className="w-4 h-4 text-gold" />
-            What each input does
+            Input & attribute reference
           </span>
         }
-        description="Understand every field before you copy the snippet."
+        description="Every field, ID, and data attribute the Keystone drop-in SDK recognizes."
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           {[
             {
-              name: "Framework",
-              description: "The frontend framework or server-side stack your project uses. Keystone generates the matching install snippet for it.",
-              example: "React",
+              title: "Script configuration",
+              items: [
+                {
+                  name: "data-keystone-url",
+                  description: "The base URL of your Keystone API. The SDK sends login, register, and OAuth requests here.",
+                  example: "http://localhost:4001",
+                },
+                {
+                  name: "data-keystone-client-id",
+                  description: "The public client ID of your Keystone application. This is safe to expose in browser code.",
+                  example: "app_abc123",
+                },
+                {
+                  name: "data-keystone-callback",
+                  description: "The callback path or full URL where OAuth providers send users back after sign-in. Must match your app's Redirect URIs.",
+                  example: "/callback.html",
+                },
+                {
+                  name: "data-keystone-project-id",
+                  description: "Optional project identifier. When set, the SDK auto-connects your project to Keystone on load.",
+                  example: "proj_123",
+                },
+                {
+                  name: "data-keystone-after-login",
+                  description: "Where to redirect the user after successful login or registration.",
+                  example: "/dashboard",
+                },
+                {
+                  name: "data-keystone-after-logout",
+                  description: "Where to redirect the user after they sign out.",
+                  example: "/",
+                },
+                {
+                  name: "data-keystone-autowire",
+                  description: "Whether the SDK should automatically find and wire forms and buttons. Set to false to attach manually via JavaScript.",
+                  example: "false",
+                },
+                {
+                  name: "data-keystone-check-session",
+                  description: "When true, the SDK checks for an existing Keystone session on page load and fills user fields automatically.",
+                  example: "true",
+                },
+              ],
             },
             {
-              name: "Application",
-              description: "The Keystone application (OAuth client) that represents this project. The snippet uses this app's public client ID.",
-              example: "My Website",
+              title: "Form IDs",
+              items: [
+                {
+                  name: "#keystone-login-form",
+                  description: "The sign-in form. The SDK listens for submit and reads email and password inputs inside it.",
+                  example: '<form id="keystone-login-form">',
+                },
+                {
+                  name: "#keystone-register-form",
+                  description: "The sign-up form. The SDK listens for submit and reads username, email, and password inputs inside it.",
+                  example: '<form id="keystone-register-form">',
+                },
+                {
+                  name: "#keystone-google-btn",
+                  description: "Button that starts Google OAuth sign-in. The SDK attaches a click handler that redirects to Keystone.",
+                  example: '<button id="keystone-google-btn">',
+                },
+                {
+                  name: "#keystone-logout",
+                  description: "Button that signs the user out. The SDK attaches a click handler that calls logout and redirects.",
+                  example: '<button id="keystone-logout">',
+                },
+                {
+                  name: "#keystone-message",
+                  description: "Optional element where the SDK displays error, success, and info messages.",
+                  example: '<div id="keystone-message"></div>',
+                },
+              ],
             },
             {
-              name: "Website URL / Project URL",
-              description: "The public URL where your project is hosted. Keystone validates this origin for CORS and builds the full callback URL from it.",
-              example: "http://localhost:3000",
+              title: "Form input attributes",
+              items: [
+                {
+                  name: 'data-keystone-input="email"',
+                  description: "Marks an input as the user's email address. Required for login and registration.",
+                  example: '<input data-keystone-input="email" type="email" />',
+                },
+                {
+                  name: 'data-keystone-input="password"',
+                  description: "Marks an input as the user's password. Required for login and registration.",
+                  example: '<input data-keystone-input="password" type="password" />',
+                },
+                {
+                  name: 'data-keystone-input="username"',
+                  description: "Marks an input as the user's username. Required for registration.",
+                  example: '<input data-keystone-input="username" type="text" />',
+                },
+                {
+                  name: 'data-keystone-input="name"',
+                  description: "Marks an input as the user's display name. Optional for registration.",
+                  example: '<input data-keystone-input="name" type="text" />',
+                },
+              ],
             },
             {
-              name: "Callback path",
-              description: "The path on your site where users are sent after signing in with an external provider (Google, etc.). The full URL is Project URL + this path and must be listed in the app's Redirect URIs.",
-              example: "/callback.html",
+              title: "User display attributes",
+              items: [
+                {
+                  name: 'data-keystone-field="email"',
+                  description: "Auto-fills the signed-in user's email address into this element.",
+                  example: '<span data-keystone-field="email"></span>',
+                },
+                {
+                  name: 'data-keystone-field="name"',
+                  description: "Auto-fills the signed-in user's display name (or username) into this element.",
+                  example: '<span data-keystone-field="name"></span>',
+                },
+                {
+                  name: 'data-keystone-field="username"',
+                  description: "Auto-fills the signed-in user's username into this element.",
+                  example: '<span data-keystone-field="username"></span>',
+                },
+              ],
             },
             {
-              name: "data-keystone-input",
-              description: "Place this attribute on your form inputs so the SDK can read them. Use email, password, username, or name.",
-              example: '<input data-keystone-input="email" />',
+              title: "Alternative attributes",
+              items: [
+                {
+                  name: 'data-keystone-form="login"',
+                  description: "Alternative to #keystone-login-form. Marks a form as the login form.",
+                  example: '<form data-keystone-form="login">',
+                },
+                {
+                  name: 'data-keystone-form="register"',
+                  description: "Alternative to #keystone-register-form. Marks a form as the registration form.",
+                  example: '<form data-keystone-form="register">',
+                },
+                {
+                  name: 'data-keystone-google',
+                  description: "Alternative to #keystone-google-btn. Marks any element as a Google sign-in trigger.",
+                  example: '<button data-keystone-google>Sign in with Google</button>',
+                },
+                {
+                  name: 'data-keystone-logout',
+                  description: "Alternative to #keystone-logout. Marks any element as a logout trigger.",
+                  example: '<button data-keystone-logout>Sign out</button>',
+                },
+                {
+                  name: 'data-keystone-message',
+                  description: "Alternative to #keystone-message. Marks any element as the message container.",
+                  example: '<p data-keystone-message></p>',
+                },
+              ],
             },
-            {
-              name: "data-keystone-field",
-              description: "Place this on display elements (like a span) and Keystone will auto-fill the user's email, name, or username after login.",
-              example: '<span data-keystone-field="email"></span>',
-            },
-          ].map((item) => (
-            <div key={item.name} className="border-b border-theme/10 last:border-0 pb-4 last:pb-0">
-              <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-                <code className="text-[12px] text-gold font-medium shrink-0 sm:w-48">{item.name}</code>
-                <div className="min-w-0">
-                  <p className="text-[12px] txt-body leading-relaxed">{item.description}</p>
-                  <p className="text-[11px] txt-muted mt-1">
-                    Example: <code className="text-gold break-all">{item.example}</code>
-                  </p>
-                </div>
+          ].map((section) => (
+            <div key={section.title}>
+              <h4 className="text-[13px] font-semibold txt-head mb-3">{section.title}</h4>
+              <div className="space-y-4">
+                {section.items.map((item) => (
+                  <div key={item.name} className="border-b border-theme/10 last:border-0 pb-4 last:pb-0">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+                      <code className="text-[12px] text-gold font-medium shrink-0 sm:w-64 break-all">{item.name}</code>
+                      <div className="min-w-0">
+                        <p className="text-[12px] txt-body leading-relaxed">{item.description}</p>
+                        <p className="text-[11px] txt-muted mt-1">
+                          Example: <code className="text-gold break-all">{item.example}</code>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
