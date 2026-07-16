@@ -652,7 +652,12 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
       modeToggle={modeToggle}
       sidebarFooter={sidebarFooter}
     >
-      {renderContent()}
+      <div
+        key={activeTab}
+        className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
+      >
+        {renderContent()}
+      </div>
       <CommandPalette items={commandItems} isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <DiagnosticsDrawer
         isOpen={diagnosticsOpen}
