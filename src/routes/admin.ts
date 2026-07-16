@@ -18,16 +18,22 @@ const CreateOrgSchema = z.object({
   plan: z.string().max(32).optional(),
 });
 
+const ipEntry = z.string().max(64).regex(/^[0-9a-fA-F:.\/]+$/, "Invalid IP or CIDR entry");
+
 const CreateAppSchema = z.object({
   name: z.string().min(1).max(255),
   redirectUris: z.array(z.string().url()).optional(),
   allowedOrigins: z.array(z.string()).optional(),
+  allowedIps: z.array(ipEntry).optional(),
+  blockedIps: z.array(ipEntry).optional(),
 });
 
 const UpdateAppSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   redirectUris: z.array(z.string().url()).optional(),
   allowedOrigins: z.array(z.string()).optional(),
+  allowedIps: z.array(ipEntry).optional(),
+  blockedIps: z.array(ipEntry).optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -153,6 +159,8 @@ export default async function adminRoutes(app: FastifyInstance) {
         name: applications.name,
         redirectUris: applications.redirectUris,
         allowedOrigins: applications.allowedOrigins,
+        allowedIps: applications.allowedIps,
+        blockedIps: applications.blockedIps,
         branding: applications.branding,
         isActive: applications.isActive,
         createdAt: applications.createdAt,

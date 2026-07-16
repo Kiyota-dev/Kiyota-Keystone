@@ -248,7 +248,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  updateApplication: (orgId: string, appId: string, input: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; isActive: boolean }>) =>
+  updateApplication: (orgId: string, appId: string, input: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean }>) =>
     fetchJson<unknown>(`/v1/admin/organizations/${orgId}/applications/${appId}`, {
       method: "PATCH",
       body: JSON.stringify(input),

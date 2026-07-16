@@ -102,7 +102,7 @@ export class OrganizationDomainService {
   async updateApplication(
     appId: string,
     orgId: string,
-    updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; isActive: boolean }>
+    updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean }>
   ): Promise<Result<Application>> {
     const updated = await this.applications.update(appId, orgId, updates);
     if (!updated) return err({ code: "APP_NOT_FOUND", message: "Application not found", statusCode: 404 });

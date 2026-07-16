@@ -9,6 +9,7 @@ import {
 import { rateLimit } from "../plugins/rateLimit.js";
 import { checkImpossibleTravel } from "../services/anomalyDetection.js";
 import { sendSuspiciousLoginAlert } from "../services/email.js";
+import { checkIpAllowed } from "../services/ipControls.js";
 import { toPublicUser } from "../types.js";
 
 /**
@@ -73,6 +74,11 @@ export default async function authRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const body = RegisterSchema.parse(request.body);
 
+      const ipCheck = await checkIpAllowed(body.client_id, request.ip);
+      if (!ipCheck.allowed) {
+        return reply.status(403).send({ error: ipCheck.reason, code: "IP_NOT_ALLOWED" });
+      }
+
       const result = await sdk.authentication.register({
         username: body.username,
         email: body.email,
@@ -102,6 +108,11 @@ export default async function authRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const body = LoginSchema.parse(request.body);
+
+      const ipCheck = await checkIpAllowed(body.client_id, request.ip);
+      if (!ipCheck.allowed) {
+        return reply.status(403).send({ error: ipCheck.reason, code: "IP_NOT_ALLOWED" });
+      }
 
       const result = await sdk.authentication.login({
         email: body.email,
@@ -138,6 +149,11 @@ export default async function authRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const body = LoginSchema.parse(request.body);
+
+      const ipCheck = await checkIpAllowed(body.client_id, request.ip);
+      if (!ipCheck.allowed) {
+        return reply.status(403).send({ error: ipCheck.reason, code: "IP_NOT_ALLOWED" });
+      }
 
       const result = await sdk.authentication.login({
         email: body.email,

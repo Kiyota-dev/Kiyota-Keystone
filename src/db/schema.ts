@@ -96,6 +96,8 @@ export const applications = pgTable(
     name: text("name").notNull(),
     redirectUris: text("redirect_uris").array().default(sql`'{}'::text[]`).notNull(),
     allowedOrigins: text("allowed_origins").array().default(sql`'{}'::text[]`).notNull(),
+    allowedIps: text("allowed_ips").array().default(sql`'{}'::text[]`).notNull(),
+    blockedIps: text("blocked_ips").array().default(sql`'{}'::text[]`).notNull(),
     branding: jsonb("branding").default({}).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

@@ -90,6 +90,8 @@ export interface UpdateApplicationInput {
   name?: string;
   redirectUris?: string[];
   allowedOrigins?: string[];
+  allowedIps?: string[];
+  blockedIps?: string[];
   isActive?: boolean;
 }
 

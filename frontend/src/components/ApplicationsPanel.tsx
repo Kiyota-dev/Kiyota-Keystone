@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { LayoutGrid, Plus, Save, X, Power } from "lucide-react";
+import { LayoutGrid, Plus, Save, X, Power, Shield } from "lucide-react";
 import { api } from "../api.ts";
 import { Card } from "./ui/Card.tsx";
 import { Button } from "./ui/Button.tsx";
@@ -32,6 +32,9 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
+  const [ipEditApp, setIpEditApp] = useState<Record<string, unknown> | null>(null);
+  const [allowedIps, setAllowedIps] = useState("");
+  const [blockedIps, setBlockedIps] = useState("");
 
   const orgOptions = organizations.data?.organizations ?? [];
 
@@ -78,6 +81,33 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
       onRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update application");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openIpEditor = (app: Record<string, unknown>) => {
+    reset();
+    setIpEditApp(app);
+    setAllowedIps(((app.allowedIps as string[]) ?? []).join(", "));
+    setBlockedIps(((app.blockedIps as string[]) ?? []).join(", "));
+  };
+
+  const saveIpControls = async () => {
+    if (!ipEditApp) return;
+    reset();
+    setBusy(true);
+    try {
+      await api.updateApplication(String(ipEditApp.orgId), String(ipEditApp.id), {
+        allowedIps: allowedIps.split(",").map((s) => s.trim()).filter(Boolean),
+        blockedIps: blockedIps.split(",").map((s) => s.trim()).filter(Boolean),
+      });
+      setSuccess("IP controls updated");
+      addToast("IP controls updated", "success");
+      setIpEditApp(null);
+      onRefresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update IP controls");
     } finally {
       setBusy(false);
     }
@@ -171,16 +201,54 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
         </form>
       )}
 
+      {ipEditApp && (
+        <div className="mb-5 p-3 sm:p-4 rounded-xl bg-surface border border-theme/20 space-y-3">
+          <p className="text-[13px] font-semibold txt-head flex items-center gap-2">
+            <Shield className="w-4 h-4 text-gold" />
+            IP controls — {String(ipEditApp.name)}
+          </p>
+          <FieldHelp
+            label="Allowed IPs"
+            help="If set, only these IPs or CIDR ranges may sign in to this application. Leave empty to allow all."
+            example="203.0.113.10, 198.51.100.0/24"
+          >
+            <Input value={allowedIps} onChange={(e) => setAllowedIps(e.target.value)} placeholder="203.0.113.0/24" />
+          </FieldHelp>
+          <FieldHelp
+            label="Blocked IPs"
+            help="These IPs or CIDR ranges are always rejected, even if they match the allowed list."
+            example="192.0.2.55, 2001:db8::/32"
+          >
+            <Input value={blockedIps} onChange={(e) => setBlockedIps(e.target.value)} placeholder="192.0.2.55" />
+          </FieldHelp>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button size="sm" onClick={saveIpControls} isLoading={busy}>
+              <Save className="w-4 h-4" />
+              Save
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setIpEditApp(null)}>
+              <X className="w-4 h-4" />
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       <DataTable
         state={state}
         columns={mode === "simple" ? ["name", "isActive"] : ["id", "orgId", "clientId", "name", "isActive", "createdAt"]}
         rows={state.data?.applications ?? []}
         emptyMessage="No applications found."
         renderRowActions={(row) => (
-          <Button size="sm" variant="secondary" onClick={() => toggleActive(row)} disabled={busy}>
-            <Power className="w-3 h-3 mr-1" />
-            {row.isActive ? "Disable" : "Enable"}
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" onClick={() => openIpEditor(row)} disabled={busy} title="IP controls">
+              <Shield className="w-3 h-3" />
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => toggleActive(row)} disabled={busy}>
+              <Power className="w-3 h-3 mr-1" />
+              {row.isActive ? "Disable" : "Enable"}
+            </Button>
+          </div>
         )}
       />
     </Card>

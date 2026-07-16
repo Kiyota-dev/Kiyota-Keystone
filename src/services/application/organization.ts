@@ -68,7 +68,7 @@ export class OrganizationApplicationService {
     actorId: string,
     orgId: string,
     appId: string,
-    updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; isActive: boolean }>
+    updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean }>
   ): Promise<Result<Application>> {
     const permCheck = await this.authorization.requireOrgRole(actorId, orgId, ["owner", "admin"]);
     if (!permCheck.success) return permCheck;
