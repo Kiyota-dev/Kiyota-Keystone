@@ -7,11 +7,8 @@ interface AdvancedProps {
 }
 
 function AdvancedBase({ mode, children, className = "" }: AdvancedProps) {
-  return (
-    <div className={`${mode === "simple" ? "hidden" : ""} ${className}`}>
-      {children}
-    </div>
-  );
+  if (mode === "simple") return null;
+  return <div className={className}>{children}</div>;
 }
 
 export const Advanced = memo(AdvancedBase);

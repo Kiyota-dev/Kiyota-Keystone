@@ -665,7 +665,7 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
       sidebarFooter={sidebarFooter}
     >
       <div
-        key={activeTab}
+        key={`${activeTab}-${mode}`}
         className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
       >
         {renderContent()}
