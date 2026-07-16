@@ -27,6 +27,7 @@ import { UsersPanel } from "./components/UsersPanel.tsx";
 import { KeysPanel } from "./components/KeysPanel.tsx";
 import { PluginsPanel } from "./components/PluginsPanel.tsx";
 import { FeatureFlagsPanel } from "./components/FeatureFlagsPanel.tsx";
+import { SecurityPanel } from "./components/SecurityPanel.tsx";
 import { OverviewPanel } from "./components/dashboard/OverviewPanel.tsx";
 import { HomePanel } from "./components/dashboard/HomePanel.tsx";
 import { IdentityProvidersPanel } from "./components/dashboard/IdentityProvidersPanel.tsx";
@@ -142,6 +143,7 @@ const TABS = [
   { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" />, group: "Access Control" },
   { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" />, group: "Access Control" },
   { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" />, group: "Access Control" },
+  { id: "security", label: "Security", icon: <Shield className="w-4 h-4" />, group: "Access Control" },
   { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" />, group: "Platform" },
   { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" />, group: "Platform" },
   { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform" },
@@ -494,6 +496,8 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
         return <IdentityProvidersPanel state={providers} />;
       case "keys":
         return <KeysPanel state={keys} onRefresh={refreshKeys} />;
+      case "security":
+        return <SecurityPanel />;
       case "plugins":
         return (
           <PluginsPanel

@@ -227,6 +227,13 @@ export const api = {
   provisionBillingCustomer: (orgId: string) =>
     fetchJson<Record<string, unknown>>(`/v1/admin/organizations/${orgId}/billing/customer`, { method: "POST" }),
 
+  getSecuritySummary: () => fetchJson<{
+    last24h: { logins: number; failedLogins: number };
+    activeSessions: number;
+    mfa: { enabled: number; total: number };
+    recentLogins: Array<{ id: string; event: string; userId: string | null; ipAddress: string | null; userAgent: string | null; createdAt: string }>;
+  }>("/v1/admin/platform/security-summary"),
+
   // Platform admin CRUD
   createOrganization: (input: { name: string; slug?: string; plan?: string }) =>
     fetchJson<{ id: string }>("/v1/admin/organizations", { method: "POST", body: JSON.stringify(input) }),

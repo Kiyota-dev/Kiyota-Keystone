@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc, gte, count, isNull } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { orgMemberships, apiKeys, users, organizations, applications, samlConnections, oidcConnections } from "../db/schema.js";
+import { orgMemberships, apiKeys, users, organizations, applications, samlConnections, oidcConnections, auditLog, refreshTokens } from "../db/schema.js";
 import { getSdk } from "../sdk/index.js";
 import { listRegisteredPlugins, listExtensionPoints, unregisterPlugin } from "../services/plugins/registry.js";
 import { isFeatureEnabled, listFeatureFlags, setFeatureFlag, deleteFeatureFlag } from "../services/featureFlags.js";
@@ -171,6 +171,52 @@ export default async function adminRoutes(app: FastifyInstance) {
       offset: query.offset ? Number(query.offset) : 0,
     });
     return { logs };
+  });
+
+  app.get("/platform/security-summary", { preHandler: [requireOwner()] }, async () => {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [loginEvents] = await db
+      .select({ total: count() })
+      .from(auditLog)
+      .where(and(eq(auditLog.event, "user_login"), gte(auditLog.createdAt, since)));
+    const [failedLoginEvents] = await db
+      .select({ total: count() })
+      .from(auditLog)
+      .where(and(eq(auditLog.event, "user_login_failed"), gte(auditLog.createdAt, since)));
+    const [activeSessions] = await db
+      .select({ total: count() })
+      .from(refreshTokens)
+      .where(and(isNull(refreshTokens.revokedAt), gte(refreshTokens.expiresAt, new Date())));
+    const [mfaUsers, totalUsers] = await Promise.all([
+      db.select({ total: count() }).from(users).where(eq(users.totpEnabled, true)),
+      db.select({ total: count() }).from(users),
+    ]);
+    const recentLogins = await db
+      .select({
+        id: auditLog.id,
+        event: auditLog.event,
+        userId: auditLog.userId,
+        ipAddress: auditLog.ipAddress,
+        userAgent: auditLog.userAgent,
+        createdAt: auditLog.createdAt,
+      })
+      .from(auditLog)
+      .where(eq(auditLog.event, "user_login"))
+      .orderBy(desc(auditLog.createdAt))
+      .limit(10);
+
+    return {
+      last24h: {
+        logins: loginEvents.total,
+        failedLogins: failedLoginEvents.total,
+      },
+      activeSessions: activeSessions.total,
+      mfa: {
+        enabled: mfaUsers[0].total,
+        total: totalUsers[0].total,
+      },
+      recentLogins,
+    };
   });
 
   app.get("/platform/queue", { preHandler: [requireOwner()] }, async () => {
