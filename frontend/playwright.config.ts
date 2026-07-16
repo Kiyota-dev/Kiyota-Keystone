@@ -13,7 +13,6 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: "line",
-  globalSetup: require.resolve("./e2e/global-setup"),
   use: {
     baseURL: "http://localhost:5173",
     trace: "on-first-retry",
@@ -26,23 +25,24 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "cd .. && npm run dev:setup",
+      command: "cd .. && npx tsx scripts/reset-test-db.ts && npm run dev",
       url: "http://localhost:4001/health",
       timeout: 120000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       env: {
         DATABASE_URL: TEST_DATABASE_URL,
         REDIS_URL: TEST_REDIS_URL,
         KEYSTONE_QUEUE_PROVIDER: process.env.KEYSTONE_QUEUE_PROVIDER || "",
         KEYSTONE_SETUP_TOKEN: TEST_SETUP_TOKEN,
         PORT: "4001",
+        NODE_ENV: "development",
       },
     },
     {
       command: "npm run dev",
       url: "http://localhost:5173",
       timeout: 120000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: false,
       env: {
         KEYSTONE_API_URL: process.env.KEYSTONE_API_URL || "http://localhost:4001",
       },

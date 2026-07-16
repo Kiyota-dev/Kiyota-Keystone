@@ -246,7 +246,6 @@ export async function buildApp() {
 
 async function start() {
   startTracing();
-  await loadSigningKeys();
   await redis.connect().catch((err: unknown) => {
     console.warn("Redis not available; rate limiting will fail open", err);
   });
@@ -258,6 +257,13 @@ async function start() {
     app.log.info("Database migrations applied");
   } catch (err) {
     app.log.warn({ err }, "Database migration skipped or failed");
+  }
+
+  try {
+    await loadSigningKeys();
+    app.log.info("JWT signing keys loaded");
+  } catch (err) {
+    app.log.warn({ err }, "JWT signing key loading failed");
   }
 
   try {

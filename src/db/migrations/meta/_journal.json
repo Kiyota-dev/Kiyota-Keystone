@@ -15,6 +15,13 @@
       "when": 1783983868584,
       "tag": "0001_brief_joseph",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784140800000,
+      "tag": "0002_add_account_lockout",
+      "breakpoints": true
     }
   ]
 }

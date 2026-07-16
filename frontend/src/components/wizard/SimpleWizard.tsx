@@ -251,6 +251,7 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
           <span className="text-[13px] font-medium txt-head">PostgreSQL</span>
         </div>
         <Input
+          aria-label="Database URL"
           value={state.infrastructure.databaseUrl}
           onChange={(e) => update("infrastructure", { databaseUrl: e.target.value })}
         />
@@ -265,6 +266,7 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
           <span className="text-[13px] font-medium txt-head">Redis</span>
         </div>
         <Input
+          aria-label="Redis URL"
           value={state.infrastructure.redisUrl}
           onChange={(e) => update("infrastructure", { redisUrl: e.target.value })}
         />
@@ -290,11 +292,12 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
 
       <div>
         <Label className="text-[12px]">Full name (optional)</Label>
-        <Input value={state.owner.name} onChange={(e) => update("owner", { name: e.target.value })} />
+        <Input aria-label="Full name (optional)" value={state.owner.name} onChange={(e) => update("owner", { name: e.target.value })} />
       </div>
       <div>
         <Label className="text-[12px]">Email</Label>
         <Input
+          aria-label="Email"
           type="email"
           value={state.owner.email}
           onChange={(e) => update("owner", { email: e.target.value })}
@@ -304,6 +307,7 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
       <div>
         <Label className="text-[12px]">Password</Label>
         <Input
+          aria-label="Password"
           type="password"
           value={state.owner.password}
           onChange={(e) => update("owner", { password: e.target.value })}
@@ -332,11 +336,11 @@ export default function SimpleWizard({ onSwitchAdvanced }: SimpleWizardProps) {
 
       <div>
         <Label className="text-[12px]">Project name</Label>
-        <Input value={appName} onChange={(e) => setAppName(e.target.value)} />
+        <Input aria-label="Project name" value={appName} onChange={(e) => setAppName(e.target.value)} />
       </div>
       <div>
         <Label className="text-[12px]">Project URL</Label>
-        <Input value={appUrl} onChange={(e) => setAppUrl(e.target.value)} />
+        <Input aria-label="Project URL" value={appUrl} onChange={(e) => setAppUrl(e.target.value)} />
         <p className="text-[11px] txt-muted mt-1">Where your website or app is hosted.</p>
       </div>
 

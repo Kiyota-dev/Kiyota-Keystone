@@ -19,6 +19,20 @@ Keystone is a **standalone identity platform**, not a wrapper around another ide
 
 ---
 
+## What's new in v1.3.0
+
+- **Simplified browser setup wizard** — choose a profile (Development, Docker Compose, Production), test PostgreSQL/Redis, create the owner account, and connect your first project without editing files.
+- **Setup diagnostics & dry-run** — validate the full configuration before applying it, then run a health report after setup completes.
+- **Mobile-first admin UI** — the dashboard and setup wizard are usable down to 375px widths, with touch-friendly controls and hash-routed tabs.
+- **Security dashboard** — owners can view 24h logins, failed logins, active sessions, MFA adoption, and recent login activity.
+- **Account lockout protection** — repeated failed logins temporarily lock accounts and emit security events.
+- **Azure Key Vault secrets provider** — store JWT signing and encryption keys in Azure Key Vault in addition to the default database provider.
+- **API key scopes & signed webhooks** — API keys carry granular scopes and audit webhook deliveries are signed with HMAC.
+- **One-click project connection** — copy integration snippets for React, Next.js, Angular, Svelte, Vue, Django, Rails, Go, Python, and plain HTML.
+- **End-to-end test suite** — Playwright tests cover the simple setup wizard and the post-setup security dashboard using an isolated `kiyota_test` database.
+
+---
+
 ## Architecture
 
 ```
@@ -251,14 +265,16 @@ Launch Keystone. `start.sh` will automatically start PostgreSQL and Redis via Do
 The wizard guides you through:
 
 1. Pasting the setup token printed in the server logs.
-2. Configuring and testing PostgreSQL and Redis.
-3. Setting public URLs and allowed origins.
-4. Generating platform secrets (internal API key, encryption key).
-5. Choosing and testing email and SMS providers.
-6. Enabling optional identity connectors (Google, GitHub, Azure, Okta, Keycloak, Zitadel).
-7. Creating the first owner account.
+2. Choosing an environment profile (Development, Docker Compose, Production).
+3. Configuring and testing PostgreSQL and Redis.
+4. Setting public URLs and allowed origins (advanced mode).
+5. Generating platform secrets (internal API key, encryption key).
+6. Choosing and testing email and SMS providers (advanced mode).
+7. Enabling optional identity connectors (advanced mode).
+8. Creating the first owner account and connecting your first project.
+9. Reviewing diagnostics and completing setup.
 
-When finished, the wizard writes `.env`, runs migrations, and creates the owner. The server then automatically restarts in normal API mode.
+When finished, the wizard writes `.env`, runs migrations, creates the owner, and optionally restarts the server in normal API mode.
 
 ### Admin dashboard
 
@@ -267,8 +283,12 @@ After setup, the same UI at http://localhost:5173 becomes the **admin dashboard*
 - **Overview** — API health and OIDC discovery endpoints.
 - **Organizations** — all platform organizations.
 - **Applications** — all registered OAuth/OIDC applications.
+- **Connect Project** — copy integration snippets for React, Next.js, Angular, Svelte, Vue, Django, Rails, Go, Python, and HTML.
 - **Users** — all platform users.
+- **Security** — 24h logins, failed logins, active sessions, MFA adoption, and recent activity.
 - **Audit Logs** — recent security events.
+- **Workflows** — configurable post-automation flows.
+- **Settings** — platform configuration and feature flags.
 
 ### Manual setup
 
@@ -300,9 +320,18 @@ docker compose -f docker-compose.test.yml up -d
 npm test
 ```
 
+### Build verification
+
+Before committing or releasing, run the full build and type check:
+
+```bash
+npm run build:all
+npm run typecheck:all
+```
+
 ### Setup frontend E2E tests
 
-The setup wizard lives in `frontend/` and is tested with Playwright. From the project root:
+The setup wizard and post-setup dashboard are tested with Playwright. The E2E suite uses an isolated `kiyota_test` database that is reset automatically before each run. From the project root:
 
 ```bash
 npm run test:all
@@ -418,6 +447,8 @@ services:
 | `KEYSTONE_SEED_OWNER_EMAIL` | Default owner email for seeded organization |
 | `KEYSTONE_SEED_OWNER_PASSWORD` | Password for the seed owner |
 | `KEYSTONE_SECRETS_PROVIDER` | `database` (default) or `environment` |
+| `AZURE_KEY_VAULT_URL` | Azure Key Vault URL for the `azure-key-vault` secrets provider |
+| `AZURE_KEY_VAULT_TENANT_ID` / `AZURE_KEY_VAULT_CLIENT_ID` / `AZURE_KEY_VAULT_CLIENT_SECRET` | Azure service principal credentials |
 | `KEYSTONE_QUEUE_PROVIDER` | `in-process`, `bullmq`, or empty to auto-select when Redis is available |
 | `KEYSTONE_PLUGINS` | Comma-separated module paths of plugins to load at startup |
 | `KEYSTONE_FEATURE_FLAGS` | Comma-separated `flag=true|false` runtime feature toggles |
