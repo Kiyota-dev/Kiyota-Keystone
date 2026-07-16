@@ -15,7 +15,26 @@ export interface KeystoneSdkConfig {
   autoWire?: boolean;
   /** Check existing session on load and mark the page authenticated if found */
   checkSession?: boolean;
+  /** UI language for built-in messages: "en" (default) or "ar" */
+  lang?: string;
 }
+
+const MESSAGES: Record<string, Record<string, string>> = {
+  en: {
+    loginSuccess: "Login successful! Redirecting…",
+    registerSuccess: "Account created! Redirecting…",
+    credentialsRequired: "Email and password are required",
+    registerFieldsRequired: "Username, email and password are required",
+    error: "Error",
+  },
+  ar: {
+    loginSuccess: "تم تسجيل الدخول بنجاح! جارٍ التحويل…",
+    registerSuccess: "تم إنشاء الحساب! جارٍ التحويل…",
+    credentialsRequired: "البريد الإلكتروني وكلمة المرور مطلوبان",
+    registerFieldsRequired: "اسم المستخدم والبريد الإلكتروني وكلمة المرور مطلوبة",
+    error: "خطأ",
+  },
+};
 
 interface KeystoneUser {
   id: string;
@@ -39,6 +58,7 @@ class KeystoneSdk {
   private afterLogout: string;
   private projectId?: string;
   private callbackPath?: string;
+  private lang: string;
 
   constructor(config: KeystoneSdkConfig = {}) {
     this.url = config.url || this.inferUrl();
@@ -47,6 +67,7 @@ class KeystoneSdk {
     this.afterLogout = config.afterLogout || "/";
     this.projectId = config.projectId;
     this.callbackPath = config.callbackPath;
+    this.lang = config.lang && MESSAGES[config.lang] ? config.lang : "en";
 
     if (config.autoWire !== false) {
       this.attachAll();
@@ -261,6 +282,10 @@ class KeystoneSdk {
     return { known, custom };
   }
 
+  private msg(key: string): string {
+    return MESSAGES[this.lang]?.[key] ?? MESSAGES.en[key] ?? key;
+  }
+
   private setMessage(el: HTMLElement, text: string, type: "info" | "error" | "success" = "info") {
     let msg =
       el.querySelector<HTMLElement>("[data-keystone-message]") ||
@@ -280,19 +305,19 @@ class KeystoneSdk {
   private async handleLogin(form: HTMLElement) {
     const { known } = this.getInputs(form);
     const { email, password } = known;
-    if (!email || !password) throw new Error("Email and password are required");
+    if (!email || !password) throw new Error(this.msg("credentialsRequired"));
     await this.login(email, password);
-    this.setMessage(form, "Login successful! Redirecting…", "success");
+    this.setMessage(form, this.msg("loginSuccess"), "success");
     setTimeout(() => (window.location.href = this.afterLogin), 300);
   }
 
   private async handleRegister(form: HTMLElement) {
     const { known, custom } = this.getInputs(form);
     const { username, email, password, name } = known;
-    if (!username || !email || !password) throw new Error("Username, email and password are required");
+    if (!username || !email || !password) throw new Error(this.msg("registerFieldsRequired"));
     const metadata = Object.keys(custom).length > 0 ? custom : undefined;
     await this.register(username, email, password, name, metadata);
-    this.setMessage(form, "Account created! Redirecting…", "success");
+    this.setMessage(form, this.msg("registerSuccess"), "success");
     setTimeout(() => (window.location.href = this.afterLogin), 300);
   }
 
@@ -415,6 +440,7 @@ if (typeof document !== "undefined") {
     const afterLogout = script.dataset.keystoneAfterLogout;
     const autoWire = script.dataset.keystoneAutowire !== "false";
     const checkSession = script.dataset.keystoneCheckSession === "true";
+    const lang = script.dataset.keystoneLang;
 
     globalSdk = new KeystoneSdk({
       url,
@@ -425,6 +451,7 @@ if (typeof document !== "undefined") {
       afterLogout,
       autoWire,
       checkSession,
+      lang,
     });
   }
 }

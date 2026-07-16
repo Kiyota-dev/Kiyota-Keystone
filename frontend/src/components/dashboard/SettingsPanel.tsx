@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Settings, Save, RotateCcw, Sparkles } from "lucide-react";
+import { Settings, Save, RotateCcw, Sparkles, Languages } from "lucide-react";
 import { api } from "../../api.ts";
 import { Button } from "../ui/Button.tsx";
 import { Input } from "../ui/Input.tsx";
+import { Select } from "../ui/Select.tsx";
 import { Switch } from "../ui/Switch.tsx";
 import { Alert } from "../ui/Alert.tsx";
 import { Card } from "../ui/Card.tsx";
@@ -13,6 +14,7 @@ import { LoadingState } from "../ui/LoadingState.tsx";
 import { ErrorState } from "../ui/ErrorState.tsx";
 import { Advanced } from "../ui/Advanced.tsx";
 import { useUiMode } from "../../hooks/useUiMode.ts";
+import { useTranslation, LANGUAGES, type Language } from "../../i18n/index.ts";
 
 interface ConfigValues {
   AUTH_API_PUBLIC_URL?: string;
@@ -35,6 +37,7 @@ interface ConfigValues {
 
 export function SettingsPanel() {
   const { mode } = useUiMode();
+  const { lang, t, changeLanguage } = useTranslation();
   const [config, setConfig] = useState<ConfigValues | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -123,6 +126,27 @@ export function SettingsPanel() {
           {error}
         </Alert>
       )}
+
+      <SectionCard
+        title={<><Languages className="w-4 h-4 inline mr-2 text-gold" />{t("settings.language")}</>}
+        description={t("settings.language-help")}
+        className="mb-6"
+      >
+        <div className="max-w-xs">
+          <Select
+            value={lang}
+            onChange={(e) => {
+              changeLanguage(e.target.value as Language);
+              // Reload so every panel re-renders in the new language/direction.
+              window.location.reload();
+            }}
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </Select>
+        </div>
+      </SectionCard>
 
       {mode === "simple" && (
         <Card variant="glass" className="p-5 mb-6">

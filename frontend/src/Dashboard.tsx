@@ -46,6 +46,7 @@ import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
 import { useHealth } from "./hooks/useHealth.ts";
 import { useTheme } from "./hooks/useTheme.ts";
+import { useTranslation } from "./i18n/index.ts";
 import { ModeToggle } from "./components/ui/ModeToggle.tsx";
 import { CommandPalette } from "./components/ui/CommandPalette.tsx";
 import { Advanced } from "./components/ui/Advanced.tsx";
@@ -172,6 +173,7 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
   const { mode, setMode } = useUiMode();
   const health = useHealth();
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation();
   const [activeTab, setActiveTabState] = useState(initialTab);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
@@ -182,8 +184,15 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
   }, [navigate]);
 
   const visibleTabs = useMemo(
-    () => TABS.filter((tab) => mode === "advanced" || tab.mode === "simple"),
-    [mode]
+    () =>
+      TABS.filter((tab) => mode === "advanced" || tab.mode === "simple").map((tab) => ({
+        ...tab,
+        label: t(`nav.${tab.id}`) !== `nav.${tab.id}` ? t(`nav.${tab.id}`) : tab.label,
+        group: t(`group.${tab.group.toLowerCase().replace(/ /g, "-")}`) !== `group.${tab.group.toLowerCase().replace(/ /g, "-")}`
+          ? t(`group.${tab.group.toLowerCase().replace(/ /g, "-")}`)
+          : tab.group,
+      })),
+    [mode, t]
   );
 
   // Keep tab in sync with URL hash (e.g. browser back/forward).
