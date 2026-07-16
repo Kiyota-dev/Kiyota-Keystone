@@ -857,6 +857,27 @@ export class LoginComponent {}`;
               ],
             },
             {
+              title: "Custom registration fields",
+              icon: <Code2 className="w-4 h-4 text-gold" />,
+              items: [
+                {
+                  name: 'data-keystone-input="firstName"',
+                  description: "Custom fields like firstName, lastName, company, or anything else are collected and stored in the user's metadata object.",
+                  example: '<input data-keystone-input="firstName" type="text" />',
+                },
+                {
+                  name: 'data-keystone-input="lastName"',
+                  description: "Add any field name you need. The SDK automatically sends unknown fields as metadata to Keystone.",
+                  example: '<input data-keystone-input="lastName" type="text" />',
+                },
+                {
+                  name: "User metadata",
+                  description: "All custom fields are stored in the user's metadata JSON object and returned by /auth/me and login/register responses.",
+                  example: '{ "firstName": "John", "lastName": "Doe" }',
+                },
+              ],
+            },
+            {
               title: "User display attributes",
               icon: <CheckCircle2 className="w-4 h-4 text-gold" />,
               items: [

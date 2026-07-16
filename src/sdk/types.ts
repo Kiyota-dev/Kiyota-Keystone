@@ -9,7 +9,7 @@ export interface AuthResponse {
 }
 
 export interface AuthenticationSdk {
-  register(input: { username: string; email: string; password: string; name?: string; clientId?: string }): Promise<Result<AuthResponse>>;
+  register(input: { username: string; email: string; password: string; name?: string; clientId?: string; metadata?: Record<string, unknown> }): Promise<Result<AuthResponse>>;
   login(input: { email: string; password: string; clientId?: string }): Promise<Result<AuthResponse>>;
   refresh(refreshToken: string, clientId?: string): Promise<Result<{ accessToken: string; refreshToken: string; expiresAt: Date }>>;
   logout(refreshToken?: string): Promise<Result<void>>;

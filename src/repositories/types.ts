@@ -9,6 +9,7 @@ export interface CreateUserInput {
   emailVerified?: boolean;
   avatarUrl?: string | null;
   zitadelUserId?: string | null;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateUserInput {

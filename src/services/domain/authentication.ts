@@ -22,6 +22,7 @@ export interface RegisterInput {
   password: string;
   name?: string;
   clientId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LoginInput {
@@ -91,6 +92,7 @@ export class AuthenticationDomainService {
       provider: "password",
       emailVerified: true,
       zitadelUserId,
+      metadata: input.metadata,
     });
 
     const context = await this.loadAppContext(input.clientId);

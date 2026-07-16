@@ -15,6 +15,7 @@ const RegisterSchema = z.object({
   password: z.string().min(8).max(128),
   name: z.string().max(255).optional(),
   client_id: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 const LoginSchema = z.object({
@@ -55,6 +56,7 @@ export default async function authRoutes(app: FastifyInstance) {
         password: body.password,
         name: body.name,
         clientId: body.client_id,
+        metadata: body.metadata,
       });
 
       if (!result.success) return sendResultError(reply, result);

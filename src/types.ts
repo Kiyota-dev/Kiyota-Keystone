@@ -47,6 +47,7 @@ export interface PublicUser {
   plan: string;
   role: string;
   provider: string;
+  metadata: Record<string, unknown>;
 }
 
 export function toPublicUser(user: User): PublicUser {
@@ -60,5 +61,6 @@ export function toPublicUser(user: User): PublicUser {
     plan: user.plan,
     role: user.role,
     provider: user.provider,
+    metadata: (user.metadata ?? {}) as Record<string, unknown>,
   };
 }

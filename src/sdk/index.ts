@@ -11,7 +11,7 @@ import { buildApplicationServices } from "../di.js";
 class SdkAuthenticationClient implements AuthenticationSdk {
   constructor(private readonly app: AuthenticationApplicationService) {}
 
-  register(input: { username: string; email: string; password: string; name?: string; clientId?: string }) {
+  register(input: { username: string; email: string; password: string; name?: string; clientId?: string; metadata?: Record<string, unknown> }) {
     return this.app.register(input);
   }
 

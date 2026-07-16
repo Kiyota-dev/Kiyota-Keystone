@@ -46,6 +46,7 @@ export const users = pgTable(
     defaultOrgId: uuid("default_org_id").references(() => organizations.id, { onDelete: "set null" }),
     phoneNumber: text("phone_number"),
     phoneVerified: boolean("phone_verified").default(false).notNull(),
+    metadata: jsonb("metadata").default({}).notNull(),
     passwordHash: text("password_hash"),
     totpSecret: text("totp_secret"),
     totpEnabled: boolean("totp_enabled").default(false).notNull(),

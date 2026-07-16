@@ -198,8 +198,17 @@ class KeystoneSdk {
     return result;
   }
 
-  async register(username: string, email: string, password: string, name?: string): Promise<{ user: KeystoneUser }> {
-    const result = (await this.request("/auth/register", { username, email, password, name })) as { user: KeystoneUser };
+  async register(
+    username: string,
+    email: string,
+    password: string,
+    name?: string,
+    metadata?: Record<string, string>
+  ): Promise<{ user: KeystoneUser }> {
+    const body: Record<string, unknown> = { username, email, password };
+    if (name) body.name = name;
+    if (metadata) body.metadata = metadata;
+    const result = (await this.request("/auth/register", body)) as { user: KeystoneUser };
     this.markAuthenticated(result.user);
     return result;
   }
@@ -230,13 +239,26 @@ class KeystoneSdk {
     ) as HTMLInputElement | null;
   }
 
-  private getInputs(form: HTMLElement): Record<string, string> {
-    const inputs: Record<string, string> = {};
-    ["email", "password", "username", "name"].forEach((name) => {
+  private getInputs(form: HTMLElement): { known: Record<string, string>; custom: Record<string, string> } {
+    const known: Record<string, string> = {};
+    const custom: Record<string, string> = {};
+    const knownNames = new Set(["email", "password", "username", "name"]);
+
+    // Read known inputs first
+    knownNames.forEach((name) => {
       const el = this.findInput(form, name);
-      if (el) inputs[name] = el.value;
+      if (el) known[name] = el.value;
     });
-    return inputs;
+
+    // Read all data-keystone-input elements, collect custom fields
+    form.querySelectorAll<HTMLInputElement>("[data-keystone-input]").forEach((el) => {
+      const name = el.getAttribute("data-keystone-input");
+      if (name && !knownNames.has(name)) {
+        custom[name] = el.value;
+      }
+    });
+
+    return { known, custom };
   }
 
   private setMessage(el: HTMLElement, text: string, type: "info" | "error" | "success" = "info") {
@@ -256,7 +278,8 @@ class KeystoneSdk {
   }
 
   private async handleLogin(form: HTMLElement) {
-    const { email, password } = this.getInputs(form);
+    const { known } = this.getInputs(form);
+    const { email, password } = known;
     if (!email || !password) throw new Error("Email and password are required");
     await this.login(email, password);
     this.setMessage(form, "Login successful! Redirecting…", "success");
@@ -264,9 +287,11 @@ class KeystoneSdk {
   }
 
   private async handleRegister(form: HTMLElement) {
-    const { username, email, password, name } = this.getInputs(form);
+    const { known, custom } = this.getInputs(form);
+    const { username, email, password, name } = known;
     if (!username || !email || !password) throw new Error("Username, email and password are required");
-    await this.register(username, email, password, name);
+    const metadata = Object.keys(custom).length > 0 ? custom : undefined;
+    await this.register(username, email, password, name, metadata);
     this.setMessage(form, "Account created! Redirecting…", "success");
     setTimeout(() => (window.location.href = this.afterLogin), 300);
   }
@@ -337,7 +362,13 @@ interface KeystoneGlobal {
   connect(projectId: string, redirectUri?: string): Promise<ConnectResponse>;
   request(path: string, body?: Record<string, unknown>): Promise<unknown>;
   login(email: string, password: string): Promise<{ user: KeystoneUser }>;
-  register(username: string, email: string, password: string, name?: string): Promise<{ user: KeystoneUser }>;
+  register(
+    username: string,
+    email: string,
+    password: string,
+    name?: string,
+    metadata?: Record<string, string>
+  ): Promise<{ user: KeystoneUser }>;
   getUser(): Promise<KeystoneUser | null>;
   logout(): Promise<void>;
   loginWithGoogle(): void;
@@ -365,8 +396,8 @@ Object.assign(Keystone, {
   connect: (projectId: string, redirectUri?: string) => Keystone().connect(projectId, redirectUri),
   request: (path: string, body?: Record<string, unknown>) => Keystone().request(path, body),
   login: (email: string, password: string) => Keystone().login(email, password),
-  register: (username: string, email: string, password: string, name?: string) =>
-    Keystone().register(username, email, password, name),
+  register: (username: string, email: string, password: string, name?: string, metadata?: Record<string, string>) =>
+    Keystone().register(username, email, password, name, metadata),
   getUser: () => Keystone().getUser(),
   logout: () => Keystone().logout(),
   loginWithGoogle: () => Keystone().loginWithGoogle(),

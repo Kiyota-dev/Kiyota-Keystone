@@ -26,6 +26,7 @@ export class DrizzleUserRepository implements UserRepository {
         emailVerified: input.emailVerified ?? true,
         avatarUrl: input.avatarUrl ?? null,
         zitadelUserId: input.zitadelUserId ?? null,
+        metadata: input.metadata ?? {},
       })
       .returning();
     return user;

@@ -9,6 +9,7 @@ export interface RegisterRequest {
   password: string;
   name?: string;
   clientId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LoginRequest {
