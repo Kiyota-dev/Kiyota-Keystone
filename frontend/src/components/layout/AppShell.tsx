@@ -28,25 +28,36 @@ function AppShellBase({
   sidebarFooter,
   children,
 }: AppShellProps) {
+  const mobileDrawerFooter = useMemo(
+    () =>
+      (modeToggle || headerActions) ? (
+        <div className="p-3 space-y-3">
+          {modeToggle && <div className="flex justify-center">{modeToggle}</div>}
+          {headerActions && <div className="flex flex-wrap items-center justify-center gap-2">{headerActions}</div>}
+        </div>
+      ) : null,
+    [modeToggle, headerActions]
+  );
+
   const headerActionsNode = useMemo(
     () => (
       <>
         <div className="md:hidden">
-          <MobileNav items={sidebarItems} active={activeTab} onChange={onTabChange} />
+          <MobileNav items={sidebarItems} active={activeTab} onChange={onTabChange} footer={mobileDrawerFooter} />
         </div>
         {headerActions && (
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="hidden md:flex items-center gap-2">
             {headerActions}
           </div>
         )}
       </>
     ),
-    [sidebarItems, activeTab, onTabChange, headerActions]
+    [sidebarItems, activeTab, onTabChange, headerActions, mobileDrawerFooter]
   );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header logo={logo} title={title} subtitle={subtitle} modeToggle={modeToggle} actions={headerActionsNode} />
+      <Header logo={logo} title={title} subtitle={subtitle} modeToggle={<div className="hidden md:block">{modeToggle}</div>} actions={headerActionsNode} />
 
       <div className="flex">
         <Sidebar

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
 import type { SidebarItem } from "./Sidebar.tsx";
 import { Button } from "../ui/Button.tsx";
@@ -7,9 +7,10 @@ interface MobileNavProps {
   items: SidebarItem[];
   active: string;
   onChange: (id: string) => void;
+  footer?: ReactNode;
 }
 
-export function MobileNav({ items, active, onChange }: MobileNavProps) {
+export function MobileNav({ items, active, onChange, footer }: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (id: string) => {
@@ -66,6 +67,11 @@ export function MobileNav({ items, active, onChange }: MobileNavProps) {
               );
             })}
           </nav>
+          {footer && (
+            <div className="border-t border-theme/30">
+              {footer}
+            </div>
+          )}
         </div>
       </div>
     </div>
