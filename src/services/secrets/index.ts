@@ -3,6 +3,7 @@ import { DatabaseSecretsProvider } from "./database.js";
 import { EnvironmentSecretsProvider } from "./environment.js";
 import { VaultSecretsProvider } from "./vault.js";
 import { AwsKmsSecretsProvider } from "./awsKms.js";
+import { AzureKeyVaultSecretsProvider } from "./azureKeyVault.js";
 import type { SecretsProvider } from "./provider.js";
 
 function createProvider(): SecretsProvider {
@@ -14,6 +15,8 @@ function createProvider(): SecretsProvider {
       return new VaultSecretsProvider();
     case "aws-kms":
       return new AwsKmsSecretsProvider();
+    case "azure-key-vault":
+      return new AzureKeyVaultSecretsProvider();
     case "database":
     default:
       return new DatabaseSecretsProvider();
@@ -28,6 +31,7 @@ export { DatabaseSecretsProvider } from "./database.js";
 export { EnvironmentSecretsProvider } from "./environment.js";
 export { VaultSecretsProvider } from "./vault.js";
 export { AwsKmsSecretsProvider } from "./awsKms.js";
+export { AzureKeyVaultSecretsProvider } from "./azureKeyVault.js";
 
 // Convenience re-exports of the active provider's methods.
 export const hashPassword = secretsProvider.hashPassword.bind(secretsProvider);
