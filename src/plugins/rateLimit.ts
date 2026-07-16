@@ -8,6 +8,12 @@ interface RateLimitPluginOptions {
   windowSeconds: number;
 }
 
+export interface GlobalRateLimitOptions {
+  maxRequests?: number;
+  windowSeconds?: number;
+  keyPrefix?: string;
+}
+
 /**
  * Atomic sliding-window rate limit script.
  *
@@ -82,6 +88,39 @@ export function rateLimit(options: RateLimitPluginOptions) {
         .header("Retry-After", String(options.windowSeconds))
         .status(429)
         .send({ error: "Too many attempts. Please try again later." });
+    }
+  };
+}
+
+export function globalRateLimit(options: GlobalRateLimitOptions = {}) {
+  const maxRequests = options.maxRequests ?? 100;
+  const windowSeconds = options.windowSeconds ?? 60;
+  const keyPrefix = options.keyPrefix ?? "global";
+
+  return async function onRequest(request: FastifyRequest, reply: FastifyReply) {
+    const id = clientIdentifier(request);
+    const key = `${keyPrefix}:${id}`;
+    const allowed = await isAllowed(key, maxRequests, windowSeconds);
+    if (!allowed) {
+      return reply
+        .header("Retry-After", String(windowSeconds))
+        .status(429)
+        .send({ error: "Rate limit exceeded. Please slow down." });
+    }
+  };
+}
+
+export function appRateLimit(options: { maxAttempts: number; windowSeconds: number }) {
+  return async function preHandler(request: FastifyRequest, reply: FastifyReply) {
+    const clientId = (request.body as Record<string, string> | undefined)?.client_id ?? "anonymous";
+    const id = clientIdentifier(request);
+    const key = `app:${clientId}:${id}`;
+    const allowed = await isAllowed(key, options.maxAttempts, options.windowSeconds);
+    if (!allowed) {
+      return reply
+        .header("Retry-After", String(options.windowSeconds))
+        .status(429)
+        .send({ error: "Too many attempts for this application. Please try again later." });
     }
   };
 }

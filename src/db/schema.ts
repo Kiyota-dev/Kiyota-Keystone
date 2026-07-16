@@ -63,6 +63,27 @@ export const users = pgTable(
   })
 );
 
+export const userSessions = pgTable(
+  "user_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    refreshTokenId: text("refresh_token_id").notNull(),
+    deviceFingerprint: text("device_fingerprint"),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index("user_sessions_user_idx").on(table.userId),
+    refreshTokenIdx: index("user_sessions_refresh_token_idx").on(table.refreshTokenId),
+  })
+);
+
 export const applications = pgTable(
   "applications",
   {

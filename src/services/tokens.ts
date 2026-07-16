@@ -24,6 +24,7 @@ import {
   listValidSigningKeys,
   type SigningKeyPair,
 } from "./secrets.js";
+import { SessionRepository } from "../repositories/session.js";
 
 /** Active signing key used to issue new tokens. */
 let activeKey: SigningKeyPair | null = null;
@@ -181,7 +182,7 @@ export async function createTokenSet(
   const refreshTokenHash = hashToken(refreshToken);
   const expiresAt = new Date(Date.now() + config.REFRESH_TOKEN_TTL_SECONDS * 1000);
 
-  await db.insert(refreshTokens).values({
+  const [inserted] = await db.insert(refreshTokens).values({
     userId: user.id,
     appId: opts.appId ?? null,
     tokenHash: refreshTokenHash,
@@ -189,7 +190,21 @@ export async function createTokenSet(
     ipAddress: ip ?? null,
     userAgent: userAgent ?? null,
     deviceFingerprint: deviceFingerprint ?? null,
-  });
+  }).returning();
+
+  try {
+    const sessions = new SessionRepository();
+    await sessions.create({
+      userId: user.id,
+      refreshTokenId: inserted.id,
+      deviceFingerprint,
+      ipAddress: ip,
+      userAgent,
+      expiresAt,
+    });
+  } catch {
+    // Session tracking is best-effort; token creation must not fail because of it.
+  }
 
   return { accessToken, refreshToken, refreshTokenHash, expiresAt };
 }

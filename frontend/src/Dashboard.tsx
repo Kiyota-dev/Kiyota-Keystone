@@ -16,6 +16,7 @@ import {
   Settings,
   Code2,
   BookOpen,
+  Monitor,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -34,6 +35,7 @@ import { IdentityProvidersPanel } from "./components/dashboard/IdentityProviders
 import { OrganizationSelector } from "./components/dashboard/OrganizationSelector.tsx";
 import { SettingsPanel } from "./components/dashboard/SettingsPanel.tsx";
 import { ConnectProjectPanel } from "./components/ConnectProjectPanel.tsx";
+import { SessionsPanel } from "./components/SessionsPanel.tsx";
 import { useAuth } from "./hooks/useAuth.ts";
 import { useAsync } from "./hooks/useAsync.ts";
 import { useUiMode } from "./hooks/useUiMode.ts";
@@ -144,6 +146,7 @@ const TABS = [
   { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "security", label: "Security", icon: <Shield className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
+  { id: "sessions", label: "Sessions", icon: <Monitor className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
@@ -510,6 +513,8 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
         return <KeysPanel state={keys} onRefresh={refreshKeys} />;
       case "security":
         return <SecurityPanel />;
+      case "sessions":
+        return <SessionsPanel />;
       case "plugins":
         return (
           <PluginsPanel

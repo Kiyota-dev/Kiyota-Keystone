@@ -261,6 +261,14 @@ export const api = {
   deactivateUser: (userId: string) =>
     fetchJson<{ success: boolean }>(`/v1/admin/platform/users/${userId}`, { method: "DELETE" }),
 
+  // Session management
+  getSessions: () =>
+    fetchJson<{ sessions: Array<{ id: string; deviceFingerprint: string | null; ipAddress: string | null; userAgent: string | null; lastSeenAt: string; expiresAt: string; createdAt: string }> }>("/auth/sessions"),
+  revokeSession: (id: string) =>
+    fetchJson<{ success: boolean }>(`/auth/sessions/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  revokeAllSessions: () =>
+    fetchJson<{ success: boolean }>("/auth/sessions/revoke-all", { method: "POST", body: JSON.stringify({}) }),
+
   // Platform configuration
   getConfig: () => fetchJson<{ values: Record<string, string> }>("/v1/admin/config"),
   updateConfig: (input: { values: Record<string, string> }) =>

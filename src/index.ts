@@ -29,6 +29,7 @@ import appContextPlugin from "./plugins/appContext.js";
 import permissionsPlugin from "./plugins/permissions.js";
 import mtlsPlugin from "./plugins/mtls.js";
 import metricsPlugin from "./plugins/metrics.js";
+import { globalRateLimit } from "./plugins/rateLimit.js";
 import authRoutes from "./routes/auth.js";
 import oauthRoutes from "./routes/oauth.js";
 import oauth2Routes from "./routes/oauth2.js";
@@ -49,6 +50,7 @@ import workflowRoutes from "./routes/workflows.js";
 import setupRoutes from "./routes/setup.js";
 import sdkRoutes from "./routes/sdk.js";
 import configRoutes from "./routes/config.js";
+import sessionRoutes from "./routes/sessions.js";
 import { generateSetupToken, printSetupToken } from "./services/setup/token.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -171,6 +173,12 @@ export async function buildApp() {
     await queue.close?.();
   });
 
+  // Global API rate limiting to protect the platform from abuse.
+  app.addHook("onRequest", globalRateLimit({
+    maxRequests: Number(config.GLOBAL_RATE_LIMIT_MAX) || 100,
+    windowSeconds: Number(config.GLOBAL_RATE_LIMIT_WINDOW) || 60,
+  }));
+
   await app.register(appContextPlugin);
   await app.register(authPlugin);
   await app.register(permissionsPlugin);
@@ -178,6 +186,7 @@ export async function buildApp() {
   await app.register(metricsPlugin);
 
   await app.register(authRoutes, { prefix: "/auth" });
+  await app.register(sessionRoutes, { prefix: "/auth" });
   await app.register(oauthRoutes, { prefix: "/auth" });
   await app.register(oauth2Routes, { prefix: "/oauth2" });
   await app.register(passwordRoutes, { prefix: "/auth" });
