@@ -135,21 +135,21 @@ interface Plan {
 const API_BASE = import.meta.env.VITE_KEYSTONE_API_URL || "http://localhost:4001";
 
 const TABS = [
-  { id: "overview", label: "Home", icon: <Activity className="w-4 h-4" />, group: "Home" },
-  { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, group: "Authentication" },
-  { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" />, group: "Authentication" },
-  { id: "connect-project", label: "Connect Project", icon: <Code2 className="w-4 h-4" />, group: "Authentication" },
-  { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" />, group: "Authentication" },
-  { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" />, group: "Access Control" },
-  { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" />, group: "Access Control" },
-  { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" />, group: "Access Control" },
-  { id: "security", label: "Security", icon: <Shield className="w-4 h-4" />, group: "Access Control" },
-  { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" />, group: "Platform" },
-  { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" />, group: "Platform" },
-  { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform" },
-  { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" />, group: "Platform" },
-  { id: "billing", label: "Billing", icon: <CreditCard className="w-4 h-4" />, group: "Platform" },
-  { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" />, group: "Platform" },
+  { id: "overview", label: "Home", icon: <Activity className="w-4 h-4" />, group: "Home", mode: "simple" as const },
+  { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, group: "Authentication", mode: "simple" as const },
+  { id: "applications", label: "Applications", icon: <LayoutGrid className="w-4 h-4" />, group: "Authentication", mode: "simple" as const },
+  { id: "connect-project", label: "Connect Project", icon: <Code2 className="w-4 h-4" />, group: "Authentication", mode: "simple" as const },
+  { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" />, group: "Authentication", mode: "advanced" as const },
+  { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
+  { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
+  { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
+  { id: "security", label: "Security", icon: <Shield className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
+  { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "billing", label: "Billing", icon: <CreditCard className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" />, group: "Platform", mode: "simple" as const },
 ];
 
 interface DashboardProps {
@@ -170,6 +170,11 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
     navigate(`/dashboard/${encodeURIComponent(tab)}`);
   }, [navigate]);
 
+  const visibleTabs = useMemo(
+    () => TABS.filter((tab) => mode === "advanced" || tab.mode === "simple"),
+    [mode]
+  );
+
   // Keep tab in sync with URL hash (e.g. browser back/forward).
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, "");
@@ -181,6 +186,13 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
       }
     }
   }, [activeTab]);
+
+  // If the active tab is hidden by the current UI mode, fall back to Home.
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some((tab) => tab.id === activeTab)) {
+      setActiveTab("overview");
+    }
+  }, [activeTab, visibleTabs, setActiveTab]);
 
   const {
     data: overviewData,
@@ -620,13 +632,13 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
 
   const commandItems = useMemo(
     () =>
-      TABS.map((tab) => ({
+      visibleTabs.map((tab) => ({
         id: tab.id,
         label: tab.label,
         group: tab.group,
         onSelect: () => setActiveTab(tab.id),
       })),
-    []
+    [visibleTabs, setActiveTab]
   );
 
   useEffect(() => {
@@ -645,7 +657,7 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
       title="Keystone Admin"
       subtitle="Identity Platform"
       logo={logo}
-      sidebarItems={TABS}
+      sidebarItems={visibleTabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       headerActions={headerActions}

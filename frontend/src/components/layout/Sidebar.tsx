@@ -5,6 +5,7 @@ export interface SidebarItem {
   label: string;
   icon?: ReactNode;
   group?: string;
+  mode?: "simple" | "advanced";
 }
 
 interface SidebarProps {
