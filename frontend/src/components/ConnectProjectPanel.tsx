@@ -755,6 +755,7 @@ export class LoginComponent {}`;
           {[
             {
               title: "Script configuration",
+              icon: <Braces className="w-4 h-4 text-gold" />,
               items: [
                 {
                   name: "data-keystone-url",
@@ -800,6 +801,7 @@ export class LoginComponent {}`;
             },
             {
               title: "Form IDs",
+              icon: <LayoutTemplate className="w-4 h-4 text-gold" />,
               items: [
                 {
                   name: "#keystone-login-form",
@@ -830,6 +832,7 @@ export class LoginComponent {}`;
             },
             {
               title: "Form input attributes",
+              icon: <FileCode className="w-4 h-4 text-gold" />,
               items: [
                 {
                   name: 'data-keystone-input="email"',
@@ -855,6 +858,7 @@ export class LoginComponent {}`;
             },
             {
               title: "User display attributes",
+              icon: <CheckCircle2 className="w-4 h-4 text-gold" />,
               items: [
                 {
                   name: 'data-keystone-field="email"',
@@ -875,6 +879,7 @@ export class LoginComponent {}`;
             },
             {
               title: "Alternative attributes",
+              icon: <ArrowRight className="w-4 h-4 text-gold" />,
               items: [
                 {
                   name: 'data-keystone-form="login"',
@@ -904,24 +909,34 @@ export class LoginComponent {}`;
               ],
             },
           ].map((section) => (
-            <div key={section.title}>
-              <h4 className="text-[13px] font-semibold txt-head mb-3">{section.title}</h4>
+            <Card key={section.title} variant="glass" className="p-4 sm:p-5 border border-theme/20">
+              <h4 className="text-[13px] font-semibold txt-head mb-4 flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gold/10 flex items-center justify-center shrink-0">
+                  {section.icon}
+                </div>
+                {section.title}
+              </h4>
               <div className="space-y-4">
                 {section.items.map((item) => (
-                  <div key={item.name} className="border-b border-theme/10 last:border-0 pb-4 last:pb-0">
+                  <div key={item.name} className="group">
                     <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-                      <code className="text-[12px] text-gold font-medium shrink-0 sm:w-64 break-all">{item.name}</code>
-                      <div className="min-w-0">
+                      <div className="shrink-0 sm:w-64">
+                        <code className="inline-block px-2 py-1 rounded-lg bg-gold/10 text-gold text-[11px] font-mono break-all">
+                          {item.name}
+                        </code>
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-[12px] txt-body leading-relaxed">{item.description}</p>
-                        <p className="text-[11px] txt-muted mt-1">
-                          Example: <code className="text-gold break-all">{item.example}</code>
-                        </p>
+                        <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+                          <span className="txt-muted shrink-0">Example:</span>
+                          <code className="text-gold break-all font-mono">{item.example}</code>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       </SectionCard>
