@@ -22,7 +22,7 @@ import {
 import { Card } from "./ui/Card.tsx";
 import { Button } from "./ui/Button.tsx";
 import { Input } from "./ui/Input.tsx";
-import { Label } from "./ui/Label.tsx";
+import { FieldHelp } from "./ui/FieldHelp.tsx";
 import { Select } from "./ui/Select.tsx";
 import { PageHeader } from "./ui/PageHeader.tsx";
 import { Alert } from "./ui/Alert.tsx";
@@ -396,14 +396,17 @@ export class LoginComponent {}`;
         description="Generate a drop-in auth script and wire Keystone into any website or app in minutes."
       />
 
-      <div className={mode === "advanced" ? "hidden" : undefined}>
+      {mode === "simple" && (
         <SectionCard
           title="Quick install"
           description="Choose your framework, pick an app, and copy one snippet."
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <Label className="text-[12px]">Framework</Label>
+            <FieldHelp
+              label="Framework"
+              help="The frontend framework or server-side stack your project uses. Keystone generates the matching install snippet."
+              example="React"
+            >
               <Select value={framework} onChange={(e) => setFramework(e.target.value as Framework)}>
                 <option value="html">HTML / Vanilla JS</option>
                 <option value="react">React</option>
@@ -415,9 +418,12 @@ export class LoginComponent {}`;
                 <option value="rails">Ruby on Rails</option>
                 <option value="go">Go templates</option>
               </Select>
-            </div>
-            <div>
-              <Label className="text-[12px]">Application</Label>
+            </FieldHelp>
+            <FieldHelp
+              label="Application"
+              help="The Keystone application (client) that represents this project. The snippet will use this app's public client ID."
+              example="My Website"
+            >
               <Select value={selectedAppId} onChange={(e) => setSelectedAppId(e.target.value)}>
                 <option value="">Select an application</option>
                 {apps.map((app) => (
@@ -426,11 +432,14 @@ export class LoginComponent {}`;
                   </option>
                 ))}
               </Select>
-            </div>
-            <div>
-              <Label className="text-[12px]">Website URL</Label>
+            </FieldHelp>
+            <FieldHelp
+              label="Website URL"
+              help="The public URL where your project is hosted. Keystone uses this to validate the origin and build the callback URL."
+              example="http://localhost:3000"
+            >
               <Input value={projectUrl} onChange={(e) => setProjectUrl(e.target.value)} placeholder="http://localhost:3000" />
-            </div>
+            </FieldHelp>
           </div>
 
           <CodeBlock code={simpleCode} language={framework} showLineNumbers />
@@ -451,7 +460,7 @@ export class LoginComponent {}`;
             </Alert>
           )}
         </SectionCard>
-      </div>
+      )}
 
       <Advanced mode={mode}>
       {/* Configuration */}
@@ -467,8 +476,11 @@ export class LoginComponent {}`;
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-[12px]">Application</Label>
+              <FieldHelp
+                label="Application"
+                help="The Keystone application (OAuth client) that represents this project. The generated snippet will use this app's public client ID."
+                example="My Website"
+              >
                 <Select value={selectedAppId} onChange={(e) => setSelectedAppId(e.target.value)}>
                   <option value="">Select an application</option>
                   {apps.map((app) => (
@@ -480,27 +492,31 @@ export class LoginComponent {}`;
                 {applicationsState.loading && (
                   <p className="text-[11px] txt-muted mt-1">Loading applications…</p>
                 )}
-              </div>
+              </FieldHelp>
 
-              <div>
-                <Label className="text-[12px]">Project URL</Label>
+              <FieldHelp
+                label="Project URL"
+                help="The public URL where your project is hosted. Keystone validates this origin for CORS and builds the full callback URL from it."
+                example="http://localhost:3000"
+              >
                 <Input
                   value={projectUrl}
                   onChange={(e) => setProjectUrl(e.target.value)}
                   placeholder="http://localhost:3000"
                 />
-                <p className="text-[11px] txt-muted mt-1">The public URL where your project is hosted.</p>
-              </div>
+              </FieldHelp>
 
-              <div>
-                <Label className="text-[12px]">Callback path</Label>
+              <FieldHelp
+                label="Callback path"
+                help="The path on your site where users are sent after signing in with an external provider (Google, etc.). The full URL is Project URL + this path and must be listed in the app's Redirect URIs."
+                example="/callback.html"
+              >
                 <Input
                   value={callbackPath}
                   onChange={(e) => setCallbackPath(e.target.value)}
                   placeholder="/callback.html"
                 />
-                <p className="text-[11px] txt-muted mt-1">Where users land after OAuth providers (Google, etc.).</p>
-              </div>
+              </FieldHelp>
 
               <div className="flex flex-col justify-end">
                 <div className="text-[12px] space-y-1">
