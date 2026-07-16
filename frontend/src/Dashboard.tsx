@@ -503,7 +503,7 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
       case "connect-project":
         return <ConnectProjectPanel applicationsState={applications} configState={platformConfig} />;
       case "users":
-        return <UsersPanel state={users} onRefresh={refreshUsers} />;
+        return <UsersPanel state={users} onRefresh={refreshUsers} mode={mode} />;
       case "identity-providers":
         return <IdentityProvidersPanel state={providers} />;
       case "keys":

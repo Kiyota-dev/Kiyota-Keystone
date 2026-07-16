@@ -7,13 +7,16 @@ import { Alert } from "./ui/Alert.tsx";
 import { Select } from "./ui/Select.tsx";
 import { DataTable } from "./DataTable.tsx";
 import type { DataTabState } from "../Dashboard.tsx";
+import type { UiMode } from "../hooks/useUiMode.ts";
 
 interface UsersPanelProps {
   state: DataTabState<{ users: unknown[] }>;
   onRefresh: () => void;
+  mode: UiMode;
 }
 
-export function UsersPanel({ state, onRefresh }: UsersPanelProps) {
+export function UsersPanel({ state, onRefresh, mode }: UsersPanelProps) {
+  const isSimple = mode === "simple";
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editRole, setEditRole] = useState("");
   const [busy, setBusy] = useState(false);
@@ -77,36 +80,39 @@ export function UsersPanel({ state, onRefresh }: UsersPanelProps) {
 
       <DataTable
         state={state}
-        columns={["id", "email", "username", "name", "role", "emailVerified", "createdAt"]}
+        columns={isSimple ? ["email", "name", "role"] : ["id", "email", "username", "name", "role", "emailVerified", "createdAt"]}
         rows={state.data?.users ?? []}
         emptyMessage="No users found."
-        renderRowActions={(row) =>
-          editingId === String(row.id) ? (
-            <form onSubmit={handleUpdate} className="flex items-center gap-2">
-              <Select value={editRole} onChange={(e) => setEditRole(e.target.value)} className="text-[12px] py-1">
-                <option value="owner">owner</option>
-                <option value="admin">admin</option>
-                <option value="member">member</option>
-              </Select>
-              <Button type="submit" size="sm" isLoading={busy}>
-                <Save className="w-3 h-3" />
-              </Button>
-              <Button type="button" size="sm" variant="secondary" onClick={() => setEditingId(null)}>
-                <X className="w-3 h-3" />
-              </Button>
-            </form>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="secondary" onClick={() => startEdit(row)}>
-                <Pencil className="w-3 h-3 mr-1" />
-                Role
-              </Button>
-              <Button size="sm" variant="danger" onClick={() => handleDeactivate(String(row.id))} disabled={busy}>
-                <Trash2 className="w-3 h-3 mr-1" />
-                Deactivate
-              </Button>
-            </div>
-          )
+        renderRowActions={
+          isSimple
+            ? undefined
+            : (row) =>
+                editingId === String(row.id) ? (
+                  <form onSubmit={handleUpdate} className="flex items-center gap-2">
+                    <Select value={editRole} onChange={(e) => setEditRole(e.target.value)} className="text-[12px] py-1">
+                      <option value="owner">owner</option>
+                      <option value="admin">admin</option>
+                      <option value="member">member</option>
+                    </Select>
+                    <Button type="submit" size="sm" isLoading={busy}>
+                      <Save className="w-3 h-3" />
+                    </Button>
+                    <Button type="button" size="sm" variant="secondary" onClick={() => setEditingId(null)}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="secondary" onClick={() => startEdit(row)}>
+                      <Pencil className="w-3 h-3 mr-1" />
+                      Role
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => handleDeactivate(String(row.id))} disabled={busy}>
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Deactivate
+                    </Button>
+                  </div>
+                )
         }
       />
     </Card>
