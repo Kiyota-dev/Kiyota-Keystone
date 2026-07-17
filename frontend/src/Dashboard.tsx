@@ -23,6 +23,7 @@ import {
   Webhook,
   ShieldCheck,
   Layers,
+  BarChart3,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -67,6 +68,7 @@ const WorkflowPanel = lazy(() => import("./components/WorkflowPanel.tsx").then((
 const BillingPanel = lazy(() => import("./components/BillingPanel.tsx").then((m) => ({ default: m.BillingPanel })));
 const RolesPermissionsPanel = lazy(() => import("./components/RolesPermissionsPanel.tsx").then((m) => ({ default: m.RolesPermissionsPanel })));
 const QueuePanel = lazy(() => import("./components/QueuePanel.tsx").then((m) => ({ default: m.QueuePanel })));
+const MetricsPanel = lazy(() => import("./components/MetricsPanel.tsx").then((m) => ({ default: m.MetricsPanel })));
 
 export interface DataTabState<T> {
   data: T | null;
@@ -169,6 +171,7 @@ const TABS = [
   { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "billing", label: "Billing", icon: <CreditCard className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "metrics", label: "Metrics", icon: <BarChart3 className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" />, group: "Platform", mode: "simple" as const },
 ];
 
@@ -660,6 +663,12 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
         return (
           <Suspense fallback={<LoadingState message="Loading panel…" />}>
             <AuditLogsPanel state={auditLogs} onRefresh={refreshAuditLogs} />
+          </Suspense>
+        );
+      case "metrics":
+        return (
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <MetricsPanel />
           </Suspense>
         );
       case "settings":

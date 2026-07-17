@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and, gte, count } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { organizations } from "../db/schema.js";
+import { organizations, auditLog, orgMemberships, applications } from "../db/schema.js";
 import { getBillingProviderFactory } from "./plugins/registry.js";
 
 const DEFAULT_PLANS = ["free", "starter", "growth", "enterprise"];
@@ -22,6 +22,12 @@ export interface BillingSummary {
   plan: string;
   provider?: string;
   subscription?: Record<string, unknown>;
+  usage?: {
+    users: number;
+    applications: number;
+    logins30d: number;
+    signups30d: number;
+  };
 }
 
 export async function getBillingSummary(orgId: string): Promise<BillingSummary> {
@@ -30,14 +36,34 @@ export async function getBillingSummary(orgId: string): Promise<BillingSummary> 
     throw Object.assign(new Error("Organization not found"), { statusCode: 404 });
   }
 
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [[memberRow], [appRow], [loginRow], [signupRow]] = await Promise.all([
+    db.select({ total: count() }).from(orgMemberships).where(eq(orgMemberships.orgId, orgId)),
+    db.select({ total: count() }).from(applications).where(eq(applications.orgId, orgId)),
+    db
+      .select({ total: count() })
+      .from(auditLog)
+      .where(and(eq(auditLog.orgId, orgId), eq(auditLog.event, "user_login"), gte(auditLog.createdAt, since))),
+    db
+      .select({ total: count() })
+      .from(auditLog)
+      .where(and(eq(auditLog.orgId, orgId), eq(auditLog.event, "user_registered"), gte(auditLog.createdAt, since))),
+  ]);
+
+  const usage = {
+    users: memberRow?.total ?? 0,
+    applications: appRow?.total ?? 0,
+    logins30d: loginRow?.total ?? 0,
+    signups30d: signupRow?.total ?? 0,
+  };
+
   const factory = getBillingProviderFactory(process.env.KEYSTONE_BILLING_PROVIDER || "none");
   if (!factory) {
-    return { plan: org.plan };
+    return { plan: org.plan, usage };
   }
-
   const provider = factory();
   const subscription = await provider.getSubscription(orgId).catch(() => null);
-  return { plan: org.plan, provider: provider.name, subscription: subscription ?? undefined };
+  return { plan: org.plan, provider: provider.name, subscription: subscription ?? undefined, usage };
 }
 
 export async function setOrganizationPlan(orgId: string, plan: string): Promise<{ plan: string }> {

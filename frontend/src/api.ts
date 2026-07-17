@@ -310,7 +310,9 @@ export const api = {
   retryWebhookDelivery: (id: string) =>
     fetchJson<{ success: boolean }>(`/v1/admin/platform/webhook-deliveries/${encodeURIComponent(id)}/retry`, { method: "POST", body: JSON.stringify({}) }),
 
-  // Session management
+  // Usage analytics
+  getUsageMetrics: (days = 30) =>
+    fetchJson<{ days: number; series: Array<{ date: string; logins: number; failedLogins: number; signups: number; dau: number }> }>(`/v1/admin/platform/metrics/usage?days=${days}`),
   getSessions: () =>
     fetchJson<{ sessions: Array<{ id: string; deviceFingerprint: string | null; ipAddress: string | null; userAgent: string | null; lastSeenAt: string; expiresAt: string; createdAt: string }> }>("/auth/sessions"),
   revokeSession: (id: string) =>

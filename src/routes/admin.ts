@@ -247,6 +247,28 @@ export default async function adminRoutes(app: FastifyInstance) {
     return reply.send([header, ...rows].join("\n"));
   });
 
+  app.get("/platform/metrics/usage", { preHandler: [requireOwner()] }, async (request) => {
+    const query = request.query as { days?: string };
+    const days = Math.min(Math.max(Number(query.days) || 30, 1), 365);
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const dateSql = sql<string>`date(${auditLog.createdAt})`;
+    const rows = await db
+      .select({
+        date: dateSql,
+        logins: sql<number>`count(*) filter (where ${auditLog.event} = 'user_login')`.mapWith(Number),
+        failedLogins: sql<number>`count(*) filter (where ${auditLog.event} = 'user_login_failed')`.mapWith(Number),
+        signups: sql<number>`count(*) filter (where ${auditLog.event} = 'user_registered')`.mapWith(Number),
+        dau: sql<number>`count(distinct ${auditLog.userId}) filter (where ${auditLog.event} = 'user_login')`.mapWith(Number),
+      })
+      .from(auditLog)
+      .where(gte(auditLog.createdAt, since))
+      .groupBy(dateSql)
+      .orderBy(dateSql);
+
+    return { days, series: rows };
+  });
+
   app.get("/platform/security-summary", { preHandler: [requireOwner()] }, async () => {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const [loginEvents] = await db

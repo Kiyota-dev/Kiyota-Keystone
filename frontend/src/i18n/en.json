@@ -63,5 +63,6 @@
   "profile.unverified": "Email unverified",
   "profile.resend": "Resend verification email",
   "nav.roles": "Roles",
-  "nav.queue": "Queue"
+  "nav.queue": "Queue",
+  "nav.metrics": "Metrics"
 }
