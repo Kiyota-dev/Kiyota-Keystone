@@ -1,12 +1,12 @@
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { IdentityConnector, ExternalIdentity, AuthorizeUrlOptions, ConnectorConfig } from "./types.js";
+import { cache } from "../cache.js";
 
 export class OidcConnector implements IdentityConnector {
   id: string;
   name: string;
   type: string;
   protected config: ConnectorConfig;
-  private discoveryCache: Record<string, unknown> | null = null;
 
   constructor(id: string, name: string, type: string, config: ConnectorConfig) {
     this.id = id;
@@ -76,12 +76,16 @@ export class OidcConnector implements IdentityConnector {
   }
 
   private async discovery(): Promise<Record<string, unknown>> {
-    if (this.discoveryCache) return this.discoveryCache;
     if (!this.config.issuer) throw new Error("OIDC connector missing issuer for discovery");
+    const key = `oidc:discovery:${this.config.issuer}`;
+    const cached = await cache.get<Record<string, unknown>>(key);
+    if (cached) return cached;
+
     const res = await fetch(`${this.config.issuer.replace(/\/$/, "")}/.well-known/openid-configuration`);
     if (!res.ok) throw new Error(`OIDC discovery failed: ${res.status}`);
-    this.discoveryCache = (await res.json()) as Record<string, unknown>;
-    return this.discoveryCache;
+    const data = (await res.json()) as Record<string, unknown>;
+    await cache.set(key, data, 3600);
+    return data;
   }
 }
 

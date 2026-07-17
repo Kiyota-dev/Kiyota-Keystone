@@ -3,6 +3,11 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { applications, type Application } from "../db/schema.js";
 import { generateClientSecret, hashClientSecret } from "./secrets.js";
+import { cache } from "./cache.js";
+
+function appCacheKey(clientId: string): string {
+  return `app:clientId:${clientId}`;
+}
 
 export function generateClientId(): string {
   return `app_${crypto.randomBytes(16).toString("base64url")}`;
@@ -37,11 +42,15 @@ export async function createApplication(input: {
 export async function findApplicationByClientId(
   clientId: string
 ): Promise<Application | undefined> {
+  const cached = await cache.get<Application>(appCacheKey(clientId));
+  if (cached) return cached;
+
   const [app] = await db
     .select()
     .from(applications)
     .where(eq(applications.clientId, clientId))
     .limit(1);
+  if (app) await cache.set(appCacheKey(clientId), app, 60);
   return app;
 }
 
@@ -65,6 +74,7 @@ export async function updateApplication(
     .set(updates)
     .where(and(eq(applications.id, appId), eq(applications.orgId, orgId)))
     .returning();
+  if (updated) await cache.del(appCacheKey(updated.clientId));
   return updated;
 }
 
@@ -72,13 +82,8 @@ export async function verifyClientSecret(
   clientId: string,
   secret: string
 ): Promise<Application | undefined> {
-  const [app] = await db
-    .select()
-    .from(applications)
-    .where(and(eq(applications.clientId, clientId), eq(applications.isActive, true)))
-    .limit(1);
-
-  if (!app) return undefined;
+  const app = await findApplicationByClientId(clientId);
+  if (!app || !app.isActive) return undefined;
   if (app.clientSecretHash !== hashClientSecret(secret)) return undefined;
   return app;
 }

@@ -321,6 +321,29 @@ export default async function adminRoutes(app: FastifyInstance) {
     return { queue: app.container.queue.constructor.name, stats };
   });
 
+  app.get("/platform/queue/failed", { preHandler: [requireOwner()] }, async (request) => {
+    const query = request.query as { limit?: string };
+    const queue = app.container.queue;
+    const failed = queue.getFailed ? await queue.getFailed(Number(query.limit) || 50) : [];
+    return { failed };
+  });
+
+  app.post("/platform/queue/failed/:id/retry", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const queue = app.container.queue;
+    if (!queue.retry) {
+      return reply.status(501).send({ error: "Retry is not supported by the current queue provider" });
+    }
+    await queue.retry(id);
+    return { success: true };
+  });
+
+  app.post("/platform/queue/retry-all", { preHandler: [requireOwner()] }, async () => {
+    const queue = app.container.queue;
+    if (queue.retryAll) await queue.retryAll();
+    return { success: true };
+  });
+
   // Webhook endpoint management.
   const CreateWebhookSchema = z.object({
     appId: z.string().uuid().nullable().optional(),

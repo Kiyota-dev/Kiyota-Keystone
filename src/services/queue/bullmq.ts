@@ -71,6 +71,27 @@ export class BullMQQueue implements Queue {
     ];
   }
 
+  async getFailed(limit = 50): Promise<Job[]> {
+    const jobs = await this.queue.getFailed(0, limit);
+    return jobs.map((j) => ({
+      id: String(j.id),
+      type: j.name,
+      payload: j.data,
+      attempts: j.attemptsMade,
+      createdAt: j.timestamp ? new Date(j.timestamp) : undefined,
+    }));
+  }
+
+  async retry(jobId: string): Promise<void> {
+    const job = await this.queue.getJob(jobId);
+    if (job) await job.retry();
+  }
+
+  async retryAll(): Promise<void> {
+    const jobs = await this.queue.getFailed();
+    await Promise.all(jobs.map((j) => j.retry()));
+  }
+
   async close(): Promise<void> {
     await Promise.all(Array.from(this.workers.values()).map((worker) => worker.close()));
     await this.queue.close();

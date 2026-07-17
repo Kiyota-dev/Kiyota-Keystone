@@ -80,6 +80,9 @@ export const config = {
   // Queue provider: "in-process" (default/fallback), "bullmq", or "" to auto-select bullmq when REDIS_URL is set.
   KEYSTONE_QUEUE_PROVIDER: getEnv("KEYSTONE_QUEUE_PROVIDER", "in-process"),
 
+  // Cache key prefix for Redis/in-memory cache entries.
+  CACHE_KEY_PREFIX: getEnv("CACHE_KEY_PREFIX", "keystone:"),
+
   // Comma-separated list of plugin module paths to load at startup.
   KEYSTONE_PLUGINS: getEnv("KEYSTONE_PLUGINS"),
 

@@ -19,5 +19,8 @@ export interface Queue {
   enqueue<T>(job: Job<T>): Promise<void>;
   process(type: string, handler: JobHandler): void;
   getStats?(): Promise<QueueStats[]>;
+  getFailed?(limit: number): Promise<Job[]>;
+  retry?(jobId: string): Promise<void>;
+  retryAll?(): Promise<void>;
   close?(): Promise<void>;
 }

@@ -62,5 +62,6 @@
   "profile.verified": "البريد موثّق",
   "profile.unverified": "البريد غير موثّق",
   "profile.resend": "إعادة إرسال بريد التحقق",
-  "nav.roles": "الأدوار"
+  "nav.roles": "الأدوار",
+  "nav.queue": "الطابور"
 }

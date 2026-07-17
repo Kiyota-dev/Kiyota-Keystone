@@ -22,6 +22,7 @@ import {
   Moon,
   Webhook,
   ShieldCheck,
+  Layers,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -65,6 +66,7 @@ const EnterpriseSsoPanel = lazy(() => import("./components/EnterpriseSsoPanel.ts
 const WorkflowPanel = lazy(() => import("./components/WorkflowPanel.tsx").then((m) => ({ default: m.WorkflowPanel })));
 const BillingPanel = lazy(() => import("./components/BillingPanel.tsx").then((m) => ({ default: m.BillingPanel })));
 const RolesPermissionsPanel = lazy(() => import("./components/RolesPermissionsPanel.tsx").then((m) => ({ default: m.RolesPermissionsPanel })));
+const QueuePanel = lazy(() => import("./components/QueuePanel.tsx").then((m) => ({ default: m.QueuePanel })));
 
 export interface DataTabState<T> {
   data: T | null;
@@ -162,6 +164,7 @@ const TABS = [
   { id: "sessions", label: "Sessions", icon: <Monitor className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "workflows", label: "Workflows", icon: <Workflow className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "webhooks", label: "Webhooks", icon: <Webhook className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
+  { id: "queue", label: "Queue", icon: <Layers className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "audit-logs", label: "Audit Logs", icon: <ScrollText className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "plugins", label: "Plugins", icon: <Puzzle className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
   { id: "feature-flags", label: "Feature Flags", icon: <ToggleLeft className="w-4 h-4" />, group: "Platform", mode: "advanced" as const },
@@ -645,6 +648,12 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
                 onProvisionCustomer={handleProvisionCustomer}
               />
             </>
+          </Suspense>
+        );
+      case "queue":
+        return (
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <QueuePanel />
           </Suspense>
         );
       case "audit-logs":

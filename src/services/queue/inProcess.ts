@@ -26,6 +26,18 @@ export class InProcessQueue implements Queue {
     }));
   }
 
+  async getFailed(): Promise<Job[]> {
+    return [];
+  }
+
+  async retry(): Promise<void> {
+    // No persisted failed jobs in the in-process queue.
+  }
+
+  async retryAll(): Promise<void> {
+    // No persisted failed jobs in the in-process queue.
+  }
+
   async close(): Promise<void> {
     this.handlers.clear();
     this.stats.clear();

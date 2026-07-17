@@ -1,11 +1,15 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
+import { gzip } from "node:zlib";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 import { createApplication, findApplicationByClientId } from "../services/applications.js";
 import { createOrganization, findOrganizationBySlug } from "../services/organizations.js";
 
+const gzipAsync = promisify(gzip);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SDK_FILE = path.resolve(__dirname, "../../packages/keystone-sdk/dist/keystone-dropin.js");
 
@@ -17,13 +21,39 @@ const ConnectSchema = z.object({
 
 export default async function sdkRoutes(app: FastifyInstance) {
   // Serve the drop-in SDK so external projects can load it with one script tag.
-  app.get("/keystone-dropin.js", async (_request: FastifyRequest, reply: FastifyReply) => {
+  app.get("/keystone-dropin.js", async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const content = await fs.readFile(SDK_FILE, "utf-8");
-      return reply
+      const hash = crypto.createHash("sha256").update(content).digest("base64");
+      const etag = `"${hash}"`;
+      const ifNoneMatch = request.headers["if-none-match"];
+      if (ifNoneMatch === etag) {
+        return reply.status(304).send();
+      }
+
+      const acceptEncoding = request.headers["accept-encoding"] || "";
+      const useGzip = acceptEncoding.includes("gzip");
+      const body = useGzip ? await gzipAsync(content) : content;
+
+      reply
         .header("Content-Type", "application/javascript; charset=utf-8")
-        .header("Cache-Control", "public, max-age=3600")
-        .send(content);
+        .header("Cache-Control", "public, max-age=86400, immutable")
+        .header("ETag", etag);
+      if (useGzip) reply.header("Content-Encoding", "gzip");
+      return reply.send(body);
+    } catch (err) {
+      app.log.error({ err }, "SDK file not found");
+      return reply.status(404).send({ error: "SDK not built. Run npm run build:sdk first." });
+    }
+  });
+
+  // SRI hash for the drop-in SDK so consumers can use integrity="sha256-…".
+  app.get("/keystone-dropin.js.sri", async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const content = await fs.readFile(SDK_FILE, "utf-8");
+      const hash = crypto.createHash("sha256").update(content).digest("base64");
+      reply.header("Cache-Control", "public, max-age=86400, immutable");
+      return { integrity: `sha256-${hash}` };
     } catch (err) {
       app.log.error({ err }, "SDK file not found");
       return reply.status(404).send({ error: "SDK not built. Run npm run build:sdk first." });

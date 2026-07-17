@@ -184,7 +184,14 @@ export const api = {
   getApplications: () => fetchJson<{ applications: unknown[] }>("/v1/admin/platform/applications"),
   getAuditLogs: (event?: string) =>
     fetchJson<{ logs: unknown[] }>(`/v1/admin/platform/audit-logs${event ? `?event=${encodeURIComponent(event)}` : ""}`),
+  // Queue monitoring and dead-letter handling
   getQueueStatus: () => fetchJson<{ queue: string; stats: Array<{ type: string; count: number; failed?: number; delayed?: number }> }>("/v1/admin/platform/queue"),
+  getQueueFailed: (limit?: number) =>
+    fetchJson<{ failed: Array<{ id: string; type: string; payload: unknown; attempts?: number; createdAt?: string }> }>(`/v1/admin/platform/queue/failed?limit=${limit ?? 50}`),
+  retryQueueJob: (id: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/platform/queue/failed/${encodeURIComponent(id)}/retry`, { method: "POST", body: JSON.stringify({}) }),
+  retryAllQueueJobs: () =>
+    fetchJson<{ success: boolean }>("/v1/admin/platform/queue/retry-all", { method: "POST", body: JSON.stringify({}) }),
   getSigningKeys: () => fetchJson<{ keys: Array<{ keyId: string; createdAt: string; expiresAt?: string | null }>; provider: string }>("/v1/admin/platform/keys"),
   rotateSigningKey: () => fetchJson<{ keyId: string; provider: string }>("/v1/admin/platform/keys/rotate", { method: "POST" }),
   getFederationProviders: () => fetchJson<{ providers: Array<{ type: string; name: string; configured: boolean }> }>("/federation/providers"),
