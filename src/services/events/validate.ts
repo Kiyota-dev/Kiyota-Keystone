@@ -35,6 +35,8 @@ const VALID_EVENT_TYPES = new Set([
   "organization_member_invited",
   "organization_member_removed",
   "organization_member_role_updated",
+  "permission_created",
+  "permission_deleted",
   "application_created",
   "application_updated",
   "magic_link_sent",

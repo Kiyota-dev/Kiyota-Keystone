@@ -61,5 +61,6 @@
   "profile.save": "Save changes",
   "profile.verified": "Email verified",
   "profile.unverified": "Email unverified",
-  "profile.resend": "Resend verification email"
+  "profile.resend": "Resend verification email",
+  "nav.roles": "Roles"
 }

@@ -98,6 +98,16 @@ export interface LoginTokenResponse {
   };
 }
 
+export interface BrandingInput {
+  logoUrl?: string;
+  primaryColor?: string;
+  accentColor?: string;
+  companyName?: string;
+  supportEmail?: string;
+  loginTitle?: string;
+  loginSubtitle?: string;
+}
+
 export function getKeystoneAccessToken(): string | null {
   return localStorage.getItem("keystone-access-token")?.trim() || null;
 }
@@ -248,7 +258,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  updateApplication: (orgId: string, appId: string, input: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean }>) =>
+  updateApplication: (orgId: string, appId: string, input: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean; branding: BrandingInput }>) =>
     fetchJson<unknown>(`/v1/admin/organizations/${orgId}/applications/${appId}`, {
       method: "PATCH",
       body: JSON.stringify(input),
@@ -321,4 +331,44 @@ export const api = {
   updateConfig: (input: { values: Record<string, string> }) =>
     fetchJson<{ ok: boolean }>("/v1/admin/config", { method: "PUT", body: JSON.stringify(input) }),
   restartServer: () => fetchJson<{ ok: boolean }>("/v1/admin/config/restart", { method: "POST" }),
+
+  // RBAC: permissions and role assignments
+  getPermissions: () =>
+    fetchJson<{ permissions: Array<{ id: string; resource: string; action: string; description: string | null; createdAt: string }> }>("/v1/admin/permissions"),
+  createPermission: (input: { resource: string; action: string; description?: string }) =>
+    fetchJson<{ id: string }>("/v1/admin/permissions", { method: "POST", body: JSON.stringify(input) }),
+  deletePermission: (id: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/permissions/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  getRoles: () => fetchJson<{ roles: string[] }>("/v1/admin/roles"),
+  getRolePermissions: (role: string) =>
+    fetchJson<{ role: string; permissions: Array<{ id: string; resource: string; action: string; description: string | null }> }>(`/v1/admin/roles/${encodeURIComponent(role)}/permissions`),
+  assignRolePermission: (role: string, permissionId: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/roles/${encodeURIComponent(role)}/permissions`, { method: "POST", body: JSON.stringify({ permissionId }) }),
+  removeRolePermission: (role: string, permissionId: string) =>
+    fetchJson<{ success: boolean }>(`/v1/admin/roles/${encodeURIComponent(role)}/permissions/${encodeURIComponent(permissionId)}`, { method: "DELETE" }),
+
+  // Organization / application branding
+  updateOrganization: (orgId: string, input: Partial<{ name: string; branding: BrandingInput }>) =>
+    fetchJson<unknown>(`/v1/admin/organizations/${encodeURIComponent(orgId)}`, { method: "PATCH", body: JSON.stringify(input) }),
+  getPublicBranding: (clientId: string) =>
+    fetchJson<{ name?: string; logoUrl?: string; primaryColor?: string; accentColor?: string; supportEmail?: string; loginTitle?: string; loginSubtitle?: string }>(`/sdk/branding/${encodeURIComponent(clientId)}`),
+
+  // Audit log export (returns a downloadable blob)
+  downloadAuditExport: async (event?: string, format: "csv" | "json" = "csv"): Promise<void> => {
+    const token = getKeystoneAccessToken();
+    const params = new URLSearchParams({ format, limit: "10000" });
+    if (event) params.set("event", event);
+    const response = await fetch(`${API_BASE}/v1/admin/platform/audit-logs/export?${params}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "include",
+    });
+    if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `keystone-audit-${new Date().toISOString().slice(0, 10)}.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };

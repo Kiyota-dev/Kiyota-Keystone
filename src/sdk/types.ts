@@ -36,7 +36,7 @@ export interface OrganizationSdk {
   inviteMember(actorId: string, orgId: string, input: { email: string; role: "owner" | "admin" | "member" }): Promise<Result<{ user: { id: string }; membership: OrgMembership }>>;
   createApplication(actorId: string, orgId: string, input: { name: string; redirectUris?: string[]; allowedOrigins?: string[] }): Promise<Result<Application & { clientSecret: string }>>;
   listOrganizationApplications(actorId: string, orgId: string): Promise<Result<Application[]>>;
-  updateApplication(actorId: string, orgId: string, appId: string, updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean }>): Promise<Result<Application>>;
+  updateApplication(actorId: string, orgId: string, appId: string, updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean; branding: Record<string, unknown> }>): Promise<Result<Application>>;
 }
 
 export interface AuthorizationSdk {

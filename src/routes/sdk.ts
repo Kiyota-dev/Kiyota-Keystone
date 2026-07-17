@@ -30,6 +30,36 @@ export default async function sdkRoutes(app: FastifyInstance) {
     }
   });
 
+  // Public branding lookup for hosted login pages and the drop-in SDK.
+  // Returns only display-safe fields — never secrets.
+  app.get("/branding/:clientId", async (request: FastifyRequest, reply: FastifyReply) => {
+    const { clientId } = request.params as { clientId: string };
+    const application = await findApplicationByClientId(clientId);
+    if (!application) {
+      return reply.status(404).send({ error: "Application not found" });
+    }
+    const { findOrganizationById } = await import("../services/organizations.js");
+    const org = await findOrganizationById(application.orgId);
+
+    type Branding = Record<string, unknown>;
+    const orgBranding = (org?.branding ?? {}) as Branding;
+    const appBranding = (application.branding ?? {}) as Branding;
+    // App-level branding wins over org-level defaults.
+    const merged: Branding = { ...orgBranding, ...appBranding };
+    const pick = (key: string) => (typeof merged[key] === "string" ? merged[key] : undefined);
+
+    reply.header("Cache-Control", "public, max-age=300");
+    return {
+      name: pick("companyName") ?? application.name,
+      logoUrl: pick("logoUrl"),
+      primaryColor: pick("primaryColor"),
+      accentColor: pick("accentColor"),
+      supportEmail: pick("supportEmail"),
+      loginTitle: pick("loginTitle"),
+      loginSubtitle: pick("loginSubtitle"),
+    };
+  });
+
   // Register or connect an external project/application.
   app.post("/connect", async (request: FastifyRequest, reply: FastifyReply) => {
     const parsed = ConnectSchema.safeParse(request.body);

@@ -21,6 +21,7 @@ import {
   Sun,
   Moon,
   Webhook,
+  ShieldCheck,
 } from "lucide-react";
 import { api } from "./api.ts";
 import { Button } from "./components/ui/Button.tsx";
@@ -63,6 +64,7 @@ const AuditLogsPanel = lazy(() => import("./components/AuditLogsPanel.tsx").then
 const EnterpriseSsoPanel = lazy(() => import("./components/EnterpriseSsoPanel.tsx").then((m) => ({ default: m.EnterpriseSsoPanel })));
 const WorkflowPanel = lazy(() => import("./components/WorkflowPanel.tsx").then((m) => ({ default: m.WorkflowPanel })));
 const BillingPanel = lazy(() => import("./components/BillingPanel.tsx").then((m) => ({ default: m.BillingPanel })));
+const RolesPermissionsPanel = lazy(() => import("./components/RolesPermissionsPanel.tsx").then((m) => ({ default: m.RolesPermissionsPanel })));
 
 export interface DataTabState<T> {
   data: T | null;
@@ -153,6 +155,7 @@ const TABS = [
   { id: "connect-project", label: "Connect Project", icon: <Code2 className="w-4 h-4" />, group: "Authentication", mode: "simple" as const },
   { id: "identity-providers", label: "Identity Providers", icon: <Plug className="w-4 h-4" />, group: "Authentication", mode: "advanced" as const },
   { id: "organizations", label: "Organizations", icon: <Building2 className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
+  { id: "roles", label: "Roles", icon: <ShieldCheck className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "enterprise-sso", label: "Enterprise SSO", icon: <Shield className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "keys", label: "Keys", icon: <Lock className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
   { id: "security", label: "Security", icon: <Shield className="w-4 h-4" />, group: "Access Control", mode: "advanced" as const },
@@ -612,6 +615,12 @@ export default function Dashboard({ initialTab = "overview" }: DashboardProps) {
         );
       case "webhooks":
         return <WebhooksPanel />;
+      case "roles":
+        return (
+          <Suspense fallback={<LoadingState message="Loading panel…" />}>
+            <RolesPermissionsPanel />
+          </Suspense>
+        );
       case "billing":
         return (
           <Suspense fallback={<LoadingState message="Loading panel…" />}>

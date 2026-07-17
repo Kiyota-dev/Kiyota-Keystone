@@ -93,6 +93,7 @@ export interface UpdateApplicationInput {
   allowedIps?: string[];
   blockedIps?: string[];
   isActive?: boolean;
+  branding?: Record<string, unknown>;
 }
 
 export interface ApplicationRepository {

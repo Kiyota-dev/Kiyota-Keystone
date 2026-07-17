@@ -1,6 +1,6 @@
-import { memo, useState } from "react";
-import { LayoutGrid, Plus, Save, X, Power, Shield } from "lucide-react";
-import { api } from "../api.ts";
+import { memo, useEffect, useState } from "react";
+import { LayoutGrid, Plus, Save, X, Power, Shield, Palette } from "lucide-react";
+import { api, type BrandingInput } from "../api.ts";
 import { Card } from "./ui/Card.tsx";
 import { Button } from "./ui/Button.tsx";
 import { Alert } from "./ui/Alert.tsx";
@@ -35,6 +35,56 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
   const [ipEditApp, setIpEditApp] = useState<Record<string, unknown> | null>(null);
   const [allowedIps, setAllowedIps] = useState("");
   const [blockedIps, setBlockedIps] = useState("");
+  const [brandEditApp, setBrandEditApp] = useState<Record<string, unknown> | null>(null);
+  const [branding, setBranding] = useState<BrandingInput>({});
+  const [brandingPreview, setBrandingPreview] = useState<BrandingInput | null>(null);
+
+  const openBrandingEditor = (app: Record<string, unknown>) => {
+    reset();
+    setBrandEditApp(app);
+    setBranding(appBranding(app));
+  };
+
+  const saveBranding = async () => {
+    if (!brandEditApp) return;
+    reset();
+    setBusy(true);
+    try {
+      const clean: BrandingInput = Object.fromEntries(
+        Object.entries(branding).filter(([, v]) => v !== undefined && v !== "")
+      ) as BrandingInput;
+      await api.updateApplication(String(brandEditApp.orgId), String(brandEditApp.id), { branding: clean });
+      setSuccess("Branding updated");
+      addToast("Branding updated", "success");
+      setBrandEditApp(null);
+      onRefresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update branding");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!brandEditApp || !brandEditApp.clientId) return;
+    api
+      .getPublicBranding(String(brandEditApp.clientId))
+      .then(setBrandingPreview)
+      .catch(() => setBrandingPreview(null));
+  }, [brandEditApp]);
+
+  const appBranding = (app: Record<string, unknown>): BrandingInput => {
+    const b = (app.branding ?? {}) as Record<string, unknown>;
+    return {
+      logoUrl: typeof b.logoUrl === "string" ? b.logoUrl : undefined,
+      primaryColor: typeof b.primaryColor === "string" ? b.primaryColor : undefined,
+      accentColor: typeof b.accentColor === "string" ? b.accentColor : undefined,
+      companyName: typeof b.companyName === "string" ? b.companyName : undefined,
+      supportEmail: typeof b.supportEmail === "string" ? b.supportEmail : undefined,
+      loginTitle: typeof b.loginTitle === "string" ? b.loginTitle : undefined,
+      loginSubtitle: typeof b.loginSubtitle === "string" ? b.loginSubtitle : undefined,
+    };
+  };
 
   const orgOptions = organizations.data?.organizations ?? [];
 
@@ -234,6 +284,73 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
         </div>
       )}
 
+      {brandEditApp && (
+        <div className="mb-5 p-3 sm:p-4 rounded-xl bg-surface border border-theme/20 space-y-4">
+          <p className="text-[13px] font-semibold txt-head flex items-center gap-2">
+            <Palette className="w-4 h-4 text-gold" />
+            Branding — {String(brandEditApp.name)}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FieldHelp label="Company name" help="Shown on the hosted login page." example="Acme">
+              <Input value={branding.companyName ?? ""} onChange={(e) => setBranding((b) => ({ ...b, companyName: e.target.value || undefined }))} placeholder="Acme" />
+            </FieldHelp>
+            <FieldHelp label="Logo URL" help="A public HTTPS URL to your logo." example="https://example.com/logo.svg">
+              <Input value={branding.logoUrl ?? ""} onChange={(e) => setBranding((b) => ({ ...b, logoUrl: e.target.value || undefined }))} placeholder="https://example.com/logo.svg" />
+            </FieldHelp>
+            <FieldHelp label="Primary color" help="Hex color for buttons and accents." example="#c9a227">
+              <div className="flex gap-2">
+                <Input value={branding.primaryColor ?? ""} onChange={(e) => setBranding((b) => ({ ...b, primaryColor: e.target.value || undefined }))} placeholder="#c9a227" />
+                <input type="color" value={branding.primaryColor || "#c9a227"} onChange={(e) => setBranding((b) => ({ ...b, primaryColor: e.target.value }))} className="w-10 h-9 rounded bg-transparent cursor-pointer" />
+              </div>
+            </FieldHelp>
+            <FieldHelp label="Accent color" help="Secondary brand color." example="#ffffff">
+              <div className="flex gap-2">
+                <Input value={branding.accentColor ?? ""} onChange={(e) => setBranding((b) => ({ ...b, accentColor: e.target.value || undefined }))} placeholder="#ffffff" />
+                <input type="color" value={branding.accentColor || "#ffffff"} onChange={(e) => setBranding((b) => ({ ...b, accentColor: e.target.value }))} className="w-10 h-9 rounded bg-transparent cursor-pointer" />
+              </div>
+            </FieldHelp>
+            <FieldHelp label="Support email" help="Shown on the login page." example="support@example.com">
+              <Input value={branding.supportEmail ?? ""} onChange={(e) => setBranding((b) => ({ ...b, supportEmail: e.target.value || undefined }))} placeholder="support@example.com" />
+            </FieldHelp>
+            <FieldHelp label="Login page title" help="Headline on the hosted sign-in screen." example="Sign in to Acme">
+              <Input value={branding.loginTitle ?? ""} onChange={(e) => setBranding((b) => ({ ...b, loginTitle: e.target.value || undefined }))} placeholder="Sign in to Acme" />
+            </FieldHelp>
+            <FieldHelp label="Login page subtitle" help="Short text under the title." example="Welcome back — use your work email.">
+              <Input value={branding.loginSubtitle ?? ""} onChange={(e) => setBranding((b) => ({ ...b, loginSubtitle: e.target.value || undefined }))} placeholder="Welcome back" />
+            </FieldHelp>
+          </div>
+
+          <div className="rounded-lg border border-theme/30 p-4" style={{ backgroundColor: brandingPreview?.primaryColor ? `${brandingPreview.primaryColor}11` : undefined }}>
+            <p className="text-[11px] uppercase tracking-wide txt-muted mb-2">Preview</p>
+            <div className="flex flex-col items-center gap-3">
+              {brandingPreview?.logoUrl && <img src={brandingPreview.logoUrl} alt="" className="h-10 object-contain" />}
+              <div className="text-center">
+                <p className="text-[16px] font-semibold txt-head">{brandingPreview?.loginTitle ?? brandingPreview?.companyName ?? String(brandEditApp.name)}</p>
+                <p className="text-[13px] txt-muted">{brandingPreview?.loginSubtitle ?? "Branded login page"}</p>
+              </div>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg text-[13px] font-medium text-white"
+                style={{ backgroundColor: brandingPreview?.primaryColor ?? "#c9a227" }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button size="sm" onClick={saveBranding} isLoading={busy}>
+              <Save className="w-4 h-4" />
+              Save
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => setBrandEditApp(null)}>
+              <X className="w-4 h-4" />
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
       <DataTable
         state={state}
         columns={mode === "simple" ? ["name", "isActive"] : ["id", "orgId", "clientId", "name", "isActive", "createdAt"]}
@@ -241,6 +358,9 @@ function ApplicationsPanelBase({ state, organizations, onRefresh }: Applications
         emptyMessage="No applications found."
         renderRowActions={(row) => (
           <div className="flex gap-2">
+            <Button size="sm" variant="secondary" onClick={() => openBrandingEditor(row)} disabled={busy} title="Branding">
+              <Palette className="w-3 h-3" />
+            </Button>
             <Button size="sm" variant="secondary" onClick={() => openIpEditor(row)} disabled={busy} title="IP controls">
               <Shield className="w-3 h-3" />
             </Button>

@@ -105,7 +105,7 @@ class SdkOrganizationClient implements OrganizationSdk {
     return this.app.listOrganizationApplications(actorId, orgId);
   }
 
-  updateApplication(actorId: string, orgId: string, appId: string, updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean }>) {
+  updateApplication(actorId: string, orgId: string, appId: string, updates: Partial<{ name: string; redirectUris: string[]; allowedOrigins: string[]; allowedIps: string[]; blockedIps: string[]; isActive: boolean; branding: Record<string, unknown> }>) {
     return this.app.updateApplication(actorId, orgId, appId, updates);
   }
 }

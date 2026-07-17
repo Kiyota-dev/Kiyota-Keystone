@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { eq, and, sql, desc, gte, count, isNull } from "drizzle-orm";
 import { db } from "../db/index.js";
-import { orgMemberships, apiKeys, users, organizations, applications, samlConnections, oidcConnections, auditLog, refreshTokens } from "../db/schema.js";
+import { orgMemberships, apiKeys, users, organizations, applications, samlConnections, oidcConnections, auditLog, refreshTokens, permissions, rolePermissions } from "../db/schema.js";
 import { getSdk } from "../sdk/index.js";
 import { listRegisteredPlugins, listExtensionPoints, unregisterPlugin } from "../services/plugins/registry.js";
 import { isFeatureEnabled, listFeatureFlags, setFeatureFlag, deleteFeatureFlag } from "../services/featureFlags.js";
@@ -20,6 +20,29 @@ const CreateOrgSchema = z.object({
 
 const ipEntry = z.string().max(64).regex(/^[0-9a-fA-F:.\/]+$/, "Invalid IP or CIDR entry");
 
+const BrandingSchema = z
+  .object({
+    logoUrl: z.string().url().max(2048).optional(),
+    primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use #rrggbb format").optional(),
+    accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Use #rrggbb format").optional(),
+    companyName: z.string().max(255).optional(),
+    supportEmail: z.string().email().max(255).optional(),
+    loginTitle: z.string().max(255).optional(),
+    loginSubtitle: z.string().max(500).optional(),
+  })
+  .strict();
+
+const UpdateOrgSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  branding: BrandingSchema.optional(),
+});
+
+const CreatePermissionSchema = z.object({
+  resource: z.string().min(1).max(64).regex(/^[a-z][a-z0-9_]*$/, "lowercase snake_case only"),
+  action: z.string().min(1).max(64).regex(/^[a-z][a-z0-9_]*$/, "lowercase snake_case only"),
+  description: z.string().max(255).optional(),
+});
+
 const CreateAppSchema = z.object({
   name: z.string().min(1).max(255),
   redirectUris: z.array(z.string().url()).optional(),
@@ -35,6 +58,7 @@ const UpdateAppSchema = z.object({
   allowedIps: z.array(ipEntry).optional(),
   blockedIps: z.array(ipEntry).optional(),
   isActive: z.boolean().optional(),
+  branding: BrandingSchema.optional(),
 });
 
 const InviteSchema = z.object({
@@ -179,6 +203,48 @@ export default async function adminRoutes(app: FastifyInstance) {
       offset: query.offset ? Number(query.offset) : 0,
     });
     return { logs };
+  });
+
+  app.get("/platform/audit-logs/export", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const query = request.query as { event?: string; format?: string; limit?: string; orgId?: string; userId?: string };
+    const logs = await auditRepository.list({
+      event: query.event,
+      orgId: query.orgId,
+      userId: query.userId,
+      limit: Math.min(Number(query.limit) || 1000, 10000),
+      offset: 0,
+    });
+
+    if (query.format === "json") {
+      reply.header("content-disposition", `attachment; filename="keystone-audit-${Date.now()}.json"`);
+      return { logs };
+    }
+
+    const escapeCsv = (value: unknown): string => {
+      const s = value == null ? "" : String(value);
+      return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = "id,event,user_id,org_id,app_id,request_id,ip_address,user_agent,created_at,metadata";
+    const rows = logs.map((l) =>
+      [
+        l.id,
+        l.event,
+        l.userId,
+        l.orgId,
+        l.appId,
+        l.requestId,
+        l.ipAddress,
+        l.userAgent,
+        l.createdAt instanceof Date ? l.createdAt.toISOString() : l.createdAt,
+        JSON.stringify(l.metadata ?? {}),
+      ]
+        .map(escapeCsv)
+        .join(",")
+    );
+    reply
+      .header("content-type", "text/csv; charset=utf-8")
+      .header("content-disposition", `attachment; filename="keystone-audit-${Date.now()}.csv"`);
+    return reply.send([header, ...rows].join("\n"));
   });
 
   app.get("/platform/security-summary", { preHandler: [requireOwner()] }, async () => {
@@ -483,6 +549,30 @@ export default async function adminRoutes(app: FastifyInstance) {
   );
 
   app.patch(
+    "/organizations/:id",
+    { preHandler: [requireAuthAndRole(["owner", "admin"], { resource: "organization", action: "update" })] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = UpdateOrgSchema.parse(request.body);
+      if (body.name === undefined && body.branding === undefined) {
+        return reply.status(400).send({ error: "Nothing to update" });
+      }
+      const [updated] = await db
+        .update(organizations)
+        .set({
+          ...(body.name !== undefined ? { name: body.name } : {}),
+          ...(body.branding !== undefined ? { branding: body.branding } : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(organizations.id, id))
+        .returning();
+      if (!updated) return reply.status(404).send({ error: "Organization not found" });
+      await request.audit("organization_updated", { orgId: id, updates: Object.keys(body) });
+      return updated;
+    }
+  );
+
+  app.patch(
     "/organizations/:id/applications/:appId",
     { preHandler: [requireAuthAndRole(["owner", "admin"], { resource: "application", action: "update" })] },
     async (request, reply) => {
@@ -610,6 +700,48 @@ export default async function adminRoutes(app: FastifyInstance) {
 
   app.get("/permissions", { preHandler: [app.authenticate] }, async () => {
     return { permissions: await permissionRepository.list() };
+  });
+
+  app.post("/permissions", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const body = CreatePermissionSchema.parse(request.body);
+    const [created] = await db
+      .insert(permissions)
+      .values({ resource: body.resource, action: body.action, description: body.description ?? null })
+      .onConflictDoNothing({ target: [permissions.resource, permissions.action] })
+      .returning();
+    if (!created) {
+      return reply.status(409).send({ error: `Permission ${body.resource}:${body.action} already exists` });
+    }
+    await request.audit("permission_created", {
+      permissionId: created.id,
+      resource: created.resource,
+      action: created.action,
+    });
+    return reply.status(201).send(created);
+  });
+
+  app.delete("/permissions/:id", { preHandler: [requireOwner()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const [removed] = await db.delete(permissions).where(eq(permissions.id, id)).returning();
+    if (!removed) {
+      return reply.status(404).send({ error: "Permission not found" });
+    }
+    await request.audit("permission_deleted", {
+      permissionId: removed.id,
+      resource: removed.resource,
+      action: removed.action,
+    });
+    return { success: true };
+  });
+
+  app.get("/roles", { preHandler: [app.authenticate] }, async () => {
+    const rows = await db
+      .selectDistinct({ role: rolePermissions.role })
+      .from(rolePermissions);
+    const roles = new Set<string>(["owner", "admin", "member", ...rows.map((r) => r.role)]);
+    const memberships = await db.selectDistinct({ role: orgMemberships.role }).from(orgMemberships);
+    for (const m of memberships) roles.add(m.role);
+    return { roles: [...roles].sort() };
   });
 
   app.get("/roles/:role/permissions", { preHandler: [app.authenticate] }, async (request) => {

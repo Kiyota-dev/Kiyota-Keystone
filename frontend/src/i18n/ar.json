@@ -61,5 +61,6 @@
   "profile.save": "حفظ التغييرات",
   "profile.verified": "البريد موثّق",
   "profile.unverified": "البريد غير موثّق",
-  "profile.resend": "إعادة إرسال بريد التحقق"
+  "profile.resend": "إعادة إرسال بريد التحقق",
+  "nav.roles": "الأدوار"
 }

@@ -57,6 +57,7 @@ export async function updateApplication(
     redirectUris: string[];
     allowedOrigins: string[];
     isActive: boolean;
+    branding: Record<string, unknown>;
   }>
 ): Promise<Application | undefined> {
   const [updated] = await db

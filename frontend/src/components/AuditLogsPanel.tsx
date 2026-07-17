@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { ScrollText, Search } from "lucide-react";
+import { ScrollText, Search, Download } from "lucide-react";
 import { Card } from "./ui/Card.tsx";
 import { Button } from "./ui/Button.tsx";
 import { Input } from "./ui/Input.tsx";
 import { Label } from "./ui/Label.tsx";
 import { DataTable } from "./DataTable.tsx";
+import { api } from "../api.ts";
+import { useToastContext } from "./ui/ToastProvider.tsx";
 import type { DataTabState } from "../Dashboard.tsx";
 
 interface AuditLogsPanelProps {
@@ -13,7 +15,9 @@ interface AuditLogsPanelProps {
 }
 
 export function AuditLogsPanel({ state, onRefresh }: AuditLogsPanelProps) {
+  const { addToast } = useToastContext();
   const [event, setEvent] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +29,18 @@ export function AuditLogsPanel({ state, onRefresh }: AuditLogsPanelProps) {
     onRefresh();
   };
 
+  const doExport = async (format: "csv" | "json") => {
+    setExporting(true);
+    try {
+      await api.downloadAuditExport(event || undefined, format);
+      addToast(`${format.toUpperCase()} export started`, "success");
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Export failed", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card variant="glass" className="mt-6 p-5">
       <div className="flex items-center justify-between mb-4">
@@ -32,6 +48,16 @@ export function AuditLogsPanel({ state, onRefresh }: AuditLogsPanelProps) {
           <ScrollText className="w-4 h-4 text-gold" />
           Audit Logs
         </h3>
+        <div className="flex items-center gap-2">
+          <Button type="button" size="sm" variant="secondary" onClick={() => doExport("csv")} disabled={exporting}>
+            <Download className="w-3 h-3" />
+            CSV
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => doExport("json")} disabled={exporting}>
+            <Download className="w-3 h-3" />
+            JSON
+          </Button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="mb-4 flex flex-wrap items-end gap-3">
