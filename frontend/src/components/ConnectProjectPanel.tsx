@@ -454,6 +454,38 @@ export class LoginComponent {}`;
             </Button>
           </div>
 
+          <div className="mt-5 p-4 rounded-xl bg-surface border border-theme/20">
+            <h4 className="text-[13px] font-semibold txt-head mb-2 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-gold" />
+              Show the signed-in user
+            </h4>
+            <p className="text-[12px] txt-muted mb-3">
+              Once a user is signed in, the SDK can automatically fill profile fields anywhere on the page. Add these attributes to any element:
+            </p>
+            <div className="space-y-2 mb-3">
+              {[
+                { attr: 'data-keystone-field="email"', desc: "User's email address" },
+                { attr: 'data-keystone-field="name"', desc: "Display name (falls back to username)" },
+                { attr: 'data-keystone-field="username"', desc: "Username" },
+              ].map((item) => (
+                <div key={item.attr} className="flex items-start gap-3 text-[12px]">
+                  <code className="text-gold font-mono shrink-0">{item.attr}</code>
+                  <span className="txt-muted">{item.desc}</span>
+                </div>
+              ))}
+            </div>
+            <CodeBlock
+              code={`<div class="user-profile">
+  <p>Welcome, <span data-keystone-field="name">Guest</span>!</p>
+  <p>Email: <span data-keystone-field="email">-</span></p>
+</div>`}
+              language="html"
+            />
+            <p className="text-[11px] txt-muted mt-3">
+              For custom code, listen for the <code className="text-gold">keystone:session</code> event or call <code className="text-gold">keystone.getUser()</code>.
+            </p>
+          </div>
+
           {!selectedApp && apps.length === 0 && (
             <Alert variant="info" className="mt-4 text-[12px]">
               Create an application first in the Applications section.
